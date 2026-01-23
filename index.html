@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <title>ODA Market | Next Gen Shopping</title>
+    
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #050505;
+            --surface: #121212;
+            --surface-light: #1E1E1E;
+            --primary: #6366f1;
+            --accent: #a855f7;
+            --text: #ffffff;
+            --text-muted: #9ca3af;
+            --radius-lg: 32px;
+            --radius-md: 24px;
+            --radius-sm: 16px;
+            --font-head: 'Clash Display', sans-serif;
+            --font-body: 'Satoshi', sans-serif;
+            --nav-height: 80px;
+        }
+
+        /* RESET & BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            position: relative;
+        }
+
+        /* IMAGE D'ARRIÈRE-PLAN FLOUE */
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+        
+        .bg-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('VOTRE_IMAGE_BACKGROUND.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(40px) brightness(0.3);
+            transform: scale(1.1);
+        }
+        
+        .bg-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(5,5,5,0.7) 0%, rgba(5,5,5,0.9) 100%);
+        }
+
+        /* ANIMATIONS DE DÉFILEMENT */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .scroll-slide-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        
+        .scroll-slide-left.revealed {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .scroll-slide-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        
+        .scroll-slide-right.revealed {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .scroll-zoom {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        
+        .scroll-zoom.revealed {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .scroll-rotate {
+            opacity: 0;
+            transform: rotate(-5deg) scale(0.9);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .scroll-rotate.revealed {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        /* UTILS */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* BACKGROUND FX */
+        .bg-glow {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            filter: blur(120px);
+            opacity: 0.2;
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse 10s infinite alternate;
+        }
+        .glow-1 { top: -100px; left: -100px; background: var(--primary); }
+        .glow-2 { bottom: 20%; right: -50px; background: var(--accent); }
+
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.2; } 100% { transform: scale(1.2); opacity: 0.15; } }
+
+        /* HEADER */
+        header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            padding: 20px;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(5,5,5,0.9) 0%, rgba(5,5,5,0) 100%);
+        }
+
+        .logo {
+            font-family: var(--font-head);
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo span { background: white; color: black; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            padding-top: 80px;
+        }
+
+        h1 {
+            font-family: var(--font-head);
+            font-size: clamp(3rem, 12vw, 5rem);
+            line-height: 0.95;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 100px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hero-img-container {
+            width: 100%;
+            height: 350px;
+            position: relative;
+            margin: 30px 0;
+            perspective: 1000px;
+        }
+
+        .hero-card {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(160deg, #1e1e2e, #0f0f16);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: float 6s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* IMAGE PRINCIPALE DU HERO */
+        .hero-product-img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+            animation: float-inverse 6s ease-in-out infinite;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(1deg); } }
+        @keyframes float-inverse { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(10px) scale(1.05); } }
+
+        /* MARQUEE (Texte défilant) */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            background: var(--primary);
+            padding: 15px 0;
+            transform: rotate(-2deg) scale(1.1);
+            margin: 40px 0;
+        }
+        .marquee-content {
+            display: flex;
+            white-space: nowrap;
+            animation: scroll 20s linear infinite;
+        }
+        .marquee-item {
+            font-family: var(--font-head);
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 0 30px;
+            text-transform: uppercase;
+            color: white;
+        }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        /* BENTO GRID (WIDGETS) */
+        .section-title {
+            font-family: var(--font-head);
+            font-size: 2rem;
+            padding: 0 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 0 20px;
+            margin-bottom: 60px;
+        }
+
+        .bento-item {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 180px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s;
+        }
+        
+        .bento-item:active { transform: scale(0.96); }
+        .bento-full { grid-column: span 2; height: 140px; flex-direction: row; align-items: center; }
+        
+        /* IMAGES DANS LES BENTO */
+        .bento-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+        .bento-full .bento-icon {
+            margin-right: 20px;
+            margin-bottom: 0;
+        }
+        
+        .bento-text h3 { font-size: 1.1rem; margin-bottom: 5px; font-weight: 600; }
+        .bento-text p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+
+        /* HORIZONTAL SCROLL (SHOPS) */
+        .scroll-wrapper {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 10px 20px 40px 20px;
+            scroll-snap-type: x mandatory;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scroll-wrapper::-webkit-scrollbar { display: none; }
+
+        .shop-card {
+            min-width: 280px;
+            height: 380px;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            scroll-snap-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* IMAGE DE BOUTIQUE */
+        .shop-img {
+            width: 100%;
+            height: 65%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+        
+        .shop-content {
+            padding: 20px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0));
+        }
+
+        /* BOTTOM DOCK (NAVIGATION) */
+        .dock-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            z-index: 100;
+        }
+
+        .dock {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .dock-item {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .dock-item svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2; fill: none; }
+        
+        .dock-item.active { color: white; }
+        .dock-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* BUTTONS */
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 100px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: transform 0.1s;
+        }
+        .btn-main:active { transform: scale(0.98); }
+
+        /* LOADER */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- IMAGE D'ARRIÈRE-PLAN FLOUE -->
+    <div class="bg-image"></div>
+
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <header>
+        <div class="logo">ODA <span>MARKET</span></div>
+        <div class="profile-avatar">
+            <!-- REMPLACER PAR VOTRE IMAGE DE PROFIL -->
+            <img src="oda.png" alt="Profile" onerror="this.parentElement.innerHTML='👤'">
+        </div>
+    </header>
+
+    <main>
+        <section class="hero scroll-reveal">
+            <div class="tag-pill">✨ Marketplace v2.0</div>
+            <h1>Le Futur <br><span class="gradient-text">à portée de main.</span></h1>
+            <p style="color:var(--text-muted); font-size:1.1rem; max-width:90%;">Achetez et vendez instantanément sur la plateforme la plus moderne d'Afrique.</p>
+            
+            <div class="hero-img-container scroll-zoom">
+                <div class="hero-card">
+                    <!-- REMPLACER PAR VOTRE IMAGE PRODUIT PRINCIPALE -->
+                    <img src="3.jpg" alt="Product" class="hero-product-img" onerror="this.outerHTML='<div style=font-size:8rem>🛍️</div>'">
+                    <div style="position:absolute; bottom:20px; left:20px;">
+                        <p style="font-weight:bold; font-size:1.2rem;">New Arrivals</p>
+                        <p style="font-size:0.9rem; opacity:0.7;">Collection 2026</p>
+                    </div>
+                </div>
+            </div>
+
+            <a href="oda-achats.html" class="btn-main">
+                Explorer les produits
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </section>
+
+        <div class="marquee-container scroll-rotate">
+            <div class="marquee-content">
+                <div class="marquee-item">Nouveautés • Promos Flash • Livraison 24h • Paiement Sécurisé •</div>
+                <div class="marquee-item">Nouveautés • Promos Flash • Livraison 24h • Paiement Sécurisé •</div>
+            </div>
+        </div>
+
+        <section id="features">
+            <div class="section-title scroll-slide-left">
+                Avantages
+            </div>
+            <div class="bento-grid">
+                <div class="bento-item scroll-reveal" style="transition-delay: 0.1s">
+                    <!-- REMPLACER PAR VOTRE ICON RAPIDE -->
+                    <img src="7.webp" alt="Rapide" class="bento-icon" onerror="this.outerHTML='<div class=bento-icon style=font-size:2.5rem;color:#60a5fa>⚡</div>'">
+                    <div class="bento-text">
+                        <h3>Rapide</h3>
+                        <p>Livraison éclair en 24h chrono.</p>
+                    </div>
+                </div>
+                <div class="bento-item scroll-reveal" style="transition-delay: 0.2s">
+                    <!-- REMPLACER PAR VOTRE ICON SÉCURISÉ -->
+                    <img src="8.webp" alt="Sécurisé" class="bento-icon" onerror="this.outerHTML='<div class=bento-icon style=font-size:2.5rem;color:#34d399>🛡️</div>'">
+                    <div class="bento-text">
+                        <h3>Sécurisé</h3>
+                        <p>Paiement vérifié & crypté.</p>
+                    </div>
+                </div>
+                <div class="bento-item bento-full scroll-reveal" style="transition-delay: 0.3s">
+                    <!-- REMPLACER PAR VOTRE ICON AI -->
+                    <img src="2.jpg" alt="Smart AI" class="bento-icon" onerror="this.outerHTML='<div class=bento-icon style=font-size:2.5rem;color:#f472b6>🤖</div>'">
+                    <div class="bento-text">
+                        <h3>Smart AI</h3>
+                        <p>Nous trouvons ce que vous aimez avant vous.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="shops" style="margin-bottom: 40px;">
+            <div class="section-title scroll-slide-right">
+                Top Boutiques
+                <a href="boutique.html" style="font-size:0.9rem; color:var(--primary); text-decoration:none;">Voir tout</a>
+            </div>
+            
+            <div class="scroll-wrapper scroll-reveal">
+                <div class="shop-card">
+                    <!-- REMPLACER PAR VOTRE IMAGE BOUTIQUE 1 -->
+                    <img src="6.jpg" alt="Street Wear" class="shop-img" onerror="this.outerHTML='<div style=height:65%;background:#222;display:flex;align-items:center;justify-content:center;font-size:4rem>👟</div>'">
+                    <div class="shop-content">
+                        <h3>Street Wear</h3>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">Mode & Accessoires</p>
+                    </div>
+                </div>
+                <div class="shop-card">
+                    <!-- REMPLACER PAR VOTRE IMAGE BOUTIQUE 2 -->
+                    <img src="1.jpg" alt="Tech Zone" class="shop-img" onerror="this.outerHTML='<div style=height:65%;background:#1a1c2e;display:flex;align-items:center;justify-content:center;font-size:4rem>⌚</div>'">
+                    <div class="shop-content">
+                        <h3>Tech Zone</h3>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">Gadgets High-Tech</p>
+                    </div>
+                </div>
+                <div class="shop-card">
+                    <!-- REMPLACER PAR VOTRE IMAGE BOUTIQUE 3 -->
+                    <img src="9.jpg" alt="Home Deco" class="shop-img" onerror="this.outerHTML='<div style=height:65%;background:#2e1a1a;display:flex;align-items:center;justify-content:center;font-size:4rem>🛋️</div>'">
+                    <div class="shop-content">
+                        <h3>Home Deco</h3>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">Maison & Intérieur</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding: 20px; text-align:center; margin-bottom: 40px;" class="scroll-zoom">
+            <div style="background:var(--surface); border-radius:var(--radius-md); padding:30px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:3rem; font-weight:700; font-family:var(--font-head);" id="userCount">0</div>
+                <div style="color:var(--text-muted);">Utilisateurs actifs</div>
+            </div>
+        </section>
+
+    </main>
+
+    <div class="dock-container">
+        <nav class="dock">
+            <a href="#" class="dock-item active">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Home</span>
+            </a>
+            <a href="oda-achats.html" class="dock-item">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                <span>Shop</span>
+            </a>
+            <a href="favorie.html" class="dock-item">
+                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <span>Favs</span>
+            </a>
+            <a href="boutique.html" class="dock-item">
+                <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM12 8v8m-4-4h8"></path></svg>
+                <span>Stores</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // LOADER
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        });
+
+        // ANIMATION COMPTEUR
+        const counterElement = document.getElementById('userCount');
+        const target = 15400;
+        let current = 0;
+        const duration = 2000;
+        const step = target / (duration / 16);
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const timer = setInterval(() => {
+                        current += step;
+                        if (current >= target) {
+                            counterElement.innerText = "15.4k+";
+                            clearInterval(timer);
+                        } else {
+                            counterElement.innerText = Math.floor(current).toLocaleString();
+                        }
+                    }, 16);
+                    observer.unobserve(entry.target);
+                }
+            });
+        });
+        observer.observe(counterElement);
+
+        // NAVIGATION ACTIVE STATE
+        const navItems = document.querySelectorAll('.dock-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // ANIMATIONS AU DÉFILEMENT
+        const scrollElements = document.querySelectorAll('.scroll-reveal, .scroll-slide-left, .scroll-slide-right, .scroll-zoom, .scroll-rotate');
+        
+        const elementInView = (el, offset = 100) => {
+            const elementTop = el.getBoundingClientRect().top;
+            return elementTop <= (window.innerHeight || document.documentElement.clientHeight) - offset;
+        };
+        
+        const displayScrollElement = (element) => {
+            element.classList.add('revealed');
+        };
+        
+        const hideScrollElement = (element) => {
+            element.classList.remove('revealed');
+        };
+        
+        const handleScrollAnimation = () => {
+            scrollElements.forEach((el) => {
+                if (elementInView(el, 100)) {
+                    displayScrollElement(el);
+                }
+            });
+        };
+        
+        window.addEventListener('scroll', () => {
+            handleScrollAnimation();
+        });
+        
+        // Déclencher l'animation au chargement initial
+        setTimeout(() => {
+            handleScrollAnimation();
+        }, 100);
+    </script>
+</body>
+</html>

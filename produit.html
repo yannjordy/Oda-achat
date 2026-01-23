@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF6B00">
+    <title>Détails du Produit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="icon" type="image/png" href="oda.png">
+    <style>
+        /* ==================== VARIABLES ==================== */
+        :root {
+            --primary-color: #FF6B00;
+            --primary-dark: #E55D00;
+            --secondary-color: #1A1A1A;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8F9FA;
+            --text-primary: #1A1A1A;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+            --success-color: #10B981;
+            --error-color: #EF4444;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ==================== HEADER ==================== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-back {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-back:active {
+            transform: scale(0.95);
+            background: var(--border-color);
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex: 1;
+            text-align: center;
+            padding: 0 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-share {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-share:active {
+            transform: scale(0.95);
+            background: var(--border-color);
+        }
+
+        /* ==================== CARROUSEL VERTICAL ==================== */
+        .carousel-container {
+            margin-top: 72px;
+            background: var(--bg-primary);
+            padding-bottom: 20px;
+        }
+
+        .main-image-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .main-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .main-image.zoom {
+            transform: scale(1.5);
+        }
+
+        .image-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .thumbnails-container {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .thumbnails-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .thumbnail {
+            flex-shrink: 0;
+            width: 70px;
+            height: 70px;
+            border-radius: var(--radius-sm);
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            object-fit: cover;
+        }
+
+        .thumbnail.active {
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        /* ==================== CONTENU PRODUIT ==================== */
+        .product-content {
+            padding: 20px 16px 120px;
+        }
+
+        .product-header {
+            margin-bottom: 24px;
+        }
+
+        .product-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .product-category {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(255, 107, 0, 0.05));
+            color: var(--primary-color);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .price-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .stock-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+
+        .stock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .description-section {
+            background: var(--bg-primary);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .product-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* Engagement Section */
+        .engagement-section {
+            background: var(--bg-primary);
+            padding: 20px 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .engagement-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .engagement-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-like, .btn-comments {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-like:active, .btn-comments:active {
+            transform: scale(0.95);
+        }
+
+        .btn-like.liked {
+            background: #FFE5E5;
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        /* Comments Section */
+        .comments-section {
+            background: var(--bg-primary);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .comment-form {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .rating-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .rating-input input[type="radio"] {
+            display: none;
+        }
+
+        .rating-input label {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-size: 1.5rem;
+        }
+
+        .rating-input label:hover {
+            transform: scale(1.1);
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 12px;
+            transition: border-color 0.3s ease;
+        }
+
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn-submit-comment {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit-comment:active {
+            transform: translateY(-2px);
+        }
+
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comment-item {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .comment-rating {
+            font-size: 0.9rem;
+        }
+
+        .comment-text {
+            margin: 8px 0;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .comment-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-comments {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        /* ==================== BOUTONS D'ACTION ==================== */
+        .action-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            padding: 16px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .btn-boutique {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-boutique:active {
+            transform: scale(0.98);
+            border-color: var(--primary-color);
+            background: var(--bg-secondary);
+        }
+
+        /* ==================== MODAL PAIEMENT ==================== */
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 3000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .payment-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            width: 100%;
+            max-height: 85vh;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .btn-close-modal {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .order-summary {
+            background: linear-gradient(135deg, rgba(255, 107, 0, 0.05), rgba(255, 107, 0, 0.1));
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            border: 2px solid rgba(255, 107, 0, 0.2);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 2px solid rgba(255, 107, 0, 0.3);
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .payment-option {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .payment-option:active {
+            transform: scale(0.98);
+        }
+
+        .payment-option.active {
+            border-color: var(--primary-color);
+            background: rgba(255, 107, 0, 0.05);
+        }
+
+        .payment-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .payment-info {
+            flex: 1;
+        }
+
+        .payment-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .payment-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* ==================== LOADER ==================== */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ==================== NOTIFICATIONS ==================== */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 16px;
+            left: 16px;
+            background: white;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 10000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.show {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--error-color);
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (min-width: 768px) {
+            .product-content {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .action-buttons {
+                max-width: 600px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .modal-content {
+                max-width: 500px;
+                border-radius: var(--radius-lg);
+                max-height: 80vh;
+            }
+
+            .payment-modal {
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <div style="font-weight: 600; color: var(--primary-color);">Chargement...</div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <span id="notificationIcon">✅</span>
+        <span id="notificationText"></span>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <button class="btn-back" id="btnBack">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <h1 class="header-title" id="headerTitle">Détails du produit</h1>
+        <button class="btn-share" id="btnShare">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Carrousel d'images -->
+    <div class="carousel-container">
+        <div class="main-image-wrapper" id="mainImageWrapper">
+            <img src="" alt="Produit" class="main-image" id="mainImage">
+            <div class="image-counter" id="imageCounter">1 / 1</div>
+        </div>
+        <div class="thumbnails-container" id="thumbnailsContainer">
+            <!-- Thumbnails générées dynamiquement -->
+        </div>
+    </div>
+
+    <!-- Contenu produit -->
+    <div class="product-content">
+        <div class="product-header">
+            <h2 class="product-name" id="productName">Nom du produit</h2>
+            <span class="product-category" id="productCategory">📦 Catégorie</span>
+        </div>
+
+        <div class="price-section">
+            <div class="product-price" id="productPrice">0 FCFA</div>
+            <div class="stock-info">
+                <span class="stock-badge">
+                    <span id="stockIcon">✅</span>
+                    <span id="stockText">En stock</span>
+                </span>
+                <span id="stockQuantity">• 10 disponibles</span>
+            </div>
+        </div>
+
+        <div class="description-section">
+            <h3 class="section-title">
+                <span>📝</span>
+                Description
+            </h3>
+            <p class="product-description" id="productDescription">
+                Chargement de la description...
+            </p>
+        </div>
+
+        <!-- Section Engagement (Likes et Commentaires) -->
+        <div class="engagement-section">
+            <div class="engagement-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="likesCount">0</span>
+                    <span class="stat-label">Likes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="commentsCount">0</span>
+                    <span class="stat-label">Commentaires</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="averageRating">0.0</span>
+                    <span class="stat-label">⭐ Note</span>
+                </div>
+            </div>
+            
+            <div class="engagement-buttons">
+                <button class="btn-like" id="btnLike">
+                    <span id="likeIcon">🤍</span>
+                    <span id="likeText">J'aime</span>
+                </button>
+                <button class="btn-comments" onclick="scrollToComments()">
+                    <span>💬</span>
+                    <span>Commenter</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Section Commentaires -->
+        <div class="comments-section" id="commentsSection">
+            <h3 class="section-title">
+                <span>💬</span>
+                Commentaires
+            </h3>
+            
+            <div class="comment-form">
+                <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">Donner votre avis</h4>
+                <div class="rating-input">
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Note :</span>
+                    <label>
+                        <input type="radio" name="rating" value="5" checked>
+                        <span>⭐⭐⭐⭐⭐</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="rating" value="4">
+                        <span>⭐⭐⭐⭐</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="rating" value="3">
+                        <span>⭐⭐⭐</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="rating" value="2">
+                        <span>⭐⭐</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="rating" value="1">
+                        <span>⭐</span>
+                    </label>
+                </div>
+                <textarea id="commentInput" placeholder="Partagez votre expérience avec ce produit..." rows="3"></textarea>
+                <button class="btn-submit-comment" onclick="submitComment()">
+                    Publier le commentaire
+                </button>
+            </div>
+
+            <div class="comments-list" id="commentsList">
+                <!-- Commentaires générés dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="action-buttons">
+        <button class="btn-primary" id="btnAcheter">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 2L7.17 4M15 2l1.83 2M9 20c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
+                <path d="M7.17 4H20l-2 9H9L7.17 4zm0 0L6 1"/>
+            </svg>
+            Acheter maintenant
+        </button>
+
+        <button class="btn-secondary" id="btnWhatsApp">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/>
+            </svg>
+            Contacter sur WhatsApp
+        </button>
+
+        <button class="btn-boutique" id="btnBoutique">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Voir ma boutique
+        </button>
+    </div>
+
+    <!-- Modal Paiement -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">💳 Choisir le paiement</h2>
+                <button class="btn-close-modal" id="btnCloseModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary">
+                    <div class="summary-item">
+                        <span>Produit</span>
+                        <span id="summaryProductName">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Prix unitaire</span>
+                        <span id="summaryPrice">-</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span id="summaryTotal" style="color: var(--primary-color);">-</span>
+                    </div>
+                </div>
+
+                <h3 style="font-weight: 700; margin-bottom: 16px;">Méthode de paiement</h3>
+                <div class="payment-methods" id="paymentMethods">
+                    <!-- Options générées dynamiquement -->
+                </div>
+
+                <button class="btn-primary" id="btnConfirmPayment" style="margin-top: 24px;">
+                    Confirmer le paiement
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+   <script type="module">
+    // Configuration Supabase
+const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Variables globales
+let currentProduct = null;
+let parametres = null;
+let currentImageIndex = 0;
+let allImages = [];
+let selectedPaymentMethod = null;
+let currentUserId = getUserId();
+let productLikes = { count: 0, userLiked: false };
+let productComments = [];
+
+// Récupérer l'ID du produit depuis l'URL
+const urlParams = new URLSearchParams(window.location.search);
+const productId = parseInt(urlParams.get('id'));
+const shopIdentifier = urlParams.get('shop');
+
+// ==================== GESTION UTILISATEUR ====================
+function getUserId() {
+    let userId = localStorage.getItem('oda_user_id');
+    if (!userId) {
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('oda_user_id', userId);
+    }
+    return userId;
+}
+
+function getUserName() {
+    let userName = localStorage.getItem('oda_user_name');
+    if (!userName) {
+        userName = prompt('Entrez votre nom pour commenter:') || 'Anonyme';
+        localStorage.setItem('oda_user_name', userName);
+    }
+    return userName;
+}
+
+// ==================== NOTIFICATIONS ====================
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    const icon = document.getElementById('notificationIcon');
+    const text = document.getElementById('notificationText');
+    
+    notification.className = `notification ${type} show`;
+    icon.textContent = type === 'success' ? '✅' : '❌';
+    text.textContent = message;
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// ==================== CHARGEMENT PARAMÈTRES ====================
+async function chargerParametres() {
+    try {
+        if (shopIdentifier) {
+            const { data, error } = await supabase
+                .from('parametres_boutique')
+                .select('*')
+                .eq('config->identifiant->>slug', shopIdentifier)
+                .single();
+
+            if (data && !error) {
+                parametres = data.config;
+                appliquerTheme();
+            }
+        } else {
+            const localParams = localStorage.getItem('parametres_boutique');
+            if (localParams) {
+                parametres = JSON.parse(localParams);
+                appliquerTheme();
+            }
+        }
+    } catch (error) {
+        console.error('Erreur chargement paramètres:', error);
+    }
+}
+
+// ==================== APPLIQUER THÈME ====================
+function appliquerTheme() {
+    if (!parametres) return;
+    
+    const root = document.documentElement;
+    if (parametres.apparence?.couleurPrimaire) {
+        root.style.setProperty('--primary-color', parametres.apparence.couleurPrimaire);
+    }
+    if (parametres.apparence?.couleurSecondaire) {
+        root.style.setProperty('--secondary-color', parametres.apparence.couleurSecondaire);
+    }
+
+    // Mettre à jour le favicon
+    if (parametres.apparence?.favicon) {
+        let link = document.querySelector("link[rel*='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+        link.href = parametres.apparence.favicon;
+    }
+}
+
+// ==================== CHARGEMENT PRODUIT ====================
+async function chargerProduit() {
+    try {
+        if (!productId) {
+            showNotification('Produit non trouvé', 'error');
+            return;
+        }
+
+        // Essayer depuis Supabase
+        if (shopIdentifier) {
+            const { data: boutique } = await supabase
+                .from('parametres_boutique')
+                .select('user_id')
+                .eq('config->identifiant->>slug', shopIdentifier)
+                .single();
+
+            if (boutique) {
+                const { data, error } = await supabase
+                    .from('produits')
+                    .select('*')
+                    .eq('id', productId)
+                    .eq('user_id', boutique.user_id)
+                    .single();
+
+                if (data && !error) {
+                    currentProduct = {
+                        id: data.id,
+                        nom: data.nom,
+                        description: data.description,
+                        prix: data.prix,
+                        stock: data.stock,
+                        categorie: data.categorie,
+                        mainImage: data.main_image,
+                        descriptionImages: data.description_images || []
+                    };
+                    afficherProduit();
+                    await chargerEngagement();
+                    return;
+                }
+            }
+        }
+
+        // Fallback localStorage
+        const localProduits = localStorage.getItem('produits_ecommerce');
+        if (localProduits) {
+            const produits = JSON.parse(localProduits);
+            currentProduct = produits.find(p => p.id === productId);
+            if (currentProduct) {
+                afficherProduit();
+                await chargerEngagement();
+                return;
+            }
+        }
+
+        showNotification('Produit introuvable', 'error');
+    } catch (error) {
+        console.error('Erreur chargement produit:', error);
+        showNotification('Erreur de chargement', 'error');
+    }
+}
+
+// ==================== CHARGEMENT ENGAGEMENT ====================
+async function chargerEngagement() {
+    try {
+        // Charger les likes
+        const { data: likes, error: likesError } = await supabase
+            .from('product_likes')
+            .select('*')
+            .eq('product_id', productId);
+
+        if (!likesError && likes) {
+            const userLiked = likes.some(like => like.user_id === currentUserId);
+            productLikes = {
+                count: likes.length,
+                userLiked: userLiked
+            };
+            updateLikesUI();
+        }
+
+        // Charger les commentaires
+        const { data: comments, error: commentsError } = await supabase
+            .from('product_comments')
+            .select('*')
+            .eq('product_id', productId)
+            .order('created_at', { ascending: false });
+
+        if (!commentsError && comments) {
+            productComments = comments;
+            updateCommentsUI();
+        }
+    } catch (error) {
+        console.error('Erreur chargement engagement:', error);
+    }
+}
+
+// ==================== UI LIKES ====================
+function updateLikesUI() {
+    const likesCount = document.getElementById('likesCount');
+    const btnLike = document.getElementById('btnLike');
+    const likeIcon = document.getElementById('likeIcon');
+    const likeText = document.getElementById('likeText');
+
+    if (likesCount) likesCount.textContent = productLikes.count || 0;
+    
+    if (productLikes.userLiked) {
+        btnLike.classList.add('liked');
+        likeIcon.textContent = '❤️';
+        likeText.textContent = 'Aimé';
+    } else {
+        btnLike.classList.remove('liked');
+        likeIcon.textContent = '🤍';
+        likeText.textContent = 'J\'aime';
+    }
+}
+
+// ==================== TOGGLE LIKE ====================
+async function toggleLike() {
+    try {
+        if (productLikes.userLiked) {
+            // Retirer le like
+            const { error } = await supabase
+                .from('product_likes')
+                .delete()
+                .eq('product_id', productId)
+                .eq('user_id', currentUserId);
+
+            if (error) throw error;
+
+            productLikes = {
+                count: Math.max(0, (productLikes.count || 0) - 1),
+                userLiked: false
+            };
+            showNotification('Like retiré', 'info');
+        } else {
+            // Ajouter le like
+            const { error } = await supabase
+                .from('product_likes')
+                .insert({
+                    product_id: productId,
+                    user_id: currentUserId
+                });
+
+            if (error) throw error;
+
+            productLikes = {
+                count: (productLikes.count || 0) + 1,
+                userLiked: true
+            };
+            showNotification('Produit liké !', 'success');
+        }
+
+        updateLikesUI();
+    } catch (error) {
+        console.error('Erreur toggle like:', error);
+        showNotification('Erreur lors du like', 'error');
+    }
+}
+
+// ==================== CALCUL NOTE MOYENNE ====================
+function calculateAverageRating() {
+    if (productComments.length === 0) return '0.0';
+    const sum = productComments.reduce((acc, c) => acc + (c.rating || 0), 0);
+    return (sum / productComments.length).toFixed(1);
+}
+
+// ==================== FORMAT DATE ====================
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Aujourd\'hui';
+    if (diffDays === 1) return 'Hier';
+    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+    return date.toLocaleDateString('fr-FR');
+}
+
+// ==================== UI COMMENTAIRES ====================
+function updateCommentsUI() {
+    const commentsCount = document.getElementById('commentsCount');
+    const averageRating = document.getElementById('averageRating');
+    const commentsList = document.getElementById('commentsList');
+
+    if (commentsCount) commentsCount.textContent = productComments.length;
+    if (averageRating) averageRating.textContent = calculateAverageRating();
+
+    if (commentsList) {
+        if (productComments.length === 0) {
+            commentsList.innerHTML = `
+                <div class="empty-comments">
+                    <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Aucun commentaire pour l'instant</p>
+                    <p>Soyez le premier à donner votre avis !</p>
+                </div>
+            `;
+        } else {
+            commentsList.innerHTML = productComments.map(comment => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <div class="comment-user">
+                            <span class="user-avatar">${comment.user_name.charAt(0).toUpperCase()}</span>
+                            <span class="user-name">${comment.user_name}</span>
+                        </div>
+                        <div class="comment-rating">${'⭐'.repeat(comment.rating || 5)}</div>
+                    </div>
+                    <p class="comment-text">${comment.comment}</p>
+                    <span class="comment-date">${formatDate(comment.created_at)}</span>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+// ==================== SOUMETTRE COMMENTAIRE ====================
+window.submitComment = async function() {
+    const commentInput = document.getElementById('commentInput');
+    const ratingInput = document.querySelector('input[name="rating"]:checked');
+    
+    const comment = commentInput.value.trim();
+    const rating = parseInt(ratingInput.value);
+
+    if (!comment) {
+        showNotification('Le commentaire ne peut pas être vide', 'error');
+        return;
+    }
+
+    const userName = getUserName();
+
+    try {
+        const { data, error } = await supabase
+            .from('product_comments')
+            .insert({
+                product_id: productId,
+                user_id: currentUserId,
+                user_name: userName,
+                comment: comment,
+                rating: rating
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        productComments.unshift(data);
+        updateCommentsUI();
+        commentInput.value = '';
+        
+        showNotification('Commentaire ajouté !', 'success');
+
+        setTimeout(() => {
+            document.getElementById('commentsList').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest' 
+            });
+        }, 300);
+    } catch (error) {
+        console.error('Erreur ajout commentaire:', error);
+        showNotification('Erreur lors de l\'ajout du commentaire', 'error');
+    }
+};
+
+// ==================== SCROLL COMMENTAIRES ====================
+window.scrollToComments = function() {
+    const commentsSection = document.getElementById('commentsSection');
+    if (commentsSection) {
+        commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+            document.getElementById('commentInput').focus();
+        }, 500);
+    }
+};
+// ==================== AFFICHER PRODUIT ====================
+function afficherProduit() {
+    if (!currentProduct) return;
+
+    document.getElementById('headerTitle').textContent = currentProduct.nom;
+    document.getElementById('productName').textContent = currentProduct.nom;
+    document.getElementById('productCategory').textContent = `📦 ${currentProduct.categorie}`;
+    document.getElementById('productPrice').textContent = formatPrice(currentProduct.prix);
+    document.getElementById('productDescription').textContent = currentProduct.description;
+
+    // Stock
+    const stockIcon = document.getElementById('stockIcon');
+    const stockText = document.getElementById('stockText');
+    const stockQuantity = document.getElementById('stockQuantity');
+
+    if (currentProduct.stock > 0) {
+        stockIcon.textContent = '✅';
+        stockText.textContent = 'En stock';
+        stockQuantity.textContent = `• ${currentProduct.stock} disponibles`;
+    } else {
+        stockIcon.textContent = '❌';
+        stockText.textContent = 'Rupture de stock';
+        stockQuantity.style.display = 'none';
+    }
+
+    // Images
+    allImages = [currentProduct.mainImage];
+    if (currentProduct.descriptionImages && currentProduct.descriptionImages.length > 0) {
+        allImages = [...allImages, ...currentProduct.descriptionImages];
+    }
+
+    afficherCarrousel();
+}
+
+// ==================== CARROUSEL ====================
+function afficherCarrousel() {
+    const mainImage = document.getElementById('mainImage');
+    const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+    const imageCounter = document.getElementById('imageCounter');
+
+    mainImage.src = allImages[currentImageIndex];
+    imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+
+    thumbnailsContainer.innerHTML = '';
+    allImages.forEach((img, index) => {
+        const thumbnail = document.createElement('img');
+        thumbnail.src = img;
+        thumbnail.className = `thumbnail ${index === currentImageIndex ? 'active' : ''}`;
+        thumbnail.onclick = () => {
+            currentImageIndex = index;
+            afficherCarrousel();
+        };
+        thumbnailsContainer.appendChild(thumbnail);
+    });
+
+    mainImage.onclick = () => {
+        mainImage.classList.toggle('zoom');
+    };
+}
+
+// ==================== FORMAT PRIX ====================
+function formatPrice(price) {
+    const devise = parametres?.paiement?.devise || 'FCFA';
+    return `${price.toLocaleString('fr-FR')} ${devise}`;
+}
+
+// ==================== WHATSAPP ====================
+async function envoyerViaWhatsApp() {
+    try {
+        if (!currentProduct) {
+            showNotification('Produit non disponible', 'error');
+            return;
+        }
+
+        let telephone = parametres?.contact?.whatsapp || 
+                       parametres?.general?.telephone || 
+                       parametres?.contact?.telephone || '';
+
+        if (!telephone) {
+            showNotification('Numéro WhatsApp non configuré', 'error');
+            return;
+        }
+
+        const cleanPhone = telephone.replace(/[^0-9+]/g, '');
+        const shopName = parametres?.general?.nom || 'Boutique';
+
+        let message = `╔═══════════════════╗
+   🛍️ DEMANDE DE RENSEIGNEMENT
+╚═══════════════════╝
+
+📦 *${currentProduct.nom}*
+
+🏪 Boutique: ${shopName}
+💰 Prix: ${formatPrice(currentProduct.prix)}
+📊 Stock: ${currentProduct.stock} disponible(s)
+🏷️ Catégorie: ${currentProduct.categorie || 'Divers'}
+
+${currentProduct.description ? `📝 Description:\n${currentProduct.description}\n` : ''}
+━━━━━━━━━━━━━━━━━━━━━
+
+📸 IMAGES DU PRODUIT (${allImages.length}):
+`;
+
+        allImages.forEach((imageUrl, index) => {
+            message += `\n🖼️ Image ${index + 1}:\n${imageUrl}\n`;
+        });
+
+        message += `
+━━━━━━━━━━━━━━━━━━━━━
+
+💬 Bonjour, je suis intéressé(e) par ce produit.
+Pouvez-vous me donner plus d'informations ?
+
+✨ Merci !`;
+
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+        
+        window.open(whatsappUrl, '_blank');
+        showNotification('✅ Redirection vers WhatsApp...', 'success');
+
+    } catch (error) {
+        console.error('Erreur envoi WhatsApp:', error);
+        showNotification('Erreur lors de l\'envoi vers WhatsApp', 'error');
+    }
+}
+
+// ==================== OPTIONS PAIEMENT ====================
+function genererOptionsPayment() {
+    const container = document.getElementById('paymentMethods');
+    container.innerHTML = '';
+
+    const methodesActives = [];
+
+    if (parametres?.paiement?.carte?.actif && parametres?.paiement?.carte?.confirme) {
+        methodesActives.push({
+            id: 'card',
+            name: 'Carte bancaire',
+            desc: 'Visa, Mastercard',
+            icon: '💳'
+        });
+    }
+
+    if (parametres?.paiement?.mobile?.actif && parametres?.paiement?.mobile?.mtn?.actif) {
+        methodesActives.push({
+            id: 'mtn',
+            name: 'MTN Money',
+            desc: 'Paiement mobile MTN',
+            icon: '📱'
+        });
+    }
+
+    if (parametres?.paiement?.mobile?.actif && parametres?.paiement?.mobile?.orange?.actif) {
+        methodesActives.push({
+            id: 'orange',
+            name: 'Orange Money',
+            desc: 'Paiement mobile Orange',
+            icon: '🟠'
+        });
+    }
+
+    if (parametres?.paiement?.cash?.actif && parametres?.paiement?.cash?.confirme) {
+        methodesActives.push({
+            id: 'cash',
+            name: 'Paiement à la livraison',
+            desc: 'Payez en espèces',
+            icon: '💵'
+        });
+    }
+
+    if (methodesActives.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Aucun mode de paiement configuré</p>';
+        return;
+    }
+
+    methodesActives.forEach(method => {
+        const option = document.createElement('div');
+        option.className = 'payment-option';
+        option.dataset.method = method.id;
+        
+        option.innerHTML = `
+            <div class="payment-icon">${method.icon}</div>
+            <div class="payment-info">
+                <div class="payment-name">${method.name}</div>
+                <div class="payment-desc">${method.desc}</div>
+            </div>
+        `;
+
+        option.onclick = () => {
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            option.classList.add('active');
+            selectedPaymentMethod = method.id;
+        };
+
+        container.appendChild(option);
+    });
+}
+
+// ==================== EVENT LISTENERS ====================
+document.getElementById('btnShare').onclick = async () => {
+    const shareData = {
+        title: currentProduct.nom,
+        text: `${currentProduct.nom} - ${formatPrice(currentProduct.prix)}`,
+        url: window.location.href
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            await navigator.clipboard.writeText(window.location.href);
+            showNotification('Lien copié !', 'success');
+        }
+    } catch (error) {
+        console.log('Erreur partage:', error);
+    }
+};
+
+document.getElementById('btnBack').onclick = () => {
+    const referrer = document.referrer;
+    if (referrer && referrer.includes(window.location.origin)) {
+        window.history.back();
+    } else {
+        if (shopIdentifier) {
+            window.location.href = `oda-achats.html?shop=${shopIdentifier}`;
+        } else {
+            window.location.href = 'oda-achats.html';
+        }
+    }
+};
+
+document.getElementById('btnBoutique').onclick = () => {
+    if (shopIdentifier) {
+        window.location.href = `boutique.html?shop=${shopIdentifier}`;
+    } else {
+        window.location.href = 'boutique.html';
+    }
+};
+
+document.getElementById('btnWhatsApp').onclick = envoyerViaWhatsApp;
+
+document.getElementById('btnAcheter').onclick = () => {
+    if (currentProduct.stock <= 0) {
+        showNotification('Produit en rupture de stock', 'error');
+        return;
+    }
+
+    document.getElementById('summaryProductName').textContent = currentProduct.nom;
+    document.getElementById('summaryPrice').textContent = formatPrice(currentProduct.prix);
+    document.getElementById('summaryTotal').textContent = formatPrice(currentProduct.prix);
+
+    genererOptionsPayment();
+
+    document.getElementById('paymentModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+document.getElementById('btnCloseModal').onclick = () => {
+    document.getElementById('paymentModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+};
+
+document.getElementById('btnConfirmPayment').onclick = () => {
+    if (!selectedPaymentMethod) {
+        showNotification('Veuillez choisir un mode de paiement', 'error');
+        return;
+    }
+
+    const commande = {
+        produit: {
+            id: currentProduct.id,
+            nom: currentProduct.nom,
+            prix: currentProduct.prix,
+            image: currentProduct.mainImage,
+            quantite: 1
+        },
+        montantTotal: currentProduct.prix,
+        methodePaiement: selectedPaymentMethod,
+        dateCreation: new Date().toISOString()
+    };
+
+    sessionStorage.setItem('commande_en_cours', JSON.stringify(commande));
+
+    showNotification('Redirection vers le paiement...', 'success');
+    setTimeout(() => {
+        window.location.href = 'payement.html';
+    }, 1000);
+};
+
+document.getElementById('btnLike').onclick = toggleLike;
+
+// ==================== INITIALISATION ====================
+async function init() {
+    await chargerParametres();
+    await chargerProduit();
+    document.getElementById('loader').style.display = 'none';
+}
+
+init();
+   </script>
+</body>
+</html>

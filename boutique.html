@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <title>ODA - Toutes les Boutiques</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="icon" type="image/png" href="oda.png">
+    <link rel="stylesheet" href="boutiques-styles.css">
+    <style>
+        /* ==================== VARIABLES ==================== */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-color: #667eea;
+    --primary-dark: #5568d3;
+    --secondary-color: #764ba2;
+    --success-color: #10B981;
+    --error-color: #EF4444;
+    --warning-color: #F59E0B;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8F9FA;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B7280;
+    --border-color: #E5E7EB;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.2);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* ==================== LOADER ==================== */
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-gradient);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    gap: 20px;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loader p {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* ==================== HEADER ==================== */
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.menu-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--bg-gradient);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.menu-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--bg-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.logo-text h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    background: var(--bg-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.logo-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--bg-secondary);
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.icon-btn:hover {
+    background: var(--bg-gradient);
+    color: white;
+    transform: scale(1.05);
+}
+
+.boutique-count {
+    background: var(--bg-gradient);
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.count-number {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+}
+
+.count-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ==================== SEARCH CONTAINER ==================== */
+.search-container {
+    padding: 12px 20px;
+    background: white;
+    border-top: 1px solid var(--border-color);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-secondary);
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+    background: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.search-box svg {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.search-box input::placeholder {
+    color: var(--text-secondary);
+}
+
+.search-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.search-close:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ==================== TABS NAVIGATION ==================== */
+.tabs-nav {
+    position: sticky;
+    top: 78px;
+    background: white;
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-color);
+    z-index: 999;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabs-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-color);
+}
+
+.tab-btn.active {
+    background: var(--bg-gradient);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.tab-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.tab-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.tab-btn.active .tab-badge {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==================== CONTENT CONTAINER ==================== */
+.content-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 150px 20px 40px;
+}
+
+.boutiques-section {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-header {
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.section-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ==================== BOUTIQUES LIST (WhatsApp Style) ==================== */
+.boutiques-list {
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.boutique-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.boutique-item:last-child {
+    border-bottom: none;
+}
+
+.boutique-item:hover {
+    background: var(--bg-secondary);
+}
+
+.boutique-item:active {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.boutique-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--bg-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.boutique-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Lazy loading placeholder */
+.boutique-logo img.lazy-load {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.boutique-logo img:not(.lazy-load) {
+    opacity: 1;
+}
+
+.boutique-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.boutique-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.boutique-slug {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.boutique-slug svg {
+    width: 14px;
+    height: 14px;
+}
+
+.boutique-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-save {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 20px;
+}
+
+.btn-save:hover {
+    transform: scale(1.1);
+}
+
+.btn-save.saved {
+    background: var(--error-color);
+    border-color: var(--error-color);
+    animation: heartBeat 0.5s ease;
+}
+
+@keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.2); }
+    50% { transform: scale(1.1); }
+}
+
+.btn-info {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+}
+
+/* ==================== EMPTY STATE ==================== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: var(--bg-gradient);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==================== MODAL ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+    background: white;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-xl);
+    animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.btn-close-modal {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-close-modal:hover {
+    background: var(--border-color);
+    transform: rotate(90deg);
+}
+
+.modal-content {
+    padding: 24px;
+}
+
+.modal-boutique-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.modal-logo {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 16px;
+    border-radius: 20px;
+    background: var(--bg-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.modal-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-boutique-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.modal-boutique-slug {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.modal-info-grid {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-modal {
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-visit {
+    background: var(--bg-gradient);
+    color: white;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-visit:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-save-modal {
+    background: white;
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-save-modal:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.btn-save-modal.saved {
+    background: var(--error-color);
+    color: white;
+    border-color: var(--error-color);
+}
+
+/* ==================== TOAST ==================== */
+.toast-container {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.3s ease;
+    min-width: 300px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.toast.success {
+    border-left-color: var(--success-color);
+}
+
+.toast.error {
+    border-left-color: var(--error-color);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast-icon {
+    font-size: 1.5rem;
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .header-content {
+        padding: 12px 16px;
+    }
+
+    .logo-text h1 {
+        font-size: 1.1rem;
+    }
+
+    .logo-subtitle {
+        display: none;
+    }
+
+    .content-container {
+        padding: 140px 16px 32px;
+    }
+
+    .tabs-nav {
+        padding: 12px 16px;
+    }
+
+    .tab-btn {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .boutique-item {
+        padding: 12px;
+    }
+
+    .boutique-logo {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+    }
+
+    .boutique-name {
+        font-size: 0.95rem;
+    }
+
+    .modal-container {
+        border-radius: 20px 20px 0 0;
+        max-height: 80vh;
+    }
+
+    .modal-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .toast-container {
+        right: 16px;
+        left: 16px;
+    }
+
+    .toast {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .boutique-count {
+        padding: 6px 12px;
+    }
+
+    .count-number {
+        font-size: 1rem;
+    }
+
+    .count-label {
+        font-size: 0.65rem;
+    }
+}
+    </style>
+<body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <p>Chargement des boutiques...</p>
+    </div>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-content">
+            <button class="menu-btn" id="btnBack">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            
+            <div class="logo">
+                <div class="logo-icon">🏪</div>
+                <div class="logo-text">
+                    <h1>ODA Boutiques</h1>
+                    <p class="logo-subtitle">Découvrez toutes les boutiques</p>
+                </div>
+            </div>
+            
+            <div class="header-icons">
+                <button class="icon-btn" id="searchBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                </button>
+        </div>
+
+        <!-- Barre de recherche (cachée par défaut) -->
+        <div class="search-container" id="searchContainer" style="display: none;">
+            <div class="search-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="Rechercher une boutique..." id="searchInput">
+                <button class="search-close" id="searchClose">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tabs Navigation -->
+    <nav class="tabs-nav">
+        <button class="tab-btn active" data-tab="all">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>Toutes les boutiques</span>
+            <span class="tab-badge" id="badgeAll">0</span>
+        </button>
+        <button class="tab-btn" data-tab="saved">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span>Mes favoris</span>
+            <span class="tab-badge" id="badgeSaved">0</span>
+        </button>
+        <button class="tab-btn" data-tab="active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            <span>Plus actifs</span>
+            <span class="tab-badge" id="badgeActive">0</span>
+        </button>
+    </nav>
+
+    <!-- Content Container -->
+    <main class="content-container">
+        <!-- Slider 1: Toutes les boutiques -->
+        <section class="boutiques-section active" id="sectionAll">
+            <div class="section-header">
+                <h2>📍 Explorer les boutiques</h2>
+                <p>Découvrez toutes les boutiques disponibles</p>
+            </div>
+            
+            <div class="boutiques-list" id="boutiquesListAll">
+                <!-- Les boutiques seront générées ici -->
+            </div>
+
+            <div class="empty-state" id="emptyStateAll" style="display: none;">
+                <div class="empty-icon">🏪</div>
+                <h3>Aucune boutique trouvée</h3>
+                <p>Aucune boutique n'est disponible pour le moment</p>
+            </div>
+        </section>
+
+        <!-- Slider 2: Boutiques enregistrées -->
+        <section class="boutiques-section" id="sectionSaved" style="display: none;">
+            <div class="section-header">
+                <h2>❤️ Mes boutiques favorites</h2>
+                <p>Retrouvez vos boutiques enregistrées</p>
+            </div>
+            
+            <div class="boutiques-list" id="boutiquesListSaved">
+                <!-- Les boutiques enregistrées seront générées ici -->
+            </div>
+
+            <div class="empty-state" id="emptyStateSaved" style="display: none;">
+                <div class="empty-icon">❤️</div>
+                <h3>Aucune boutique favorite</h3>
+                <p>Enregistrez vos boutiques préférées pour les retrouver ici</p>
+                <button class="btn-primary" onclick="switchTab('all')">
+                    Explorer les boutiques
+                </button>
+                <section class="boutiques-section" id="sectionActive" style="display: none;">
+                    <div class="section-header">
+                        <h2>⚡ Boutiques les plus actives</h2>
+                        <p>Les boutiques avec le plus de produits et d'activité récente</p>
+                    </div>
+                    
+                    <div class="boutiques-list" id="boutiquesListActive">
+                        <!-- Les boutiques actives seront générées ici -->
+                    </div>
+                
+                    <div class="empty-state" id="emptyStateActive" style="display: none;">
+                        <div class="empty-icon">⚡</div>
+                        <h3>Aucune boutique active</h3>
+                        <p>Aucune boutique active pour le moment</p>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Détails Boutique -->
+    <div class="modal-overlay" id="modalOverlay" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Détails de la boutique</h3>
+                <button class="btn-close-modal" id="btnCloseModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-content" id="modalContent">
+                <!-- Le contenu sera généré dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+<script type="module">
+    // ==================== CONFIGURATION SUPABASE ====================
+const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ==================== VARIABLES GLOBALES ====================
+let allBoutiques = [];
+let activeBoutiques = [];
+let savedBoutiques = new Set();
+let currentTab = 'all';
+let searchQuery = '';
+
+// Cache configuration
+const CACHE_KEY = 'oda_boutiques_cache';
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+// ==================== GESTION DU CACHE ====================
+function saveBoutiquesToCache(boutiques) {
+    try {
+        const cacheData = {
+            boutiques: boutiques,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        console.log('💾 Boutiques sauvegardées en cache');
+    } catch (e) {
+        console.warn('Erreur sauvegarde cache:', e);
+    }
+}
+
+function loadBoutiquesFromCache() {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+
+        const cacheData = JSON.parse(cached);
+        const age = Date.now() - cacheData.timestamp;
+
+        if (age < CACHE_DURATION) {
+            console.log(`📦 ${cacheData.boutiques.length} boutiques chargées depuis le cache (${Math.round(age/1000)}s)`);
+            return cacheData.boutiques;
+        } else {
+            console.log('⏰ Cache expiré');
+            localStorage.removeItem(CACHE_KEY);
+            return null;
+        }
+    } catch (e) {
+        console.warn('Erreur lecture cache:', e);
+        return null;
+    }
+}
+
+// ==================== CHARGEMENT DES BOUTIQUES OPTIMISÉ ====================
+async function loadBoutiques() {
+    try {
+        // Essayer de charger depuis le cache d'abord
+        const cachedBoutiques = loadBoutiquesFromCache();
+        
+        if (cachedBoutiques && cachedBoutiques.length > 0) {
+            allBoutiques = cachedBoutiques;
+            loadSavedBoutiques();
+            await loadActiveBoutiques();
+            updateBadges();
+            displayBoutiques();
+            hideLoader();
+            
+            // Mettre à jour en arrière-plan
+            updateBoutiquesInBackground();
+            return;
+        }
+
+        showLoader();
+
+        // Charger avec select optimisé (seulement les champs nécessaires)
+        const { data: boutiquesData, error } = await supabase
+            .from('parametres_boutique')
+            .select('user_id, config, created_at, updated_at')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        allBoutiques = boutiquesData.map(item => ({
+            id: item.user_id,
+            nom: item.config?.general?.nom || 'Boutique Sans Nom',
+            description: item.config?.general?.description || '',
+            email: item.config?.general?.email || '',
+            telephone: item.config?.general?.telephone || '',
+            adresse: item.config?.general?.adresse || '',
+            slug: item.config?.identifiant?.slug || item.config?.slug || '',
+            logo: item.config?.apparence?.logo || '',
+            couleur: item.config?.apparence?.couleurPrimaire || '#667eea',
+            dateCreation: item.created_at,
+            dateModification: item.updated_at
+        })).filter(b => b.slug); // Ne garder que les boutiques avec un slug
+
+        console.log(`✅ ${allBoutiques.length} boutiques chargées depuis Supabase`);
+        
+        // Sauvegarder en cache
+        saveBoutiquesToCache(allBoutiques);
+        
+        loadSavedBoutiques();
+        await loadActiveBoutiques();
+        updateBadges();
+        displayBoutiques();
+
+    } catch (error) {
+        console.error('Erreur chargement boutiques:', error);
+        showToast('Erreur lors du chargement des boutiques', 'error');
+        displayBoutiques(); // Afficher l'état vide
+    } finally {
+        hideLoader();
+    }
+}
+
+// ==================== CHARGEMENT BOUTIQUES ACTIVES ====================
+async function loadActiveBoutiques() {
+    try {
+        console.log('⚡ Chargement des boutiques actives...');
+
+        // Charger tous les produits pour compter par boutique
+        const { data: allProducts, error } = await supabase
+            .from('produits')
+            .select('user_id, created_at, updated_at');
+
+        if (error) throw error;
+
+        // Compter les produits par boutique
+        const boutiqueProductCount = {};
+        const boutiqueLastActivity = {};
+
+        allProducts.forEach(product => {
+            const userId = product.user_id;
+            
+            // Compter les produits
+            boutiqueProductCount[userId] = (boutiqueProductCount[userId] || 0) + 1;
+            
+            // Dernière activité
+            const lastDate = new Date(product.updated_at || product.created_at);
+            if (!boutiqueLastActivity[userId] || lastDate > boutiqueLastActivity[userId]) {
+                boutiqueLastActivity[userId] = lastDate;
+            }
+        });
+
+        // Filtrer et trier les boutiques
+        activeBoutiques = allBoutiques
+            .map(boutique => ({
+                ...boutique,
+                productCount: boutiqueProductCount[boutique.id] || 0,
+                lastActivity: boutiqueLastActivity[boutique.id] || new Date(boutique.dateCreation)
+            }))
+            .filter(b => b.productCount > 0) // Au moins 1 produit
+            .sort((a, b) => {
+                // Trier par nombre de produits puis par activité récente
+                if (b.productCount !== a.productCount) {
+                    return b.productCount - a.productCount;
+                }
+                return b.lastActivity - a.lastActivity;
+            })
+            .slice(0, 50); // Limiter aux 50 plus actifs
+
+        console.log(`✅ ${activeBoutiques.length} boutiques actives trouvées`);
+        updateBadges();
+
+    } catch (error) {
+        console.error('Erreur chargement boutiques actives:', error);
+        activeBoutiques = [];
+    }
+}
+
+// ==================== MISE À JOUR EN ARRIÈRE-PLAN ====================
+async function updateBoutiquesInBackground() {
+    try {
+        console.log('🔄 Mise à jour silencieuse du cache...');
+        
+        const { data: boutiquesData } = await supabase
+            .from('parametres_boutique')
+            .select('user_id, config, created_at, updated_at')
+            .order('created_at', { ascending: false });
+
+        if (boutiquesData) {
+            const updatedBoutiques = boutiquesData.map(item => ({
+                id: item.user_id,
+                nom: item.config?.general?.nom || 'Boutique Sans Nom',
+                description: item.config?.general?.description || '',
+                email: item.config?.general?.email || '',
+                telephone: item.config?.general?.telephone || '',
+                adresse: item.config?.general?.adresse || '',
+                slug: item.config?.identifiant?.slug || item.config?.slug || '',
+                logo: item.config?.apparence?.logo || '',
+                couleur: item.config?.apparence?.couleurPrimaire || '#667eea',
+                dateCreation: item.created_at,
+                dateModification: item.updated_at
+            })).filter(b => b.slug);
+
+            // Mettre à jour le cache
+            saveBoutiquesToCache(updatedBoutiques);
+            
+            // Si les données ont changé, mettre à jour l'affichage
+            if (JSON.stringify(updatedBoutiques) !== JSON.stringify(allBoutiques)) {
+                allBoutiques = updatedBoutiques;
+                await loadActiveBoutiques();
+                updateBadges();
+                displayBoutiques();
+                console.log('✅ Cache mis à jour en arrière-plan');
+            }
+        }
+    } catch (error) {
+        console.warn('Erreur mise à jour arrière-plan:', error);
+    }
+}
+
+// ==================== GESTION DES FAVORIS ====================
+function loadSavedBoutiques() {
+    const stored = localStorage.getItem('oda_saved_boutiques');
+    if (stored) {
+        try {
+            savedBoutiques = new Set(JSON.parse(stored));
+            console.log(`❤️ ${savedBoutiques.size} boutiques enregistrées`);
+        } catch (e) {
+            savedBoutiques = new Set();
+        }
+    }
+}
+
+function saveBoutiques() {
+    localStorage.setItem('oda_saved_boutiques', JSON.stringify([...savedBoutiques]));
+}
+
+function toggleSaveBoutique(boutiqueId) {
+    const boutique = allBoutiques.find(b => b.id === boutiqueId);
+    if (!boutique) return;
+
+    if (savedBoutiques.has(boutiqueId)) {
+        savedBoutiques.delete(boutiqueId);
+        showToast(`${boutique.nom} retirée des favoris`, 'info');
+    } else {
+        savedBoutiques.add(boutiqueId);
+        showToast(`${boutique.nom} ajoutée aux favoris`, 'success');
+    }
+    
+    saveBoutiques();
+    updateBadges();
+    displayBoutiques();
+}
+
+// ==================== MISE À JOUR DES BADGES ====================
+function updateBadges() {
+    const badgeAll = document.getElementById('badgeAll');
+    const badgeSaved = document.getElementById('badgeSaved');
+    const badgeActive = document.getElementById('badgeActive');
+
+    const filteredBoutiques = getFilteredBoutiques();
+    
+    if (badgeAll) badgeAll.textContent = allBoutiques.length;
+    if (badgeSaved) badgeSaved.textContent = savedBoutiques.size;
+    if (badgeActive) badgeActive.textContent = activeBoutiques.length;
+}
+
+// ==================== FILTRAGE ET RECHERCHE ====================
+function getFilteredBoutiques() {
+    let boutiques = currentTab === 'active' ? [...activeBoutiques] : [...allBoutiques];
+
+    // Filtrer par recherche
+    if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        boutiques = boutiques.filter(b => 
+            b.nom.toLowerCase().includes(query) ||
+            b.slug.toLowerCase().includes(query) ||
+            b.description?.toLowerCase().includes(query) ||
+            b.adresse?.toLowerCase().includes(query)
+        );
+    }
+
+    // Filtrer par tab
+    if (currentTab === 'saved') {
+        boutiques = [...allBoutiques].filter(b => savedBoutiques.has(b.id));
+    }
+
+    return boutiques;
+}
+// ==================== AFFICHAGE DES BOUTIQUES ====================
+function displayBoutiques() {
+    const sectionAll = document.getElementById('sectionAll');
+    const sectionSaved = document.getElementById('sectionSaved');
+    const sectionActive = document.getElementById('sectionActive');
+    const listAll = document.getElementById('boutiquesListAll');
+    const listSaved = document.getElementById('boutiquesListSaved');
+    const listActive = document.getElementById('boutiquesListActive');
+    const emptyStateAll = document.getElementById('emptyStateAll');
+    const emptyStateSaved = document.getElementById('emptyStateSaved');
+    const emptyStateActive = document.getElementById('emptyStateActive');
+
+    // Masquer toutes les sections
+    sectionAll.style.display = 'none';
+    sectionSaved.style.display = 'none';
+    sectionActive.style.display = 'none';
+
+    // Afficher la section active
+    let activeSection, activeList, activeEmptyState;
+    
+    if (currentTab === 'all') {
+        activeSection = sectionAll;
+        activeList = listAll;
+        activeEmptyState = emptyStateAll;
+    } else if (currentTab === 'saved') {
+        activeSection = sectionSaved;
+        activeList = listSaved;
+        activeEmptyState = emptyStateSaved;
+    } else if (currentTab === 'active') {
+        activeSection = sectionActive;
+        activeList = listActive;
+        activeEmptyState = emptyStateActive;
+    }
+
+    activeSection.style.display = 'block';
+
+    // Obtenir les boutiques filtrées
+    const filteredBoutiques = getFilteredBoutiques();
+
+    if (filteredBoutiques.length === 0) {
+        activeList.style.display = 'none';
+        activeEmptyState.style.display = 'block';
+    } else {
+        activeList.style.display = 'block';
+        activeEmptyState.style.display = 'none';
+        
+        // Afficher badge produits pour onglet "actifs"
+        if (currentTab === 'active') {
+            renderActiveBoutiquesProgressively(activeList, filteredBoutiques);
+        } else {
+            renderBoutiquesProgressively(activeList, filteredBoutiques);
+        }
+    }
+
+    updateBadges();
+}
+
+// ==================== RENDU PROGRESSIF (BATCH RENDERING) ====================
+function renderBoutiquesProgressively(container, boutiques) {
+    container.innerHTML = '';
+    
+    if (boutiques.length <= 20) {
+        container.innerHTML = boutiques.map(b => createBoutiqueItem(b)).join('');
+        return;
+    }
+    
+    const batchSize = 20;
+    let currentIndex = 0;
+    
+    function renderBatch() {
+        const batch = boutiques.slice(currentIndex, currentIndex + batchSize);
+        const fragment = document.createDocumentFragment();
+        
+        batch.forEach(boutique => {
+            const div = document.createElement('div');
+            div.innerHTML = createBoutiqueItem(boutique);
+            fragment.appendChild(div.firstChild);
+        });
+        
+        container.appendChild(fragment);
+        currentIndex += batchSize;
+        
+        if (currentIndex < boutiques.length) {
+            requestAnimationFrame(renderBatch);
+        }
+    }
+    
+    renderBatch();
+}
+
+function renderActiveBoutiquesProgressively(container, boutiques) {
+    container.innerHTML = '';
+    
+    if (boutiques.length <= 20) {
+        container.innerHTML = boutiques.map(b => createActiveBoutiqueItem(b)).join('');
+        return;
+    }
+    
+    const batchSize = 20;
+    let currentIndex = 0;
+    
+    function renderBatch() {
+        const batch = boutiques.slice(currentIndex, currentIndex + batchSize);
+        const fragment = document.createDocumentFragment();
+        
+        batch.forEach(boutique => {
+            const div = document.createElement('div');
+            div.innerHTML = createActiveBoutiqueItem(boutique);
+            fragment.appendChild(div.firstChild);
+        });
+        
+        container.appendChild(fragment);
+        currentIndex += batchSize;
+        
+        if (currentIndex < boutiques.length) {
+            requestAnimationFrame(renderBatch);
+        }
+    }
+    
+    renderBatch();
+}
+
+// ==================== CRÉATION D'UN ITEM BOUTIQUE STANDARD ====================
+function createBoutiqueItem(boutique) {
+    const isSaved = savedBoutiques.has(boutique.id);
+    
+    const logoDisplay = boutique.logo 
+        ? `<img data-src="${boutique.logo}" alt="${boutique.nom}" class="lazy-load">` 
+        : getEmojiForBoutique(boutique.nom);
+
+    return `
+        <div class="boutique-item" onclick="showBoutiqueModal('${boutique.id}')">
+            <div class="boutique-logo" style="background: ${boutique.couleur};">
+                ${logoDisplay}
+            </div>
+            
+            <div class="boutique-info">
+                <div class="boutique-name">${boutique.nom}</div>
+                <div class="boutique-slug">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                    @${boutique.slug}
+                </div>
+            </div>
+            
+            <div class="boutique-actions">
+                <button class="btn-save ${isSaved ? 'saved' : ''}" 
+                        onclick="event.stopPropagation(); toggleSaveBoutique('${boutique.id}')">
+                    ${isSaved ? '❤️' : '🤍'}
+                </button>
+                <div class="btn-info"></div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== CRÉATION D'UN ITEM BOUTIQUE ACTIVE ====================
+function createActiveBoutiqueItem(boutique) {
+    const isSaved = savedBoutiques.has(boutique.id);
+    
+    const logoDisplay = boutique.logo 
+        ? `<img data-src="${boutique.logo}" alt="${boutique.nom}" class="lazy-load">` 
+        : getEmojiForBoutique(boutique.nom);
+
+    // Calculer l'activité récente
+    const now = new Date();
+    const lastActivity = new Date(boutique.lastActivity);
+    const daysSinceActivity = Math.floor((now - lastActivity) / (1000 * 60 * 60 * 24));
+    
+    let activityText = '';
+    if (daysSinceActivity === 0) activityText = "Aujourd'hui";
+    else if (daysSinceActivity === 1) activityText = "Hier";
+    else if (daysSinceActivity < 7) activityText = `Il y a ${daysSinceActivity}j`;
+    else if (daysSinceActivity < 30) activityText = `Il y a ${Math.floor(daysSinceActivity / 7)}sem`;
+    else activityText = `Il y a ${Math.floor(daysSinceActivity / 30)}mois`;
+
+    return `
+        <div class="boutique-item" onclick="showBoutiqueModal('${boutique.id}')">
+            <div class="boutique-logo" style="background: ${boutique.couleur};">
+                ${logoDisplay}
+            </div>
+            
+            <div class="boutique-info">
+                <div class="boutique-name">${boutique.nom}</div>
+                <div class="boutique-slug">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                    </svg>
+                    ${boutique.productCount} produit${boutique.productCount > 1 ? 's' : ''} • ${activityText}
+                </div>
+            </div>
+            
+            <div class="boutique-actions">
+                <button class="btn-save ${isSaved ? 'saved' : ''}" 
+                        onclick="event.stopPropagation(); toggleSaveBoutique('${boutique.id}')">
+                    ${isSaved ? '❤️' : '🤍'}
+                </button>
+                <div class="btn-info"></div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== LAZY LOADING DES IMAGES ====================
+function initLazyLoading() {
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.getAttribute('data-src');
+                    if (src) {
+                        img.src = src;
+                        img.classList.remove('lazy-load');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px'
+        });
+
+        // Observer toutes les images lazy
+        document.querySelectorAll('.lazy-load').forEach(img => {
+            imageObserver.observe(img);
+        });
+    } else {
+        // Fallback pour les navigateurs sans IntersectionObserver
+        document.querySelectorAll('.lazy-load').forEach(img => {
+            const src = img.getAttribute('data-src');
+            if (src) img.src = src;
+        });
+    }
+}
+
+// ==================== EMOJI PAR DÉFAUT ====================
+function getEmojiForBoutique(nom) {
+    const emojis = ['🪐', '🛍️', '🏬', '🛒', '🎁', '📦', '🎨', '👕', '👗', '👠'];
+    const index = nom.charCodeAt(0) % emojis.length;
+    return emojis[index];
+}
+
+// ==================== MODAL DÉTAILS BOUTIQUE ====================
+function showBoutiqueModal(boutiqueId) {
+    const boutique = allBoutiques.find(b => b.id === boutiqueId);
+    if (!boutique) return;
+
+    const modal = document.getElementById('modalOverlay');
+    const modalContent = document.getElementById('modalContent');
+    const isSaved = savedBoutiques.has(boutiqueId);
+
+    const dateCreation = formatDate(boutique.dateCreation);
+    const dateModification = boutique.dateModification ? formatDate(boutique.dateModification) : 'Jamais';
+    
+    const logoDisplay = boutique.logo 
+        ? `<img src="${boutique.logo}" alt="${boutique.nom}">` 
+        : getEmojiForBoutique(boutique.nom);
+
+    modalContent.innerHTML = `
+        <div class="modal-boutique-header">
+            <div class="modal-logo" style="background: ${boutique.couleur};">
+                ${logoDisplay}
+            </div>
+            <h2 class="modal-boutique-name">${boutique.nom}</h2>
+            <div class="modal-boutique-slug">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                @${boutique.slug}
+            </div>
+        </div>
+
+        <div class="modal-info-grid">
+            ${boutique.description ? `
+                <div class="info-item">
+                    <div class="info-icon">📝</div>
+                    <div class="info-content">
+                        <div class="info-label">Description</div>
+                        <div class="info-value">${boutique.description}</div>
+                    </div>
+                </div>
+            ` : ''}
+
+            <div class="info-item">
+                <div class="info-icon">📅</div>
+                <div class="info-content">
+                    <div class="info-label">Date de création</div>
+                    <div class="info-value">${dateCreation}</div>
+                </div>
+            </div>
+
+            ${boutique.dateModification ? `
+                <div class="info-item">
+                    <div class="info-icon">🔄</div>
+                    <div class="info-content">
+                        <div class="info-label">Dernière modification</div>
+                        <div class="info-value">${dateModification}</div>
+                    </div>
+                </div>
+            ` : ''}
+
+            ${boutique.adresse ? `
+                <div class="info-item">
+                    <div class="info-icon">📍</div>
+                    <div class="info-content">
+                        <div class="info-label">Adresse</div>
+                        <div class="info-value">${boutique.adresse}</div>
+                    </div>
+                </div>
+            ` : ''}
+
+            ${boutique.telephone ? `
+                <div class="info-item">
+                    <div class="info-icon">📞</div>
+                    <div class="info-content">
+                        <div class="info-label">Téléphone</div>
+                        <div class="info-value">${boutique.telephone}</div>
+                    </div>
+                </div>
+            ` : ''}
+
+            ${boutique.email ? `
+                <div class="info-item">
+                    <div class="info-icon">✉️</div>
+                    <div class="info-content">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">${boutique.email}</div>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-modal btn-visit" onclick="visitBoutique('${boutique.slug}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Visiter la boutique
+            </button>
+            <button class="btn-modal btn-save-modal ${isSaved ? 'saved' : ''}" 
+                    onclick="toggleSaveBoutique('${boutique.id}'); updateModalSaveButton('${boutique.id}')">
+                ${isSaved ? '❤️ Enregistrée' : '🤍 Enregistrer'}
+            </button>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+}
+
+// ==================== MISE À JOUR BOUTON SAVE MODAL ====================
+window.updateModalSaveButton = function(boutiqueId) {
+    const isSaved = savedBoutiques.has(boutiqueId);
+    const btn = document.querySelector('.btn-save-modal');
+    if (btn) {
+        btn.className = `btn-modal btn-save-modal ${isSaved ? 'saved' : ''}`;
+        btn.innerHTML = isSaved ? '❤️ Enregistrée' : '🤍 Enregistrer';
+    }
+};
+
+// ==================== NAVIGATION VERS BOUTIQUE ====================
+window.visitBoutique = function(slug) {
+    window.location.href = `boutique.html?shop=${slug}`;
+};
+
+// ==================== GESTION DES TABS ====================
+function switchTab(tab) {
+    currentTab = tab;
+
+    // Mettre à jour les boutons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    displayBoutiques();
+    
+    // Initialiser le lazy loading après l'affichage
+    setTimeout(() => initLazyLoading(), 100);
+}
+
+window.switchTab = switchTab;
+
+// ==================== GESTION DE LA RECHERCHE ====================
+let searchTimeout;
+
+function handleSearch(value) {
+    clearTimeout(searchTimeout);
+    
+    searchTimeout = setTimeout(() => {
+        searchQuery = value;
+        displayBoutiques();
+        setTimeout(() => initLazyLoading(), 100);
+    }, 300);
+}
+
+function toggleSearch() {
+    const searchContainer = document.getElementById('searchContainer');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (searchContainer.style.display === 'none') {
+        searchContainer.style.display = 'block';
+        searchInput.focus();
+    } else {
+        searchContainer.style.display = 'none';
+        searchInput.value = '';
+        searchQuery = '';
+        displayBoutiques();
+        setTimeout(() => initLazyLoading(), 100);
+    }
+}
+
+// ==================== UTILITAIRES ====================
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    return date.toLocaleDateString('fr-FR', options);
+}
+
+function showLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = 'flex';
+}
+
+function hideLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = 'none';
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️',
+        warning: '⚠️'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type]}</div>
+        <div class="toast-message">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ==================== EXPOSER LES FONCTIONS GLOBALES ====================
+window.toggleSaveBoutique = toggleSaveBoutique;
+window.showBoutiqueModal = showBoutiqueModal;
+
+// ==================== INITIALISATION ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🪐 ODA Boutiques - Initialisation...');
+
+    // Gestion du bouton retour
+    const btnBack = document.getElementById('btnBack');
+    if (btnBack) {
+        btnBack.addEventListener('click', () => {
+            if (document.referrer && document.referrer.includes(window.location.origin)) {
+                window.history.back();
+            } else {
+                window.location.href = 'oda-achats.html';
+            }
+        });
+    }
+
+    // Charger les boutiques
+    await loadBoutiques();
+    
+    // Initialiser le lazy loading
+    setTimeout(() => initLazyLoading(), 100);
+
+    // Gestion des tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            switchTab(btn.dataset.tab);
+        });
+    });
+
+    // Gestion de la recherche
+    const searchBtn = document.getElementById('searchBtn');
+    const searchClose = document.getElementById('searchClose');
+    const searchInput = document.getElementById('searchInput');
+
+    if (searchBtn) searchBtn.addEventListener('click', toggleSearch);
+    if (searchClose) searchClose.addEventListener('click', toggleSearch);
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            handleSearch(e.target.value);
+        });
+    }
+
+    // Gestion de la modal
+    const modalOverlay = document.getElementById('modalOverlay');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+        });
+    }
+
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.style.display = 'none';
+            }
+        });
+    }
+
+    // Gestion du scroll header
+    let lastScrollTop = 0;
+    window.addEventListener('scroll', () => {
+        const header = document.querySelector('.main-header');
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            header.style.transform = 'translateY(-100%)';
+        } else {
+            header.style.transform = 'translateY(0)';
+        }
+        
+        lastScrollTop = scrollTop;
+    });
+
+    console.log('✅ Initialisation terminée');
+});
+</script>
+</body>
+</html>

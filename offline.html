@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B00">
+    <link rel="icon" type="image/png" href="oda.png">
+    <title>Hors ligne - ODA Marketplace</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .icon {
+            font-size: 8rem;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        
+        p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            text-align: left;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .feature-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .feature-icon {
+            font-size: 1.5rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status {
+            margin-top: 32px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #EF4444;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .online .status-dot {
+            background: #10B981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📴</div>
+        
+        <h1>Vous êtes hors ligne</h1>
+        
+        <p>
+            Pas de panique ! Vous pouvez toujours consulter vos produits favoris 
+            et les pages récemment visitées.
+        </p>
+        
+        <div class="features">
+            <div class="feature-item">
+                <span class="feature-icon">❤️</span>
+                <span>Accédez à vos favoris</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📱</span>
+                <span>Parcourez les pages en cache</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🔄</span>
+                <span>Synchronisation automatique au retour</span>
+            </div>
+        </div>
+        
+        <a href="/oda-achats.html" class="btn">
+            Retour à l'accueil
+        </a>
+        
+        <div class="status" id="status">
+            <span class="status-dot"></span>
+            <span id="statusText">Hors ligne</span>
+        </div>
+    </div>
+    
+    <script>
+        // Détecter le retour de la connexion
+        function updateStatus() {
+            const status = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            
+            if (navigator.onLine) {
+                status.classList.add('online');
+                statusText.textContent = 'Connexion rétablie !';
+                
+                setTimeout(() => {
+                    window.location.href = '/oda-achats.html';
+                }, 1500);
+            } else {
+                status.classList.remove('online');
+                statusText.textContent = 'Hors ligne';
+            }
+        }
+        
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        
+        updateStatus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF6B00">
+    <title>ODA Marketplace PWA</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ODA Market">
+    <link rel="apple-touch-icon" href="oda-icon-192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="oda-icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="oda-icon-192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="oda-icon-192.png">
+    
+    <!-- Splash Screens iOS -->
+    <link rel="apple-touch-startup-image" href="splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px)">
+    <link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px)">
+    <link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px)">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #FF6B00;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .status {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge.success {
+            background: #10B981;
+            color: white;
+        }
+        
+        .badge.error {
+            background: #EF4444;
+            color: white;
+        }
+        
+        .badge.warning {
+            background: #F59E0B;
+            color: white;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #FF6B00;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #E55D00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .notification-log {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .notification-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #FF6B00;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .notification-time {
+            font-size: 0.8rem;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+        
+        .info-box {
+            background: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .info-box h3 {
+            color: #1E40AF;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        
+        .info-box p {
+            color: #1E3A8A;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .emoji {
+            font-size: 1.5rem;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ ODA Marketplace PWA</h1>
+        
+        <div class="status">
+            <div class="status-item">
+                <span>📱 Installation PWA</span>
+                <span class="badge" id="installStatus">Vérification...</span>
+            </div>
+            <div class="status-item">
+                <span>🔔 Notifications</span>
+                <span class="badge" id="notifStatus">Vérification...</span>
+            </div>
+            <div class="status-item">
+                <span>📡 Service Worker</span>
+                <span class="badge" id="swStatus">Vérification...</span>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" id="installBtn" style="display: none;">
+            📲 Installer l'Application
+        </button>
+        
+        <button class="btn btn-primary" id="enableNotifBtn">
+            🔔 Activer les Notifications
+        </button>
+        
+        <button class="btn btn-secondary" id="testNotifBtn">
+            🧪 Tester une Notification
+        </button>
+        
+        <div class="info-box">
+            <h3>📋 Instructions d'installation</h3>
+            <p><strong>Android Chrome:</strong> Cliquez sur "Installer l'Application" ou menu ⋮ → "Installer l'application"</p>
+            <p><strong>iOS Safari:</strong> Cliquez sur <span style="font-size: 1.2rem;">⎙</span> → "Sur l'écran d'accueil"</p>
+        </div>
+        
+        <div class="notification-log" id="notificationLog">
+            <h3 style="margin-bottom: 12px; color: #374151;">📬 Historique des notifications</h3>
+            <div id="logContent">
+                <p style="text-align: center; color: #9CA3AF;">Aucune notification pour le moment</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        let deferredPrompt;
+        let notificationCount = 0;
+        const MAX_NOTIFICATIONS = 5;
+        
+        // ==================== PWA MANAGER ====================
+        class PWAManager {
+            constructor() {
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 Initialisation PWA Manager');
+                
+                // Vérifier le support
+                this.checkSupport();
+                
+                // Enregistrer le Service Worker
+                await this.registerServiceWorker();
+                
+                // Gérer l'installation
+                this.handleInstallPrompt();
+                
+                // Démarrer les notifications automatiques
+                this.startAutoNotifications();
+                
+                // Mettre à jour les statuts
+                this.updateStatus();
+            }
+            
+            checkSupport() {
+                const installStatus = document.getElementById('installStatus');
+                const notifStatus = document.getElementById('notifStatus');
+                const swStatus = document.getElementById('swStatus');
+                
+                // Service Worker
+                if ('serviceWorker' in navigator) {
+                    swStatus.textContent = 'Supporté';
+                    swStatus.className = 'badge success';
+                } else {
+                    swStatus.textContent = 'Non supporté';
+                    swStatus.className = 'badge error';
+                }
+                
+                // Notifications
+                if ('Notification' in window) {
+                    const permission = Notification.permission;
+                    notifStatus.textContent = permission === 'granted' ? 'Activées' : 
+                                            permission === 'denied' ? 'Bloquées' : 'Non activées';
+                    notifStatus.className = `badge ${permission === 'granted' ? 'success' : 
+                                                    permission === 'denied' ? 'error' : 'warning'}`;
+                } else {
+                    notifStatus.textContent = 'Non supportées';
+                    notifStatus.className = 'badge error';
+                }
+                
+                // Installation PWA
+                if (window.matchMedia('(display-mode: standalone)').matches) {
+                    installStatus.textContent = 'Installée';
+                    installStatus.className = 'badge success';
+                } else {
+                    installStatus.textContent = 'Non installée';
+                    installStatus.className = 'badge warning';
+                }
+            }
+            
+            async registerServiceWorker() {
+                if (!('serviceWorker' in navigator)) {
+                    console.log('❌ Service Worker non supporté');
+                    return;
+                }
+                
+                try {
+                    // Créer le Service Worker dynamiquement
+                    const swCode = this.generateServiceWorkerCode();
+                    const blob = new Blob([swCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    
+                    const registration = await navigator.serviceWorker.register(swUrl);
+                    console.log('✅ Service Worker enregistré:', registration.scope);
+                    
+                    // Nettoyer l'URL
+                    URL.revokeObjectURL(swUrl);
+                    
+                    return registration;
+                } catch (error) {
+                    console.error('❌ Erreur enregistrement SW:', error);
+                }
+            }
+            
+            generateServiceWorkerCode() {
+                return `
+                    const CACHE_NAME = 'oda-marketplace-v1';
+                    const urlsToCache = [
+                        '/',
+                        '/oda-achats.html',
+                        '/oda.png'
+                    ];
+                    
+                    self.addEventListener('install', event => {
+                        console.log('🔧 Installation du Service Worker');
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                                .catch(err => console.log('Cache failed:', err))
+                        );
+                        self.skipWaiting();
+                    });
+                    
+                    self.addEventListener('activate', event => {
+                        console.log('✅ Service Worker activé');
+                        event.waitUntil(self.clients.claim());
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                                .catch(() => caches.match('/'))
+                        );
+                    });
+                    
+                    self.addEventListener('notificationclick', event => {
+                        console.log('🔔 Notification cliquée');
+                        event.notification.close();
+                        event.waitUntil(
+                            clients.openWindow('/')
+                        );
+                    });
+                `;
+            }
+            
+            handleInstallPrompt() {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    
+                    const installBtn = document.getElementById('installBtn');
+                    installBtn.style.display = 'block';
+                    
+                    installBtn.addEventListener('click', async () => {
+                        if (!deferredPrompt) return;
+                        
+                        deferredPrompt.prompt();
+                        const result = await deferredPrompt.userChoice;
+                        
+                        if (result.outcome === 'accepted') {
+                            console.log('✅ Application installée');
+                            this.addLog('🎉 Application installée avec succès!');
+                            installBtn.style.display = 'none';
+                        }
+                        
+                        deferredPrompt = null;
+                    });
+                });
+                
+                window.addEventListener('appinstalled', () => {
+                    console.log('✅ PWA installée');
+                    this.addLog('📱 ODA Marketplace est maintenant installée!');
+                    this.updateStatus();
+                });
+            }
+            
+            async requestNotificationPermission() {
+                if (!('Notification' in window)) {
+                    alert('❌ Les notifications ne sont pas supportées');
+                    return false;
+                }
+                
+                if (Notification.permission === 'granted') {
+                    this.addLog('✅ Notifications déjà activées');
+                    return true;
+                }
+                
+                if (Notification.permission === 'denied') {
+                    alert('❌ Les notifications sont bloquées. Veuillez les autoriser dans les paramètres du navigateur.');
+                    return false;
+                }
+                
+                try {
+                    const permission = await Notification.requestPermission();
+                    
+                    if (permission === 'granted') {
+                        this.addLog('✅ Notifications activées avec succès!');
+                        this.updateStatus();
+                        this.sendWelcomeNotification();
+                        return true;
+                    } else {
+                        this.addLog('❌ Permission refusée');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Erreur permission:', error);
+                    return false;
+                }
+            }
+            
+            async sendNotification(title, options = {}) {
+                if (Notification.permission !== 'granted') {
+                    console.log('⚠️ Notifications non autorisées');
+                    return;
+                }
+                
+                if (notificationCount >= MAX_NOTIFICATIONS) {
+                    console.log('⚠️ Limite de notifications atteinte');
+                    return;
+                }
+                
+                const defaultOptions = {
+                    icon: '/oda.png',
+                    badge: '/oda.png',
+                    vibrate: [200, 100, 200],
+                    tag: 'oda-notification',
+                    requireInteraction: false,
+                    ...options
+                };
+                
+                try {
+                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                        const registration = await navigator.serviceWorker.ready;
+                        await registration.showNotification(title, defaultOptions);
+                    } else {
+                        new Notification(title, defaultOptions);
+                    }
+                    
+                    notificationCount++;
+                    this.addLog(`🔔 ${title}`);
+                    console.log(`✅ Notification envoyée (${notificationCount}/${MAX_NOTIFICATIONS})`);
+                } catch (error) {
+                    console.error('❌ Erreur notification:', error);
+                }
+            }
+            
+            sendWelcomeNotification() {
+                this.sendNotification('🎉 Bienvenue sur ODA Marketplace!', {
+                    body: 'Merci d\'avoir activé les notifications. Vous serez informé des nouveaux produits et promotions.',
+                    icon: '/oda.png'
+                });
+            }
+            
+            startAutoNotifications() {
+                const notifications = [
+                    {
+                        delay: 5000, // 5 secondes
+                        title: '🆕 Nouveaux produits disponibles!',
+                        body: '15 nouveaux articles viennent d\'arriver. Découvrez-les maintenant!'
+                    },
+                    {
+                        delay: 30000, // 30 secondes
+                        title: '🔥 Offre Flash!',
+                        body: 'Réduction de 30% sur une sélection de produits. Offre limitée!'
+                    },
+                    {
+                        delay: 60000, // 1 minute
+                        title: '⭐ Produit populaire',
+                        body: 'Le produit "Samsung Galaxy S24" est très demandé. Stock limité!'
+                    },
+                    {
+                        delay: 120000, // 2 minutes
+                        title: '👋 Vous nous manquez!',
+                        body: 'Cela fait un moment. Revenez découvrir nos nouveautés!'
+                    },
+                    {
+                        delay: 180000, // 3 minutes
+                        title: '🎁 Cadeau spécial',
+                        body: 'Complétez votre profil et recevez 500 FCFA de réduction!'
+                    }
+                ];
+                
+                notifications.forEach(notif => {
+                    setTimeout(() => {
+                        if (Notification.permission === 'granted' && notificationCount < MAX_NOTIFICATIONS) {
+                            this.sendNotification(notif.title, {
+                                body: notif.body,
+                                icon: '/oda.png'
+                            });
+                        }
+                    }, notif.delay);
+                });
+                
+                console.log(`⏰ ${notifications.length} notifications programmées`);
+            }
+            
+            addLog(message) {
+                const logContent = document.getElementById('logContent');
+                const time = new Date().toLocaleTimeString('fr-FR');
+                
+                if (logContent.querySelector('p')) {
+                    logContent.innerHTML = '';
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'notification-item';
+                item.innerHTML = `
+                    <div>${message}</div>
+                    <div class="notification-time">${time}</div>
+                `;
+                
+                logContent.insertBefore(item, logContent.firstChild);
+                
+                // Limiter à 10 entrées
+                while (logContent.children.length > 10) {
+                    logContent.removeChild(logContent.lastChild);
+                }
+            }
+            
+            updateStatus() {
+                this.checkSupport();
+            }
+        }
+        
+        // ==================== INITIALISATION ====================
+        let pwaManager;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Démarrage ODA Marketplace PWA');
+            
+            pwaManager = new PWAManager();
+            
+            // Bouton activer notifications
+            document.getElementById('enableNotifBtn').addEventListener('click', async () => {
+                const granted = await pwaManager.requestNotificationPermission();
+                if (granted) {
+                    document.getElementById('enableNotifBtn').textContent = '✅ Notifications activées';
+                    document.getElementById('enableNotifBtn').disabled = true;
+                }
+            });
+            
+            // Bouton test notification
+            document.getElementById('testNotifBtn').addEventListener('click', () => {
+                if (notificationCount >= MAX_NOTIFICATIONS) {
+                    alert(`⚠️ Limite de ${MAX_NOTIFICATIONS} notifications atteinte`);
+                    return;
+                }
+                
+                pwaManager.sendNotification('🧪 Notification de test', {
+                    body: 'Ceci est une notification de test. Tout fonctionne correctement!',
+                    icon: '/oda.png'
+                });
+            });
+            
+            // Rendre disponible globalement
+            window.pwaManager = pwaManager;
+        });
+    </script>
+</body>
+</html>

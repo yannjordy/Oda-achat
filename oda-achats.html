@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1541,7 +1542,7 @@ body.dark-mode .toggle-desc {
 body.dark-mode .section-header h3 {
     color: white;
 }
-/* ==================== MENU LATÉRAL ==================== */
+/* ==================== MENU LATÉRAL OPTIMISÉ (SCROLLABLE) ==================== */
 .side-menu {
     position: fixed;
     top: 0;
@@ -1553,8 +1554,10 @@ body.dark-mode .section-header h3 {
     box-shadow: var(--shadow-lg);
     z-index: 2000;
     transition: left 0.3s ease;
-    overflow-y: auto;
+    overflow: hidden; /* IMPORTANT: Pas de scroll sur le menu lui-même */
     -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column; /* IMPORTANT: Layout vertical */
 }
 
 .side-menu.active {
@@ -1569,6 +1572,7 @@ body.dark-mode .section-header h3 {
     border-bottom: 1px solid var(--border-color);
     background: var(--primary-color);
     color: white;
+    flex-shrink: 0; /* Ne pas rétrécir */
 }
 
 .menu-header h2 {
@@ -1576,27 +1580,37 @@ body.dark-mode .section-header h3 {
     font-weight: 700;
 }
 
-.btn-close {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: rotate(90deg);
-}
-
 .menu-content {
     padding: 20px;
+    overflow-y: auto; /* IMPORTANT: Le scroll est ICI, pas sur le menu */
+    overflow-x: hidden;
+    flex: 1; /* Prendre tout l'espace disponible */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollbar du menu-content */
+.menu-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.menu-content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+}
+
+.menu-content::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.menu-content::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Pour Firefox */
+.menu-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--bg-secondary);
 }
 
 .menu-section {
@@ -1610,51 +1624,19 @@ body.dark-mode .section-header h3 {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 12px;
+    position: sticky; /* Sticky pour les titres de section */
+    top: -20px;
+    background: var(--bg-primary);
+    padding: 8px 0;
+    z-index: 1;
 }
 
-/* Liste de catégories */
+/* Liste de catégories (scrollable à l'intérieur) */
 .category-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
-}
-
-.category-item {
-    padding: 12px 16px;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    position: relative;
-}
-
-.category-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 0;
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
-    transition: width 0.3s ease;
-    border-radius: 12px;
-    z-index: -1;
-}
-
-.category-item:hover::before {
-    width: 100%;
-}
-
-.category-item:hover {
-    color: white;
-    transform: translateX(5px);
-}
-
-.category-item:active {
-    transform: scale(0.98);
-    border-color: var(--primary-color);
+    /* Le scroll sera géré par le JS dans improved_menu */
 }
 
 /* Liens du menu */
@@ -1687,31 +1669,68 @@ body.dark-mode .section-header h3 {
     flex-shrink: 0;
 }
 
-/* Overlay */
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 1500;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-}
-
-.overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
 /* Responsive */
 @media (min-width: 640px) {
     .side-menu {
         max-width: 400px;
     }
+}
+
+@media (max-width: 768px) {
+    .side-menu {
+        width: 90%;
+        max-width: 350px;
+    }
+    
+    .menu-header {
+        padding: 16px;
+    }
+    
+    .menu-content {
+        padding: 16px;
+    }
+}
+
+@media (max-height: 600px) {
+    /* Pour les petits écrans en hauteur */
+    .menu-header {
+        padding: 12px 16px;
+    }
+    
+    .menu-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .menu-section {
+        margin-bottom: 20px;
+    }
+}
+
+/* Animation d'ouverture */
+@keyframes slideInFromLeft {
+    from {
+        left: -100%;
+    }
+    to {
+        left: 0;
+    }
+}
+
+.side-menu.active {
+    animation: slideInFromLeft 0.3s ease;
+}
+
+/* Effet de glissement fluide */
+.side-menu {
+    will-change: left;
+}
+
+/* Indicateur de scroll en bas (optionnel) */
+.menu-content::after {
+    content: '';
+    display: block;
+    height: 20px;
+    pointer-events: none;
 }
 </style>
 <body>
@@ -2078,7 +2097,7 @@ body.dark-mode .section-header h3 {
     </div>
 </div>
 <script src="pwa-manager.js"></script>
- <script type="module">
+<script type="module">
     // ==================== CONFIGURATION SUPABASE ====================
 const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
@@ -2087,13 +2106,794 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ==================== VARIABLES GLOBALES ====================
 let allProducts = [];
 let favoriteProducts = new Set();
-let productLikes = {}; 
-let productComments = {}; 
+let productLikes = {};
+let productComments = {};
 let currentFilter = 'all';
 let carouselInterval;
 let currentSlide = 0;
 let popularProducts = [];
-let currentUserId = getUserId(); 
+let currentUserId = getUserId();
+
+// ==================== 1. CACHE MANAGER ====================
+class CacheManager {
+    constructor() {
+        this.CACHE_KEYS = {
+            PRODUCTS: 'oda_products_v2',
+            LIKES: 'oda_likes_v2',
+            COMMENTS: 'oda_comments_v2',
+            SHOPS: 'oda_shops_v2',
+            TIMESTAMP: 'oda_cache_timestamp'
+        };
+        this.CACHE_DURATION = 60 * 60 * 1000; // 1 heure
+    }
+
+    saveToCache(key, data) {
+        try {
+            const cacheData = { data, timestamp: Date.now() };
+            localStorage.setItem(key, JSON.stringify(cacheData));
+            console.log(`💾 Cache sauvegardé: ${key}`);
+            return true;
+        } catch (e) {
+            console.error(`❌ Erreur cache ${key}:`, e);
+            if (e.name === 'QuotaExceededError') {
+                this.clearOldCaches();
+                try {
+                    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+                    return true;
+                } catch (e2) {
+                    console.error('❌ Échec après nettoyage:', e2);
+                }
+            }
+            return false;
+        }
+    }
+
+    loadFromCache(key) {
+        try {
+            const cached = localStorage.getItem(key);
+            if (!cached) return null;
+            const { data, timestamp } = JSON.parse(cached);
+            const age = Date.now() - timestamp;
+            if (age < this.CACHE_DURATION) {
+                console.log(`📦 Cache chargé: ${key} (âge: ${Math.round(age/1000)}s)`);
+                return data;
+            }
+            localStorage.removeItem(key);
+            return null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    saveAll(products, likes, comments, shops) {
+        const results = {
+            products: this.saveToCache(this.CACHE_KEYS.PRODUCTS, products),
+            likes: this.saveToCache(this.CACHE_KEYS.LIKES, likes),
+            comments: this.saveToCache(this.CACHE_KEYS.COMMENTS, comments),
+            shops: this.saveToCache(this.CACHE_KEYS.SHOPS, shops)
+        };
+        localStorage.setItem(this.CACHE_KEYS.TIMESTAMP, Date.now().toString());
+        return Object.values(results).every(r => r);
+    }
+
+    loadAll() {
+        return {
+            products: this.loadFromCache(this.CACHE_KEYS.PRODUCTS),
+            likes: this.loadFromCache(this.CACHE_KEYS.LIKES),
+            comments: this.loadFromCache(this.CACHE_KEYS.COMMENTS),
+            shops: this.loadFromCache(this.CACHE_KEYS.SHOPS)
+        };
+    }
+
+    hasCompleteCache() {
+        return Object.values(this.CACHE_KEYS).slice(0, 4).every(key => {
+            const item = localStorage.getItem(key);
+            if (!item) return false;
+            try {
+                const { timestamp } = JSON.parse(item);
+                return (Date.now() - timestamp) < this.CACHE_DURATION;
+            } catch { return false; }
+        });
+    }
+
+    clearAll() {
+        Object.values(this.CACHE_KEYS).forEach(key => localStorage.removeItem(key));
+        console.log('🗑️ Cache vidé');
+    }
+
+    clearOldCaches() {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('oda_') && !Object.values(this.CACHE_KEYS).includes(key)) {
+                localStorage.removeItem(key);
+            }
+        });
+    }
+
+    getStats() {
+        const timestamp = localStorage.getItem(this.CACHE_KEYS.TIMESTAMP);
+        const age = timestamp ? Date.now() - parseInt(timestamp) : 0;
+        const minutes = Math.floor(age / 60000);
+        const ageStr = minutes > 0 ? `${minutes}m` : `${Math.floor(age/1000)}s`;
+        
+        return {
+            valid: this.hasCompleteCache(),
+            age: ageStr,
+            size: this.getCacheSize()
+        };
+    }
+
+    getCacheSize() {
+        let total = 0;
+        Object.values(this.CACHE_KEYS).forEach(key => {
+            const item = localStorage.getItem(key);
+            if (item) total += item.length;
+        });
+        if (total < 1024) return `${total} B`;
+        if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
+        return `${(total / (1024 * 1024)).toFixed(2)} MB`;
+    }
+}
+
+window.cacheManager = new CacheManager();
+
+// ==================== 2. LOADING PROGRESS ====================
+class LoadingProgress {
+    constructor() {
+        this.currentProgress = 0;
+        this.targetProgress = 0;
+        this.isLoading = false;
+        this.init();
+    }
+
+    init() {
+        const styles = `<style>
+            .loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; z-index: 99999; opacity: 1; transition: opacity 0.5s; }
+            .loader-overlay.fade-out { opacity: 0; pointer-events: none; }
+            .loader-content { text-align: center; max-width: 400px; width: 90%; }
+            .loader-logo { margin-bottom: 40px; animation: fadeInDown 0.6s; }
+            .logo-icon { font-size: 4rem; margin-bottom: 16px; animation: bounce 2s infinite; }
+            .logo-text { font-size: 1.8rem; font-weight: 800; color: white; text-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+            .progress-container { margin-bottom: 24px; animation: fadeInUp 0.6s 0.2s both; }
+            .progress-bar-bg { position: relative; width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+            .progress-bar { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, #FF6B00, #FFA500); border-radius: 10px; width: 0%; transition: width 0.3s; box-shadow: 0 0 20px rgba(255,107,0,0.5); }
+            .progress-shine { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shine 2s infinite; }
+            @keyframes shine { 0% { left: -100%; } 50%, 100% { left: 100%; } }
+            .progress-text { display: flex; justify-content: space-between; color: white; font-size: 0.9rem; }
+            .progress-percentage { font-size: 1.5rem; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+            .progress-step { font-size: 0.85rem; opacity: 0.9; }
+            .loading-dots { display: flex; justify-content: center; gap: 8px; animation: fadeInUp 0.6s 0.4s both; }
+            .loading-dots span { width: 8px; height: 8px; background: rgba(255,255,255,0.6); border-radius: 50%; animation: dotPulse 1.4s infinite both; }
+            .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+            .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+            @keyframes dotPulse { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; } 40% { transform: scale(1.2); opacity: 1; } }
+            @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        </style>`;
+        document.head.insertAdjacentHTML('beforeend', styles);
+    }
+
+    start() {
+        this.isLoading = true;
+        this.currentProgress = 0;
+        this.targetProgress = 0;
+        
+        const html = `<div class="loader-overlay" id="loaderOverlay">
+            <div class="loader-content">
+                <div class="loader-logo">
+                    <div class="logo-icon">🛍️</div>
+                    <div class="logo-text">ODA Marketplace</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar" id="progressBar"></div>
+                        <div class="progress-shine"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span class="progress-percentage" id="progressPercentage">0%</span>
+                        <span class="progress-step" id="progressStep">Initialisation...</span>
+                    </div>
+                </div>
+                <div class="loading-dots"><span></span><span></span><span></span></div>
+            </div>
+        </div>`;
+        
+        document.body.insertAdjacentHTML('afterbegin', html);
+        this.overlay = document.getElementById('loaderOverlay');
+        this.progressBar = document.getElementById('progressBar');
+        this.progressPercentage = document.getElementById('progressPercentage');
+        this.progressStep = document.getElementById('progressStep');
+        
+        this.animate();
+    }
+
+    updateProgress(percentage, step) {
+        this.targetProgress = Math.min(100, Math.max(0, percentage));
+        if (step) this.progressStep.textContent = step;
+    }
+
+    animate() {
+        if (!this.isLoading) return;
+        const diff = this.targetProgress - this.currentProgress;
+        this.currentProgress += diff * 0.1;
+        const display = Math.round(this.currentProgress);
+        this.progressBar.style.width = `${display}%`;
+        this.progressPercentage.textContent = `${display}%`;
+        if (Math.abs(diff) > 0.5) requestAnimationFrame(() => this.animate());
+    }
+
+    complete() {
+        this.updateProgress(100, 'Chargement terminé !');
+        setTimeout(() => this.hide(), 500);
+    }
+
+    hide() {
+        this.isLoading = false;
+        if (this.overlay) {
+            this.overlay.classList.add('fade-out');
+            setTimeout(() => this.overlay.remove(), 500);
+        }
+    }
+
+    showError(msg) {
+        this.progressStep.textContent = `❌ ${msg}`;
+        this.progressBar.style.background = 'linear-gradient(90deg, #EF4444, #DC2626)';
+        setTimeout(() => this.hide(), 2000);
+    }
+}
+
+window.loadingProgress = new LoadingProgress();
+
+// ==================== 3. OPTIMIZED DATA LOADER ====================
+class OptimizedDataLoader {
+    constructor(supabase) {
+        this.supabase = supabase;
+        this.cache = window.cacheManager;
+        this.loader = window.loadingProgress;
+        this.data = { products: [], likes: {}, comments: {}, shops: {} };
+    }
+
+    async load() {
+        this.loader.start();
+        this.loader.updateProgress(0, 'Vérification du cache...');
+
+        try {
+            if (this.cache.hasCompleteCache()) {
+                console.log('📦 Chargement depuis le cache...');
+                await this.loadFromCache();
+                this.loader.complete();
+                return this.data;
+            }
+
+            console.log('🌐 Chargement depuis le serveur...');
+            await this.loadFromServer();
+            this.loader.complete();
+            return this.data;
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            this.loader.showError('Échec du chargement');
+            throw error;
+        }
+    }
+
+    async loadFromCache() {
+        const cached = this.cache.loadAll();
+        this.data.products = cached.products || [];
+        this.data.likes = cached.likes || {};
+        this.data.comments = cached.comments || {};
+        this.data.shops = cached.shops || {};
+        await this.simulateProgress(10, 100, 500);
+        console.log(`✅ ${this.data.products.length} produits depuis le cache`);
+        setTimeout(() => this.updateInBackground(), 2000);
+    }
+
+    async loadFromServer() {
+        this.loader.updateProgress(10, 'Chargement des boutiques...');
+        await this.loadShops();
+        this.loader.updateProgress(30, 'Chargement des produits...');
+        await this.loadProducts();
+        this.loader.updateProgress(50, 'Chargement des likes...');
+        await this.loadLikes();
+        this.loader.updateProgress(70, 'Chargement des commentaires...');
+        await this.loadComments();
+        this.loader.updateProgress(85, 'Traitement des données...');
+        this.processData();
+        this.loader.updateProgress(95, 'Sauvegarde en cache...');
+        this.saveToCache();
+        this.loader.updateProgress(100);
+    }
+
+    async loadShops() {
+        const { data, error } = await this.supabase
+            .from('parametres_boutique')
+            .select('user_id, config');
+        if (error) throw error;
+        data.forEach(shop => {
+            const slug = shop.config?.identifiant?.slug || shop.config?.slug || null;
+            this.data.shops[shop.user_id] = {
+                nom: shop.config?.general?.nom || 'Boutique',
+                identifiant: slug,
+                couleurPrimaire: shop.config?.apparence?.couleurPrimaire || '#FF6B00'
+            };
+        });
+        console.log(`🏪 ${Object.keys(this.data.shops).length} boutiques`);
+    }
+
+    async loadProducts() {
+        const { data, error } = await this.supabase
+            .from('produits')
+            .select('*')
+            .eq('statut', 'published')
+            .gt('stock', 0);
+        if (error) throw error;
+        this.data.products = data.map(p => ({
+            id: p.id, nom: p.nom, description: p.description,
+            prix: p.prix, stock: p.stock, mainImage: p.main_image,
+            categorie: p.categorie, userId: p.user_id, created_at: p.created_at
+        }));
+        console.log(`📦 ${this.data.products.length} produits`);
+    }
+
+    async loadLikes() {
+        const { data, error } = await this.supabase
+            .from('product_likes')
+            .select('product_id, user_id');
+        if (error) throw error;
+        data.forEach(like => {
+            if (!this.data.likes[like.product_id]) {
+                this.data.likes[like.product_id] = { count: 0, users: [] };
+            }
+            this.data.likes[like.product_id].count++;
+            this.data.likes[like.product_id].users.push(like.user_id);
+        });
+        console.log(`👍 ${Object.keys(this.data.likes).length} produits likés`);
+    }
+
+    async loadComments() {
+        const { data, error } = await this.supabase
+            .from('product_comments')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        data.forEach(comment => {
+            if (!this.data.comments[comment.product_id]) {
+                this.data.comments[comment.product_id] = [];
+            }
+            this.data.comments[comment.product_id].push(comment);
+        });
+        console.log(`💬 ${Object.keys(this.data.comments).length} produits commentés`);
+    }
+
+    processData() {
+        this.data.products = this.data.products.map(p => ({
+            ...p,
+            shopName: this.data.shops[p.userId]?.nom || 'Boutique',
+            shopSlug: this.data.shops[p.userId]?.identifiant,
+            shopColor: this.data.shops[p.userId]?.couleurPrimaire,
+            likes: this.data.likes[p.id]?.count || 0,
+            commentsCount: (this.data.comments[p.id] || []).length,
+            rating: this.calculateAverageRating(this.data.comments[p.id] || [])
+        }));
+    }
+
+    calculateAverageRating(comments) {
+        if (!comments || comments.length === 0) return '0.0';
+        return (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1);
+    }
+
+    saveToCache() {
+        this.cache.saveAll(this.data.products, this.data.likes, this.data.comments, this.data.shops);
+    }
+
+    async updateInBackground() {
+        console.log('🔄 Mise à jour en arrière-plan...');
+        setTimeout(async () => {
+            try {
+                await this.loadFromServer();
+                console.log('✅ Cache mis à jour');
+            } catch (error) {
+                console.error('❌ Erreur arrière-plan:', error);
+            }
+        }, 2000);
+    }
+
+    async simulateProgress(from, to, duration) {
+        const steps = 20;
+        const increment = (to - from) / steps;
+        const delay = duration / steps;
+        for (let i = 0; i < steps; i++) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            this.loader.updateProgress(from + increment * (i + 1));
+        }
+    }
+
+    async forceReload() {
+        this.cache.clearAll();
+        return this.load();
+    }
+}
+
+// ==================== 4. IMPROVED MENU ====================
+// ==================== MENU HAMBURGER AMÉLIORÉ ====================
+class ImprovedMenu {
+    constructor() {
+        this.products = [];
+        this.categories = new Map();
+        this.isOpen = false;
+    }
+
+    // Initialiser le menu
+    init(products) {
+        this.products = products;
+        this.generateCategories();
+        this.setupEventListeners();
+        this.render();
+    }
+
+    // Générer les catégories avec comptage
+    generateCategories() {
+        this.categories.clear();
+        
+        // Ajouter "Tous" en premier
+        this.categories.set('Tous', this.products.length);
+        
+        // Compter les produits par catégorie
+        const categoryCounts = {};
+        
+        this.products.forEach(product => {
+            const category = product.categorie || 'Autres';
+            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+
+        // Trier les catégories par nombre de produits (décroissant)
+        const sortedCategories = Object.entries(categoryCounts)
+            .sort((a, b) => b[1] - a[1]);
+
+        sortedCategories.forEach(([category, count]) => {
+            this.categories.set(category, count);
+        });
+
+        console.log(`📂 ${this.categories.size} catégories générées`);
+    }
+
+    // Rendre le menu
+    render() {
+        const categoryList = document.getElementById('categoryList');
+        if (!categoryList) {
+            console.warn('⚠️ Element categoryList non trouvé');
+            return;
+        }
+
+        if (this.categories.size === 0) {
+            categoryList.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
+                    <p style="font-size: 0.9rem;">Aucune catégorie disponible</p>
+                    <p style="font-size: 0.8rem; margin-top: 8px; opacity: 0.7;">
+                        Les produits se chargent...
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        
+        this.categories.forEach((count, category) => {
+            const isAll = category === 'Tous';
+            const icon = this.getCategoryIcon(category);
+            const percentage = ((count / this.products.length) * 100).toFixed(0);
+            
+            html += `
+                <div class="category-item ${isAll ? 'category-all' : ''}" 
+                     onclick="window.improvedMenu.selectCategory('${category}')"
+                     data-category="${category}">
+                    <div class="category-content">
+                        <div class="category-header">
+                            <span class="category-icon">${icon}</span>
+                            <span class="category-name">${category}</span>
+                        </div>
+                        <div class="category-stats">
+                            <span class="category-count">${count}</span>
+                            ${!isAll ? `<span class="category-percentage">${percentage}%</span>` : ''}
+                        </div>
+                    </div>
+                    ${!isAll ? `
+                        <div class="category-progress">
+                            <div class="category-progress-bar" style="width: ${percentage}%"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+
+        categoryList.innerHTML = html;
+        
+        // Ajouter les styles pour les nouvelles catégories
+        this.injectStyles();
+        
+        console.log(`✅ Menu rendu avec ${this.categories.size} catégories`);
+    }
+
+    // Obtenir l'icône de la catégorie
+    getCategoryIcon(category) {
+        const icons = {
+            'Tous': '🏠',
+            'Électronique': '📱',
+            'Mode': '👕',
+            'Maison': '🏡',
+            'Beauté': '💄',
+            'Sport': '⚽',
+            'Livres': '📚',
+            'Jouets': '🧸',
+            'Alimentation': '🍔',
+            'Santé': '💊',
+            'Auto': '🚗',
+            'Jardin': '🌱',
+            'Autres': '📦'
+        };
+        
+        // Recherche par correspondance partielle
+        for (const [key, icon] of Object.entries(icons)) {
+            if (category.toLowerCase().includes(key.toLowerCase())) {
+                return icon;
+            }
+        }
+        
+        return icons['Autres'];
+    }
+
+    // Sélectionner une catégorie
+    selectCategory(category) {
+        console.log(`📂 Catégorie sélectionnée: ${category}`);
+        
+        // Fermer le menu
+        this.close();
+        
+        // Dispatch event pour filtrage
+        const event = new CustomEvent('categorySelected', { 
+            detail: { category } 
+        });
+        window.dispatchEvent(event);
+        
+        // Mettre à jour l'affichage
+        this.highlightCategory(category);
+    }
+
+    // Mettre en surbrillance la catégorie active
+    highlightCategory(category) {
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.category === category) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    // Configurer les écouteurs d'événements
+    setupEventListeners() {
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const sideMenu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('overlay');
+        
+        if (menuBtn) {
+            menuBtn.addEventListener('click', () => this.open());
+        }
+        
+        if (closeMenuBtn) {
+            closeMenuBtn.addEventListener('click', () => this.close());
+        }
+        
+        if (overlay) {
+            overlay.addEventListener('click', () => this.close());
+        }
+
+        // Fermeture au clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+    }
+
+    // Ouvrir le menu
+    open() {
+        const sideMenu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('overlay');
+        
+        if (sideMenu) {
+            sideMenu.classList.add('active');
+            this.isOpen = true;
+        }
+        
+        if (overlay) {
+            overlay.classList.add('active');
+        }
+        
+        // Régénérer si les produits ont changé
+        if (this.products.length > 0) {
+            this.generateCategories();
+            this.render();
+        }
+    }
+
+    // Fermer le menu
+    close() {
+        const sideMenu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('overlay');
+        
+        if (sideMenu) {
+            sideMenu.classList.remove('active');
+            this.isOpen = false;
+        }
+        
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    }
+
+    // Mettre à jour avec de nouveaux produits
+    update(products) {
+        this.products = products;
+        this.generateCategories();
+        if (this.isOpen) {
+            this.render();
+        }
+    }
+
+    // Injecter les styles CSS
+    injectStyles() {
+        if (document.getElementById('improved-menu-styles')) return;
+        
+        const styles = `
+            <style id="improved-menu-styles">
+                .category-item {
+                    position: relative;
+                    padding: 0;
+                    background: var(--bg-secondary);
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    border: 2px solid transparent;
+                    overflow: hidden;
+                    margin-bottom: 8px;
+                }
+
+                .category-item.active {
+                    border-color: var(--primary-color);
+                    background: linear-gradient(90deg, 
+                        rgba(255, 107, 0, 0.1), 
+                        rgba(255, 107, 0, 0.05)
+                    );
+                }
+
+                .category-all {
+                    background: linear-gradient(135deg, 
+                        var(--primary-color), 
+                        var(--primary-dark)
+                    );
+                    color: white;
+                    font-weight: 600;
+                }
+
+                .category-all .category-name,
+                .category-all .category-count {
+                    color: white;
+                }
+
+                .category-content {
+                    padding: 14px 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .category-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .category-icon {
+                    font-size: 1.3rem;
+                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+                }
+
+                .category-name {
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    font-size: 0.95rem;
+                }
+
+                .category-stats {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .category-count {
+                    font-weight: 700;
+                    color: var(--primary-color);
+                    font-size: 1.1rem;
+                    background: rgba(255, 107, 0, 0.1);
+                    padding: 4px 10px;
+                    border-radius: 12px;
+                    min-width: 40px;
+                    text-align: center;
+                }
+
+                .category-all .category-count {
+                    background: rgba(255,255,255,0.2);
+                }
+
+                .category-percentage {
+                    font-size: 0.75rem;
+                    color: var(--text-secondary);
+                    font-weight: 600;
+                }
+
+                .category-progress {
+                    height: 3px;
+                    background: rgba(0,0,0,0.05);
+                    overflow: hidden;
+                }
+
+                .category-progress-bar {
+                    height: 100%;
+                    background: linear-gradient(90deg, 
+                        var(--primary-color), 
+                        var(--primary-dark)
+                    );
+                    transition: width 0.5s ease;
+                }
+
+                .category-item:hover {
+                    transform: translateX(4px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+
+                .category-item:active {
+                    transform: scale(0.98);
+                }
+
+                @media (max-width: 768px) {
+                    .category-content {
+                        padding: 12px 14px;
+                    }
+                    
+                    .category-name {
+                        font-size: 0.9rem;
+                    }
+                    
+                    .category-count {
+                        font-size: 1rem;
+                        padding: 3px 8px;
+                    }
+                }
+            </style>
+        `;
+        
+        document.head.insertAdjacentHTML('beforeend', styles);
+    }
+
+    // Obtenir les statistiques
+    getStats() {
+        return {
+            totalCategories: this.categories.size,
+            totalProducts: this.products.length,
+            categories: Array.from(this.categories.entries()).map(([name, count]) => ({
+                name,
+                count,
+                percentage: ((count / this.products.length) * 100).toFixed(1)
+            }))
+        };
+    }
+}
+
+// Instance globale
+window.improvedMenu = new ImprovedMenu();
+console.log('📱 Improved Menu initialisé');
+
 
 // ==================== GESTION UTILISATEUR ====================
 function getUserId() {
@@ -2112,171 +2912,6 @@ function getUserName() {
         localStorage.setItem('oda_user_name', userName);
     }
     return userName;
-}
-
-// ==================== LIKES ====================
-async function loadProductLikes() {
-    try {
-        const { data: likes, error } = await supabase
-            .from('product_likes')
-            .select('product_id, user_id');
-
-        if (error) throw error;
-
-        const likesCount = {};
-        likes.forEach(like => {
-            if (!likesCount[like.product_id]) {
-                likesCount[like.product_id] = { count: 0, userLiked: false };
-            }
-            likesCount[like.product_id].count++;
-            if (like.user_id === currentUserId) {
-                likesCount[like.product_id].userLiked = true;
-            }
-        });
-
-        productLikes = likesCount;
-        console.log(`👍 Likes chargés pour ${Object.keys(productLikes).length} produits`);
-    } catch (error) {
-        console.error('Erreur chargement likes:', error);
-    }
-}
-
-async function toggleLike(productId) {
-    const currentLike = productLikes[productId] || { count: 0, userLiked: false };
-
-    try {
-        if (currentLike.userLiked) {
-            const { error } = await supabase
-                .from('product_likes')
-                .delete()
-                .eq('product_id', productId)
-                .eq('user_id', currentUserId);
-
-            if (error) throw error;
-
-            productLikes[productId] = {
-                count: Math.max(0, currentLike.count - 1),
-                userLiked: false
-            };
-            showToast('Like retiré', 'info');
-        } else {
-            const { error } = await supabase
-                .from('product_likes')
-                .insert({
-                    product_id: productId,
-                    user_id: currentUserId
-                });
-
-            if (error) throw error;
-
-            productLikes[productId] = {
-                count: currentLike.count + 1,
-                userLiked: true
-            };
-            showToast('Produit liké !', 'success');
-        }
-
-        updateLikeButton(productId);
-        updateCarousel();
-        
-    } catch (error) {
-        console.error('Erreur toggle like:', error);
-        showToast('Erreur lors du like', 'error');
-    }
-}
-
-function updateLikeButton(productId) {
-    const likeData = productLikes[productId] || { count: 0, userLiked: false };
-    const likeBtns = document.querySelectorAll(`[data-like-product="${productId}"]`);
-    
-    likeBtns.forEach(btn => {
-        const countSpan = btn.querySelector('.like-count');
-        const icon = btn.querySelector('.like-icon');
-        
-        if (countSpan) countSpan.textContent = likeData.count;
-        if (icon) icon.textContent = likeData.userLiked ? '❤️' : '🤍';
-        
-        btn.classList.toggle('liked', likeData.userLiked);
-    });
-}
-
-// ==================== COMMENTAIRES ====================
-async function loadProductComments() {
-    try {
-        const { data: comments, error } = await supabase
-            .from('product_comments')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        productComments = {};
-        comments.forEach(comment => {
-            if (!productComments[comment.product_id]) {
-                productComments[comment.product_id] = [];
-            }
-            productComments[comment.product_id].push(comment);
-        });
-
-        console.log(`💬 Commentaires chargés pour ${Object.keys(productComments).length} produits`);
-    } catch (error) {
-        console.error('Erreur chargement commentaires:', error);
-    }
-}
-
-async function addComment(productId, commentText, rating) {
-    if (!commentText.trim()) {
-        showToast('Le commentaire ne peut pas être vide', 'error');
-        return;
-    }
-
-    const userName = getUserName();
-
-    try {
-        const { data, error } = await supabase
-            .from('product_comments')
-            .insert({
-                product_id: productId,
-                user_id: currentUserId,
-                user_name: userName,
-                comment: commentText.trim(),
-                rating: rating || 5
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        if (!productComments[productId]) {
-            productComments[productId] = [];
-        }
-        productComments[productId].unshift(data);
-
-        showToast('Commentaire ajouté !', 'success');
-        return data;
-    } catch (error) {
-        console.error('Erreur ajout commentaire:', error);
-        showToast('Erreur lors de l\'ajout du commentaire', 'error');
-    }
-}
-
-function calculateAverageRating(comments) {
-    if (!comments || comments.length === 0) return '0.0';
-    const sum = comments.reduce((acc, c) => acc + (c.rating || 0), 0);
-    return (sum / comments.length).toFixed(1);
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Aujourd\'hui';
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
-    return date.toLocaleDateString('fr-FR');
 }
 
 // ==================== FAVORIS ====================
@@ -2312,7 +2947,6 @@ function toggleFavorite(productId) {
 
 function updateBadges() {
     const favBadge = document.getElementById('favBadge');
-    
     if (favBadge) {
         const favCount = favoriteProducts.size;
         favBadge.textContent = favCount;
@@ -2320,76 +2954,101 @@ function updateBadges() {
     }
 }
 
-// ==================== CACHE LOCAL ====================
-const CACHE_KEY = 'oda_products_cache';
-const CACHE_DURATION = 30 * 60 * 1000;
+// ==================== LIKES ====================
+async function toggleLike(productId) {
+    const currentLike = productLikes[productId] || { count: 0, userLiked: false };
 
-function saveProductsToCache(products) {
     try {
-        const data = {
-            products: products,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-        console.log('💾 Produits sauvegardés en cache local');
-    } catch (e) {
-        console.error('Erreur sauvegarde cache:', e);
-    }
-}
-
-function loadProductsFromCache() {
-    try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (!cached) return null;
-
-        const data = JSON.parse(cached);
-        const age = Date.now() - data.timestamp;
-
-        if (age < CACHE_DURATION) {
-            console.log(`📦 ${data.products.length} produits chargés depuis le cache (${Math.round(age/1000)}s)`);
-            return data.products;
+        if (currentLike.userLiked) {
+            await supabase.from('product_likes').delete()
+                .eq('product_id', productId).eq('user_id', currentUserId);
+            productLikes[productId] = {
+                count: Math.max(0, currentLike.count - 1),
+                userLiked: false
+            };
+            showToast('Like retiré', 'info');
         } else {
-            console.log('⏰ Cache expiré, rechargement nécessaire');
-            return null;
+            await supabase.from('product_likes').insert({
+                product_id: productId,
+                user_id: currentUserId
+            });
+            productLikes[productId] = {
+                count: currentLike.count + 1,
+                userLiked: true
+            };
+            showToast('Produit liké !', 'success');
         }
-    } catch (e) {
-        console.error('Erreur lecture cache:', e);
-        return null;
+        updateLikeButton(productId);
+        updateCarousel();
+    } catch (error) {
+        console.error('Erreur like:', error);
+        showToast('Erreur lors du like', 'error');
     }
 }
 
-// ==================== UTILITAIRES ====================
-function formatPrice(price) {
-    return `${price.toLocaleString('fr-FR')} FCFA`;
+function updateLikeButton(productId) {
+    const likeData = productLikes[productId] || { count: 0, userLiked: false };
+    const likeBtns = document.querySelectorAll(`[data-like-product="${productId}"]`);
+    
+    likeBtns.forEach(btn => {
+        const countSpan = btn.querySelector('.like-count');
+        const icon = btn.querySelector('.like-icon');
+        if (countSpan) countSpan.textContent = likeData.count;
+        if (icon) icon.textContent = likeData.userLiked ? '❤️' : '🤍';
+        btn.classList.toggle('liked', likeData.userLiked);
+    });
 }
 
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    
-    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span>${message}</span>`;
-    
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// Exposer les fonctions globales
-window.toggleFavorite = toggleFavorite;
-window.toggleLike = toggleLike;
-window.scrollToProducts = function() {
-    const productsSection = document.querySelector('.products-container');
-    if (productsSection) {
-        productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// ==================== COMMENTAIRES ====================
+async function addComment(productId, commentText, rating) {
+    if (!commentText.trim()) {
+        showToast('Le commentaire ne peut pas être vide', 'error');
+        return;
     }
-};
+
+    const userName = getUserName();
+
+    try {
+        const { data, error } = await supabase.from('product_comments').insert({
+            product_id: productId,
+            user_id: currentUserId,
+            user_name: userName,
+            comment: commentText.trim(),
+            rating: rating || 5
+        }).select().single();
+
+        if (error) throw error;
+
+        if (!productComments[productId]) {
+            productComments[productId] = [];
+        }
+        productComments[productId].unshift(data);
+        showToast('Commentaire ajouté !', 'success');
+        return data;
+    } catch (error) {
+        console.error('Erreur commentaire:', error);
+        showToast('Erreur lors de l\'ajout', 'error');
+    }
+}
+
+function calculateAverageRating(comments) {
+    if (!comments || comments.length === 0) return '0.0';
+    const sum = comments.reduce((acc, c) => acc + (c.rating || 0), 0);
+    return (sum / comments.length).toFixed(1);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Aujourd\'hui';
+    if (diffDays === 1) return 'Hier';
+    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+    return date.toLocaleDateString('fr-FR');
+}
+
 // ==================== MODAL COMMENTAIRES ====================
 function showCommentsModal(productId) {
     const product = allProducts.find(p => p.id === productId);
@@ -2411,7 +3070,6 @@ function showCommentsModal(productId) {
                     </svg>
                 </button>
             </div>
-            
             <div class="modal-stats">
                 <div class="stat-item">
                     <span class="stat-icon">❤️</span>
@@ -2429,7 +3087,6 @@ function showCommentsModal(productId) {
                     <span class="stat-label">Note moyenne</span>
                 </div>
             </div>
-
             <div class="comment-form">
                 <h4>Ajouter un commentaire</h4>
                 <div class="rating-input">
@@ -2441,17 +3098,16 @@ function showCommentsModal(productId) {
                         </label>
                     `).join('')}
                 </div>
-                <textarea id="commentInput" placeholder="Partagez votre avis sur ce produit..." rows="3"></textarea>
+                <textarea id="commentInput" placeholder="Partagez votre avis..." rows="3"></textarea>
                 <button class="btn-submit" onclick="submitComment(${productId})">
                     Publier le commentaire
                 </button>
             </div>
-
             <div class="comments-list">
                 <h4>Tous les commentaires (${comments.length})</h4>
                 ${comments.length === 0 ? `
                     <div class="empty-comments">
-                        <p>Aucun commentaire pour l'instant</p>
+                        <p>Aucun commentaire</p>
                         <p>Soyez le premier à donner votre avis !</p>
                     </div>
                 ` : comments.map(c => `
@@ -2470,14 +3126,12 @@ function showCommentsModal(productId) {
             </div>
         </div>
     `;
-
     document.body.appendChild(modal);
 }
 
 window.submitComment = async function(productId) {
     const input = document.getElementById('commentInput');
     const ratingInput = document.querySelector('input[name="rating"]:checked');
-    
     if (!input || !ratingInput) return;
     
     const comment = input.value;
@@ -2486,159 +3140,30 @@ window.submitComment = async function(productId) {
     if (comment.trim()) {
         await addComment(productId, comment, rating);
         input.value = '';
-        
         document.querySelector('.comments-modal').remove();
         showCommentsModal(productId);
     }
 };
 
-window.showCommentsModal = showCommentsModal;
-
-// ==================== CHARGEMENT PRODUITS ====================
-async function loadAllProducts() {
-    try {
-        await Promise.all([
-            loadProductLikes(),
-            loadProductComments()
-        ]);
-
-        const cachedProducts = loadProductsFromCache();
-        
-        if (cachedProducts) {
-            allProducts = cachedProducts;
-            displayProducts();
-            updateCarousel();
-            document.getElementById('loader').style.display = 'none';
-            
-            // Régénérer les catégories depuis le cache
-            genererCategories();
-            
-            updateProductsInBackground();
-            return;
-        }
-
-        console.log('🌐 Chargement des produits depuis le serveur...');
-
-        const { data: products, error: productsError } = await supabase
-            .from('produits')
-            .select('*')
-            .eq('statut', 'published')
-            .gt('stock', 0);
-
-        if (productsError) throw productsError;
-
-        const { data: shops, error: shopsError } = await supabase
-            .from('parametres_boutique')
-            .select('user_id, config');
-
-        if (shopsError) throw shopsError;
-
-        const shopsMap = {};
-        shops.forEach(shop => {
-            const identifiantUnique = shop.config?.identifiant?.slug || 
-                                     shop.config?.slug || 
-                                     null;
-            
-            shopsMap[shop.user_id] = {
-                nom: shop.config?.general?.nom || 'Boutique',
-                identifiant: identifiantUnique,
-                couleurPrimaire: shop.config?.apparence?.couleurPrimaire || '#FF6B00'
-            };
-        });
-
-        allProducts = products.map(p => ({
-            id: p.id,
-            nom: p.nom,
-            description: p.description,
-            prix: p.prix,
-            stock: p.stock,
-            mainImage: p.main_image,
-            categorie: p.categorie,
-            userId: p.user_id,
-            shopName: shopsMap[p.user_id]?.nom || 'Boutique',
-            shopSlug: shopsMap[p.user_id]?.identifiant,
-            shopColor: shopsMap[p.user_id]?.couleurPrimaire,
-            created_at: p.created_at,
-            likes: productLikes[p.id]?.count || 0,
-            commentsCount: (productComments[p.id] || []).length,
-            rating: calculateAverageRating(productComments[p.id] || [])
-        }));
-
-        console.log(`✅ ${allProducts.length} produits chargés`);
-        
-        saveProductsToCache(allProducts);
-        displayProducts();
-        updateCarousel();
-        
-        // Régénérer les catégories après le chargement des produits
-        genererCategories();
-
-    } catch (error) {
-        console.error('❌ Erreur chargement produits:', error);
-        document.getElementById('emptyState').style.display = 'block';
-        showToast('Erreur de chargement des produits', 'error');
-    } finally {
-        document.getElementById('loader').style.display = 'none';
-    }
+// ==================== UTILITAIRES ====================
+function formatPrice(price) {
+    return `${price.toLocaleString('fr-FR')} FCFA`;
 }
 
-async function updateProductsInBackground() {
-    try {
-        console.log('🔄 Mise à jour silencieuse du cache...');
-        
-        await Promise.all([
-            loadProductLikes(),
-            loadProductComments()
-        ]);
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
 
-        const { data: products } = await supabase
-            .from('produits')
-            .select('*')
-            .eq('statut', 'published')
-            .gt('stock', 0);
-
-        const { data: shops } = await supabase
-            .from('parametres_boutique')
-            .select('user_id, config');
-
-        if (products && shops) {
-            const shopsMap = {};
-            shops.forEach(shop => {
-                const identifiantUnique = shop.config?.identifiant?.slug || 
-                                         shop.config?.slug || 
-                                         null;
-                
-                shopsMap[shop.user_id] = {
-                    nom: shop.config?.general?.nom || 'Boutique',
-                    identifiant: identifiantUnique,
-                    couleurPrimaire: shop.config?.apparence?.couleurPrimaire || '#FF6B00'
-                };
-            });
-
-            const updatedProducts = products.map(p => ({
-                id: p.id,
-                nom: p.nom,
-                description: p.description,
-                prix: p.prix,
-                stock: p.stock,
-                mainImage: p.main_image,
-                categorie: p.categorie,
-                userId: p.user_id,
-                shopName: shopsMap[p.user_id]?.nom || 'Boutique',
-                shopSlug: shopsMap[p.user_id]?.identifiant,
-                shopColor: shopsMap[p.user_id]?.couleurPrimaire,
-                created_at: p.created_at,
-                likes: productLikes[p.id]?.count || 0,
-                commentsCount: (productComments[p.id] || []).length,
-                rating: calculateAverageRating(productComments[p.id] || [])
-            }));
-
-            saveProductsToCache(updatedProducts);
-            console.log('✅ Cache mis à jour en arrière-plan');
-        }
-    } catch (error) {
-        console.error('Erreur mise à jour arrière-plan:', error);
-    }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = `<span style="font-size:1.2rem;">${icon}</span><span>${message}</span>`;
+    
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // ==================== NAVIGATION ====================
@@ -2653,6 +3178,17 @@ window.goToShop = function(shopSlug, productId) {
         showToast('Boutique non disponible', 'error');
     }
 };
+
+window.scrollToProducts = function() {
+    document.querySelector('.products-container')?.scrollIntoView({ 
+        behavior: 'smooth', block: 'start' 
+    });
+};
+
+// Exposer les fonctions globales
+window.toggleFavorite = toggleFavorite;
+window.toggleLike = toggleLike;
+window.showCommentsModal = showCommentsModal;
 // ==================== AFFICHAGE PRODUITS ====================
 function displayProducts() {
     const grid = document.getElementById('productsGrid');
@@ -2661,31 +3197,6 @@ function displayProducts() {
     const sectionHeader = document.querySelector('.section-header h2');
 
     let filteredProducts = [...allProducts];
-    let displayMode = 'grid';
-
-    switch(currentFilter) {
-        case 'all':
-            displayMode = 'categories';
-            break;
-        case 'recent':
-            filteredProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            filteredProducts = filteredProducts.slice(0, 50);
-            if (sectionHeader) sectionHeader.textContent = 'Produits récents';
-            break;
-        case 'popular':
-            filteredProducts.sort((a, b) => {
-                const aLikes = productLikes[a.id]?.count || 0;
-                const bLikes = productLikes[b.id]?.count || 0;
-                return bLikes - aLikes;
-            });
-            filteredProducts = filteredProducts.slice(0, 50);
-            if (sectionHeader) sectionHeader.textContent = 'Produits populaires';
-            break;
-        case 'promo':
-            filteredProducts = filteredProducts.filter(p => p.promo);
-            if (sectionHeader) sectionHeader.textContent = 'Promotions';
-            break;
-    }
 
     if (filteredProducts.length === 0) {
         grid.style.display = 'none';
@@ -2697,12 +3208,8 @@ function displayProducts() {
     grid.style.display = 'block';
     emptyState.style.display = 'none';
     if (productCount) productCount.textContent = `${filteredProducts.length} produits`;
-
-    if (displayMode === 'categories') {
-        displayProductsByCategories(filteredProducts);
-    } else {
-        displayProductsGrid(filteredProducts);
-    }
+    
+    displayProductsByCategories(filteredProducts);
 }
 
 function displayProductsByCategories(products) {
@@ -2713,14 +3220,11 @@ function displayProductsByCategories(products) {
     const categories = {};
     products.forEach(product => {
         const cat = product.categorie || 'Autres';
-        if (!categories[cat]) {
-            categories[cat] = [];
-        }
+        if (!categories[cat]) categories[cat] = [];
         categories[cat].push(product);
     });
 
     let html = '';
-    
     Object.keys(categories).forEach(category => {
         const categoryProducts = categories[category].slice(0, 20);
         
@@ -2742,8 +3246,6 @@ function displayProductsByCategories(products) {
                     padding-bottom: 12px;
                     scroll-snap-type: x mandatory;
                     -webkit-overflow-scrolling: touch;
-                    scrollbar-width: thin;
-                    scrollbar-color: var(--primary-color) var(--bg-secondary);
                 ">
                     ${categoryProducts.map(product => createProductCard(product, true)).join('')}
                 </div>
@@ -2756,26 +3258,13 @@ function displayProductsByCategories(products) {
     grid.style.gridTemplateColumns = '1fr';
 }
 
-function displayProductsGrid(products) {
-    const grid = document.getElementById('productsGrid');
-    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
-    grid.innerHTML = products.map(product => createProductCard(product, false)).join('');
-}
-
 function createProductCard(product, isHorizontal = false) {
-    const cardStyle = isHorizontal ? `
-        min-width: 200px;
-        max-width: 200px;
-        scroll-snap-align: start;
-    ` : '';
-
+    const cardStyle = isHorizontal ? `min-width: 200px; max-width: 200px; scroll-snap-align: start;` : '';
     const likeData = productLikes[product.id] || { count: 0, userLiked: false };
     const commentsCount = (productComments[product.id] || []).length;
 
     return `
-        <div class="product-card" 
-             style="${cardStyle}"
-             onclick="goToProduct(${product.id})">
+        <div class="product-card" style="${cardStyle}" onclick="goToProduct(${product.id})">
             <div class="product-image-wrapper">
                 <button class="btn-favorite ${favoriteProducts.has(product.id) ? 'active' : ''}"
                         onclick="event.stopPropagation(); toggleFavorite(${product.id})">
@@ -2816,6 +3305,44 @@ function createProductCard(product, isHorizontal = false) {
     `;
 }
 
+// ==================== FILTRAGE PAR CATÉGORIE ====================
+function filterByCategory(category) {
+    const grid = document.getElementById('productsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const productCount = document.getElementById('productCount');
+    const sectionHeader = document.querySelector('.section-header h2');
+    
+    let filtered = allProducts;
+    if (category !== 'Tous') {
+        filtered = allProducts.filter(p => p.categorie === category);
+    }
+    
+    if (sectionHeader) {
+        sectionHeader.textContent = category === 'Tous' ? 'Tous les produits' : category;
+    }
+    
+    if (filtered.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'block';
+        if (productCount) productCount.textContent = '0 produits';
+    } else {
+        grid.style.display = 'grid';
+        emptyState.style.display = 'none';
+        if (productCount) productCount.textContent = `${filtered.length} produits`;
+        
+        if (category === 'Tous') {
+            displayProductsByCategories(filtered);
+        } else {
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+            grid.innerHTML = filtered.map(product => createProductCard(product, false)).join('');
+        }
+    }
+    
+    document.querySelector('.products-container')?.scrollIntoView({ 
+        behavior: 'smooth', block: 'start' 
+    });
+}
+
 // ==================== CAROUSEL ====================
 function updateCarousel() {
     const container = document.getElementById('carouselContainer');
@@ -2830,8 +3357,7 @@ function updateCarousel() {
         .slice(0, 10);
 
     if (popularProducts.length === 0) {
-        const carousel = document.getElementById('heroCarousel');
-        if (carousel) carousel.style.display = 'none';
+        document.getElementById('heroCarousel')?.style.setProperty('display', 'none');
         return;
     }
 
@@ -2844,7 +3370,7 @@ function updateCarousel() {
             <img src="${product.mainImage || 'https://via.placeholder.com/1200x400'}" 
                  class="carousel-image" 
                  alt="${product.nom}"
-                 onerror="this.src='https://via.placeholder.com/1200x400?text=${encodeURIComponent(product.nom)}'">
+                 onerror="this.src='https://via.placeholder.com/1200x400'">
             <div class="carousel-overlay">
                 <div class="carousel-info">
                     <h2>${product.nom}</h2>
@@ -2869,9 +3395,7 @@ function updateCarousel() {
 
 function startCarousel(totalSlides) {
     if (carouselInterval) clearInterval(carouselInterval);
-    
     currentSlide = 0;
-    
     carouselInterval = setInterval(() => {
         currentSlide = (currentSlide + 1) % totalSlides;
         updateCarouselPosition();
@@ -2883,7 +3407,6 @@ function updateCarouselPosition() {
     if (!container) return;
     
     container.style.transform = `translateX(-${currentSlide * 100}%)`;
-
     document.querySelectorAll('.dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === currentSlide);
     });
@@ -2919,343 +3442,10 @@ function initCarouselControls() {
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') {
-            btnPrev?.click();
-        } else if (e.key === 'ArrowRight') {
-            btnNext?.click();
-        }
+        if (e.key === 'ArrowLeft') btnPrev?.click();
+        else if (e.key === 'ArrowRight') btnNext?.click();
     });
 }
-// ==================== MENU LATÉRAL ====================
-function initSideMenu() {
-    const menuBtn = document.getElementById('menuBtn');
-    const closeMenuBtn = document.getElementById('closeMenuBtn');
-    const sideMenu = document.getElementById('sideMenu');
-    const overlay = document.getElementById('overlay');
-    
-    if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            if (sideMenu) sideMenu.classList.add('active');
-            if (overlay) overlay.classList.add('active');
-            // Régénérer les catégories à chaque ouverture du menu
-            genererCategories();
-        });
-    }
-    
-    if (closeMenuBtn) {
-        closeMenuBtn.addEventListener('click', fermerMenu);
-    }
-    
-    if (overlay) {
-        overlay.addEventListener('click', fermerMenu);
-    }
-    
-    // Générer les catégories au chargement initial
-    genererCategories();
-    initialiserMenuLiens();
-}
-
-function fermerMenu() {
-    const sideMenu = document.getElementById('sideMenu');
-    const overlay = document.getElementById('overlay');
-    
-    if (sideMenu) sideMenu.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
-}
-
-function genererCategories() {
-    const categoryList = document.getElementById('categoryList');
-    if (!categoryList) {
-        console.warn('❌ Element categoryList non trouvé');
-        return;
-    }
-    
-    // Attendre que les produits soient chargés
-    if (!allProducts || allProducts.length === 0) {
-        console.log('⏳ En attente du chargement des produits...');
-        categoryList.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">Chargement...</div>';
-        return;
-    }
-    
-    const categories = [...new Set(allProducts.map(p => p.categorie))].filter(Boolean);
-    
-    console.log('📂 Catégories trouvées:', categories);
-    
-    if (categories.length > 0) {
-        categoryList.innerHTML = categories.map(cat => 
-            `<div class="category-item" onclick="filtrerParCategorie('${cat}')">${cat}</div>`
-        ).join('');
-        console.log(`✅ ${categories.length} catégories affichées dans le menu`);
-    } else {
-        categoryList.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">Aucune catégorie disponible</div>';
-        console.log('⚠️ Aucune catégorie trouvée dans les produits');
-    }
-}
-
-function filtrerParCategorie(categorie) {
-    fermerMenu();
-    
-    const filtered = allProducts.filter(p => p.categorie === categorie);
-    const grid = document.getElementById('productsGrid');
-    const emptyState = document.getElementById('emptyState');
-    const productCount = document.getElementById('productCount');
-    const sectionHeader = document.querySelector('.section-header h2');
-    
-    if (sectionHeader) sectionHeader.textContent = categorie;
-    
-    if (filtered.length === 0) {
-        grid.style.display = 'none';
-        emptyState.style.display = 'block';
-        if (productCount) productCount.textContent = '0 produits';
-    } else {
-        grid.style.display = 'grid';
-        emptyState.style.display = 'none';
-        if (productCount) productCount.textContent = `${filtered.length} produits`;
-        grid.innerHTML = filtered.map(product => createProductCard(product, false)).join('');
-    }
-    
-    const productsSection = document.querySelector('.products-container');
-    if (productsSection) {
-        productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-function initialiserMenuLiens() {
-    const aboutLink = document.getElementById('aboutLink');
-    const contactLink = document.getElementById('contactLink');
-    const helpLink = document.getElementById('helpLink');
-    
-    if (aboutLink) {
-        aboutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            fermerMenu();
-            setTimeout(() => showToast('Page À propos - En construction', 'info'), 300);
-        });
-    }
-    
-    if (contactLink) {
-        contactLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            fermerMenu();
-            setTimeout(() => showToast('Page Contact - En construction', 'info'), 300);
-        });
-    }
-    
-    if (helpLink) {
-        helpLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            fermerMenu();
-            setTimeout(() => showToast('Page Aide - En construction', 'info'), 300);
-        });
-    }
-}
-
-window.filtrerParCategorie = filtrerParCategorie;
-
-// Exposer genererCategories globalement pour debug
-window.genererCategories = genererCategories;
-window.rafraichirMenu = function() {
-    console.log('🔄 Rafraîchissement manuel du menu...');
-    genererCategories();
-};
-
-// ==================== PARAMÈTRES ====================
-let userSettings = {
-    userName: '',
-    lastNameChange: null,
-    notifications: {
-        newProducts: true,
-        promotions: true,
-        comments: true,
-        popular: true
-    },
-    preferences: {
-        darkMode: false,
-        sounds: true
-    }
-};
-
-function chargerParametresUtilisateur() {
-    try {
-        const saved = localStorage.getItem('oda_user_settings');
-        if (saved) {
-            userSettings = { ...userSettings, ...JSON.parse(saved) };
-        }
-        
-        if (!userSettings.userName) {
-            userSettings.userName = localStorage.getItem('oda_user_name') || '';
-        }
-        
-        appliquerParametres();
-    } catch (e) {
-        console.error('Erreur chargement paramètres:', e);
-    }
-}
-
-function appliquerParametres() {
-    const input = document.getElementById('userNameInput');
-    if (input) {
-        input.value = userSettings.userName || 'Non défini';
-    }
-    
-    const notifNewProducts = document.getElementById('notifNewProducts');
-    const notifPromotions = document.getElementById('notifPromotions');
-    const notifComments = document.getElementById('notifComments');
-    const notifPopular = document.getElementById('notifPopular');
-    const darkMode = document.getElementById('darkMode');
-    const appSounds = document.getElementById('appSounds');
-    
-    if (notifNewProducts) notifNewProducts.checked = userSettings.notifications.newProducts;
-    if (notifPromotions) notifPromotions.checked = userSettings.notifications.promotions;
-    if (notifComments) notifComments.checked = userSettings.notifications.comments;
-    if (notifPopular) notifPopular.checked = userSettings.notifications.popular;
-    if (darkMode) darkMode.checked = userSettings.preferences.darkMode;
-    if (appSounds) appSounds.checked = userSettings.preferences.sounds;
-    
-    if (userSettings.preferences.darkMode) {
-        document.body.classList.add('dark-mode');
-    }
-}
-
-function sauvegarderParametres() {
-    try {
-        localStorage.setItem('oda_user_settings', JSON.stringify(userSettings));
-        localStorage.setItem('oda_user_name', userSettings.userName);
-    } catch (e) {
-        console.error('Erreur sauvegarde paramètres:', e);
-    }
-}
-
-window.ouvrirParametres = function() {
-    chargerParametresUtilisateur();
-    const modal = document.getElementById('settingsModal');
-    if (modal) modal.classList.add('active');
-};
-
-window.ouvrirChangementNom = function() {
-    const newName = prompt('Entrez votre nouveau nom:', userSettings.userName);
-    
-    if (newName && newName.trim() && newName.trim() !== userSettings.userName) {
-        userSettings.userName = newName.trim();
-        userSettings.lastNameChange = new Date().toISOString();
-        sauvegarderParametres();
-        appliquerParametres();
-        showToast('✅ Nom modifié avec succès', 'success');
-    }
-};
-
-window.effacerDonnees = function() {
-    if (confirm('⚠️ ATTENTION !\n\nCette action supprimera définitivement :\n- Vos favoris\n- Vos paramètres\n- Votre historique\n\nContinuer ?')) {
-        localStorage.clear();
-        sessionStorage.clear();
-        showToast('✅ Toutes vos données ont été effacées', 'success');
-        setTimeout(() => window.location.reload(), 1500);
-    }
-};
-
-function initialiserParametres() {
-    const settingsBtn = document.getElementById('settingsBtn');
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', window.ouvrirParametres);
-    }
-    
-    const notifNewProducts = document.getElementById('notifNewProducts');
-    const notifPromotions = document.getElementById('notifPromotions');
-    const notifComments = document.getElementById('notifComments');
-    const notifPopular = document.getElementById('notifPopular');
-    const darkMode = document.getElementById('darkMode');
-    const appSounds = document.getElementById('appSounds');
-    
-    if (notifNewProducts) {
-        notifNewProducts.addEventListener('change', function() {
-            userSettings.notifications.newProducts = this.checked;
-            sauvegarderParametres();
-        });
-    }
-    
-    if (notifPromotions) {
-        notifPromotions.addEventListener('change', function() {
-            userSettings.notifications.promotions = this.checked;
-            sauvegarderParametres();
-        });
-    }
-    
-    if (notifComments) {
-        notifComments.addEventListener('change', function() {
-            userSettings.notifications.comments = this.checked;
-            sauvegarderParametres();
-        });
-    }
-    
-    if (notifPopular) {
-        notifPopular.addEventListener('change', function() {
-            userSettings.notifications.popular = this.checked;
-            sauvegarderParametres();
-        });
-    }
-    
-    if (darkMode) {
-        darkMode.addEventListener('change', function() {
-            userSettings.preferences.darkMode = this.checked;
-            document.body.classList.toggle('dark-mode', this.checked);
-            sauvegarderParametres();
-        });
-    }
-    
-    if (appSounds) {
-        appSounds.addEventListener('change', function() {
-            userSettings.preferences.sounds = this.checked;
-            sauvegarderParametres();
-        });
-    }
-    
-    chargerParametresUtilisateur();
-}
-
-// ==================== PWA NOTIFICATIONS ====================
-window.verifierStatutNotifications = function() {
-    const statusText = document.getElementById('notifStatusText');
-    const enableBtn = document.getElementById('enableNotifBtn');
-    
-    if (!statusText || !enableBtn) return;
-    
-    if (!('Notification' in window)) {
-        statusText.textContent = '❌ Non supportées sur ce navigateur';
-        enableBtn.disabled = true;
-        return;
-    }
-    
-    const permission = Notification.permission;
-    
-    switch(permission) {
-        case 'granted':
-            statusText.innerHTML = '✅ <span style="color: var(--success-color); font-weight: 600;">Activées</span>';
-            enableBtn.style.display = 'none';
-            break;
-        case 'denied':
-            statusText.innerHTML = '❌ <span style="color: var(--error-color); font-weight: 600;">Bloquées</span>';
-            enableBtn.textContent = 'Débloquer';
-            break;
-        default:
-            statusText.innerHTML = '⚠️ <span style="color: #F59E0B; font-weight: 600;">Non activées</span>';
-            enableBtn.style.display = 'block';
-            break;
-    }
-};
-
-window.activerNotifications = async function() {
-    if (!window.pwaManager) {
-        showToast('PWA Manager non disponible', 'error');
-        return;
-    }
-    
-    const granted = await window.pwaManager.requestNotificationPermission();
-    
-    if (granted) {
-        window.verifierStatutNotifications();
-        showToast('🎉 Notifications activées !', 'success');
-    }
-};
 
 // ==================== RECHERCHE ====================
 function initSearch() {
@@ -3292,6 +3482,313 @@ function initSearch() {
         }
     });
 }
+// ==================== CHARGEMENT OPTIMISÉ ====================
+async function loadAllProductsOptimized() {
+    try {
+        const dataLoader = new OptimizedDataLoader(supabase);
+        const data = await dataLoader.load();
+        
+        allProducts = data.products;
+        productLikes = data.likes;
+        productComments = data.comments;
+        
+        // Convertir les likes au bon format
+        Object.keys(productLikes).forEach(productId => {
+            const likeData = productLikes[productId];
+            productLikes[productId] = {
+                count: likeData.count,
+                userLiked: likeData.users.includes(currentUserId)
+            };
+        });
+        
+        // Initialiser le menu
+        window.improvedMenu.init(allProducts);
+        
+        // Afficher
+        displayProducts();
+        updateCarousel();
+        
+        // Stats
+        console.log('📊 STATISTIQUES:');
+        console.log(`   - Produits: ${allProducts.length}`);
+        console.log(`   - Cache: ${window.cacheManager.getStats().size}`);
+        
+        return data;
+    } catch (error) {
+        console.error('❌ Erreur:', error);
+        document.getElementById('emptyState').style.display = 'block';
+        showToast('Erreur de chargement', 'error');
+        throw error;
+    }
+}
+
+// ==================== FILTRAGE PAR CATÉGORIE ====================
+function setupCategoryFiltering() {
+    window.addEventListener('categorySelected', (e) => {
+        filterByCategory(e.detail.category);
+    });
+}
+
+// ==================== MENU LATÉRAL ====================
+function initSideMenu() {
+    const menuBtn = document.getElementById('menuBtn');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const overlay = document.getElementById('overlay');
+    
+    if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+            document.getElementById('sideMenu')?.classList.add('active');
+            overlay?.classList.add('active');
+            window.improvedMenu.render();
+        });
+    }
+    
+    if (closeMenuBtn) {
+        closeMenuBtn.addEventListener('click', () => {
+            document.getElementById('sideMenu')?.classList.remove('active');
+            overlay?.classList.remove('active');
+        });
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            document.getElementById('sideMenu')?.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+    
+    // Liens du menu
+    const aboutLink = document.getElementById('aboutLink');
+    const contactLink = document.getElementById('contactLink');
+    const helpLink = document.getElementById('helpLink');
+    
+    if (aboutLink) {
+        aboutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast('Page À propos - En construction', 'info');
+        });
+    }
+    
+    if (contactLink) {
+        contactLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast('Page Contact - En construction', 'info');
+        });
+    }
+    
+    if (helpLink) {
+        helpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast('Page Aide - En construction', 'info');
+        });
+    }
+}
+
+// ==================== PARAMÈTRES ====================
+let userSettings = {
+    userName: '',
+    lastNameChange: null,
+    notifications: {
+        newProducts: true,
+        promotions: true,
+        comments: true,
+        popular: true
+    },
+    preferences: {
+        darkMode: false,
+        sounds: true
+    }
+};
+
+function chargerParametresUtilisateur() {
+    try {
+        const saved = localStorage.getItem('oda_user_settings');
+        if (saved) {
+            userSettings = { ...userSettings, ...JSON.parse(saved) };
+        }
+        if (!userSettings.userName) {
+            userSettings.userName = localStorage.getItem('oda_user_name') || '';
+        }
+        appliquerParametres();
+    } catch (e) {
+        console.error('Erreur chargement paramètres:', e);
+    }
+}
+
+function appliquerParametres() {
+    const input = document.getElementById('userNameInput');
+    if (input) input.value = userSettings.userName || 'Non défini';
+    
+    const notifNewProducts = document.getElementById('notifNewProducts');
+    const notifPromotions = document.getElementById('notifPromotions');
+    const notifComments = document.getElementById('notifComments');
+    const notifPopular = document.getElementById('notifPopular');
+    const darkMode = document.getElementById('darkMode');
+    const appSounds = document.getElementById('appSounds');
+    
+    if (notifNewProducts) notifNewProducts.checked = userSettings.notifications.newProducts;
+    if (notifPromotions) notifPromotions.checked = userSettings.notifications.promotions;
+    if (notifComments) notifComments.checked = userSettings.notifications.comments;
+    if (notifPopular) notifPopular.checked = userSettings.notifications.popular;
+    if (darkMode) darkMode.checked = userSettings.preferences.darkMode;
+    if (appSounds) appSounds.checked = userSettings.preferences.sounds;
+    
+    if (userSettings.preferences.darkMode) {
+        document.body.classList.add('dark-mode');
+    }
+}
+
+function sauvegarderParametres() {
+    try {
+        localStorage.setItem('oda_user_settings', JSON.stringify(userSettings));
+        localStorage.setItem('oda_user_name', userSettings.userName);
+    } catch (e) {
+        console.error('Erreur sauvegarde:', e);
+    }
+}
+
+window.ouvrirParametres = function() {
+    chargerParametresUtilisateur();
+    document.getElementById('settingsModal')?.classList.add('active');
+};
+
+window.ouvrirChangementNom = function() {
+    const newName = prompt('Entrez votre nouveau nom:', userSettings.userName);
+    if (newName && newName.trim() && newName.trim() !== userSettings.userName) {
+        userSettings.userName = newName.trim();
+        userSettings.lastNameChange = new Date().toISOString();
+        sauvegarderParametres();
+        appliquerParametres();
+        showToast('✅ Nom modifié', 'success');
+    }
+};
+
+window.effacerDonnees = function() {
+    if (confirm('⚠️ ATTENTION !\n\nSupprimer vos favoris, paramètres et historique ?')) {
+        localStorage.clear();
+        sessionStorage.clear();
+        showToast('✅ Données effacées', 'success');
+        setTimeout(() => window.location.reload(), 1500);
+    }
+};
+
+function initialiserParametres() {
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', window.ouvrirParametres);
+    }
+    
+    ['notifNewProducts', 'notifPromotions', 'notifComments', 'notifPopular'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const key = id.replace('notif', '').replace(/^./, str => str.toLowerCase());
+            el.addEventListener('change', function() {
+                userSettings.notifications[key] = this.checked;
+                sauvegarderParametres();
+            });
+        }
+    });
+    
+    const darkMode = document.getElementById('darkMode');
+    if (darkMode) {
+        darkMode.addEventListener('change', function() {
+            userSettings.preferences.darkMode = this.checked;
+            document.body.classList.toggle('dark-mode', this.checked);
+            sauvegarderParametres();
+        });
+    }
+    
+    const appSounds = document.getElementById('appSounds');
+    if (appSounds) {
+        appSounds.addEventListener('change', function() {
+            userSettings.preferences.sounds = this.checked;
+            sauvegarderParametres();
+        });
+    }
+    
+    chargerParametresUtilisateur();
+}
+
+// ==================== GESTION DU CACHE ====================
+function addForceReloadButton() {
+    const settingsBody = document.querySelector('.settings-body');
+    if (!settingsBody) return;
+    
+    const cacheSection = document.createElement('div');
+    cacheSection.className = 'settings-section';
+    cacheSection.innerHTML = `
+        <div class="section-header">
+            <span class="section-icon">💾</span>
+            <h3>Cache de l'application</h3>
+        </div>
+        <div id="cacheInfo" style="background:var(--bg-secondary);padding:16px;border-radius:12px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="color:var(--text-secondary);">Taille:</span>
+                <strong id="cacheSize">Calcul...</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="color:var(--text-secondary);">Âge:</span>
+                <strong id="cacheAge">Calcul...</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-secondary);">Statut:</span>
+                <strong id="cacheStatus">Valide</strong>
+            </div>
+        </div>
+        <button class="btn-primary" onclick="window.forceReloadData()" style="width:100%;background:#3B82F6;margin-bottom:12px;">
+            🔄 Forcer le rechargement
+        </button>
+        <button class="btn-danger" onclick="window.clearAllCache()">
+            🗑️ Vider le cache
+        </button>
+    `;
+    settingsBody.appendChild(cacheSection);
+    updateCacheInfo();
+}
+
+function updateCacheInfo() {
+    const stats = window.cacheManager?.getStats();
+    if (!stats) return;
+    
+    const sizeEl = document.getElementById('cacheSize');
+    const ageEl = document.getElementById('cacheAge');
+    const statusEl = document.getElementById('cacheStatus');
+    
+    if (sizeEl) sizeEl.textContent = stats.size;
+    if (ageEl) ageEl.textContent = stats.age || 'Nouveau';
+    if (statusEl) {
+        statusEl.textContent = stats.valid ? 'Valide ✓' : 'Expiré ✗';
+        statusEl.style.color = stats.valid ? 'var(--success-color)' : 'var(--error-color)';
+    }
+}
+
+window.forceReloadData = async function() {
+    if (confirm('Recharger depuis le serveur ?')) {
+        window.loadingProgress.start();
+        try {
+            const dataLoader = new OptimizedDataLoader(supabase);
+            await dataLoader.forceReload();
+            allProducts = dataLoader.data.products;
+            productLikes = dataLoader.data.likes;
+            productComments = dataLoader.data.comments;
+            window.improvedMenu.update(allProducts);
+            displayProducts();
+            updateCarousel();
+            showToast('✅ Données rechargées', 'success');
+            updateCacheInfo();
+        } catch (error) {
+            showToast('❌ Erreur', 'error');
+        }
+    }
+};
+
+window.clearAllCache = function() {
+    if (confirm('Vider le cache ?')) {
+        window.cacheManager.clearAll();
+        showToast('🗑️ Cache vidé', 'success');
+        updateCacheInfo();
+    }
+};
 
 // ==================== SCROLL HEADER ====================
 let lastScrollTop = 0;
@@ -3299,35 +3796,78 @@ function initScrollBehavior() {
     window.addEventListener('scroll', () => {
         const header = document.querySelector('.main-header');
         if (!header) return;
-        
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
         if (scrollTop > lastScrollTop && scrollTop > 100) {
             header.style.transform = 'translateY(-100%)';
         } else {
             header.style.transform = 'translateY(0)';
         }
-        
         lastScrollTop = scrollTop;
     });
 }
 
-// ==================== INITIALISATION COMPLÈTE ====================
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🛒 ODA Marketplace initialisé');
-    console.log('📅 Version:', new Date().toLocaleDateString('fr-FR'));
+// ==================== PWA NOTIFICATIONS ====================
+window.verifierStatutNotifications = function() {
+    const statusText = document.getElementById('notifStatusText');
+    const enableBtn = document.getElementById('enableNotifBtn');
+    if (!statusText || !enableBtn) return;
     
-    // Chargement initial
+    if (!('Notification' in window)) {
+        statusText.textContent = '❌ Non supportées';
+        enableBtn.disabled = true;
+        return;
+    }
+    
+    const permission = Notification.permission;
+    switch(permission) {
+        case 'granted':
+            statusText.innerHTML = '✅ <span style="color:var(--success-color);font-weight:600;">Activées</span>';
+            enableBtn.style.display = 'none';
+            break;
+        case 'denied':
+            statusText.innerHTML = '❌ <span style="color:var(--error-color);font-weight:600;">Bloquées</span>';
+            enableBtn.textContent = 'Débloquer';
+            break;
+        default:
+            statusText.innerHTML = '⚠️ <span style="color:#F59E0B;font-weight:600;">Non activées</span>';
+            enableBtn.style.display = 'block';
+    }
+};
+
+window.activerNotifications = async function() {
+    if (!window.pwaManager) {
+        showToast('PWA Manager non disponible', 'error');
+        return;
+    }
+    const granted = await window.pwaManager.requestNotificationPermission();
+    if (granted) {
+        window.verifierStatutNotifications();
+        showToast('🎉 Notifications activées !', 'success');
+    }
+};
+
+// ==================== INITIALISATION COMPLÈTE ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 ODA MARKETPLACE - VERSION OPTIMISÉE');
+    console.log('='.repeat(50));
+    
+    // Masquer l'ancien loader
+    const oldLoader = document.getElementById('loader');
+    if (oldLoader) oldLoader.style.display = 'none';
+    
+    // Chargement
     loadFavorites();
     updateBadges();
-    loadAllProducts();
+    await loadAllProductsOptimized();
     
-    // Initialisation des composants
+    // Initialisation
+    setupCategoryFiltering();
     initSideMenu();
     initCarouselControls();
     initSearch();
     initScrollBehavior();
     initialiserParametres();
+    addForceReloadButton();
     
     // PWA
     if (window.verifierStatutNotifications) {
@@ -3337,100 +3877,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mode PWA
     const isPWA = window.matchMedia('(display-mode: standalone)').matches;
     if (isPWA) {
-        console.log('📱 Application lancée en mode PWA');
+        console.log('📱 Mode PWA');
         document.body.classList.add('pwa-mode');
     }
     
-    // Fermeture Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            fermerMenu();
-        }
-    });
-    
-    console.log('✅ Initialisation terminée');
-    console.log('🎯 Fonctionnalités actives:');
-    console.log('   - Système de likes en temps réel');
-    console.log('   - Commentaires avec notes');
-    console.log('   - Favoris persistants');
-    console.log('   - Carousel produits populaires');
-    console.log('   - Cache local 30min');
+    console.log('='.repeat(50));
+    console.log('✅ PRÊT');
+    console.log('🎯 Fonctionnalités:');
+    console.log('   ✓ Cache local optimisé');
+    console.log('   ✓ Loader avec pourcentage');
+    console.log('   ✓ Menu avec compteurs');
+    console.log('   ✓ Catégorie "Tous"');
+    console.log('   ✓ Chargement instantané');
 });
-// ==================== SCRIPT DE DIAGNOSTIC CATÉGORIES ====================
-// Ajoutez ce code temporairement dans la console pour déboguer
 
-console.log('🔍 DIAGNOSTIC CATÉGORIES');
-console.log('========================');
-
-// 1. Vérifier l'élément DOM
-const categoryList = document.getElementById('categoryList');
-console.log('1️⃣ Element categoryList:', categoryList ? '✅ Trouvé' : '❌ Non trouvé');
-
-if (categoryList) {
-    console.log('   HTML actuel:', categoryList.innerHTML.substring(0, 100) + '...');
-}
-
-// 2. Vérifier les produits
-console.log('2️⃣ Produits chargés:', window.allProducts ? `✅ ${window.allProducts.length} produits` : '❌ Aucun');
-
-if (window.allProducts && window.allProducts.length > 0) {
-    // 3. Extraire les catégories
-    const categories = [...new Set(window.allProducts.map(p => p.categorie))].filter(Boolean);
-    console.log('3️⃣ Catégories extraites:', categories);
-    console.log('   Nombre:', categories.length);
-    
-    // 4. Exemple de produits
-    console.log('4️⃣ Exemple de 3 produits:');
-    window.allProducts.slice(0, 3).forEach((p, i) => {
-        console.log(`   Produit ${i + 1}:`, {
-            nom: p.nom,
-            categorie: p.categorie,
-            shopName: p.shopName
-        });
-    });
-    
-    // 5. Tester la génération manuelle
-    console.log('5️⃣ Test génération manuelle...');
-    if (typeof window.genererCategories === 'function') {
-        window.genererCategories();
-        console.log('   ✅ Fonction genererCategories() exécutée');
-    } else {
-        console.log('   ❌ Fonction genererCategories() non disponible');
+// Refresh auto toutes les 30min
+setInterval(() => {
+    if (document.visibilityState === 'visible') {
+        console.log('🔄 Mise à jour auto...');
+        const dataLoader = new OptimizedDataLoader(supabase);
+        dataLoader.updateInBackground();
     }
-} else {
-    console.log('⚠️ Les produits ne sont pas encore chargés');
-    console.log('💡 Attendez quelques secondes et relancez ce script');
-}
+}, 30 * 60 * 1000);
 
-// 6. Vérifier le menu
-const sideMenu = document.getElementById('sideMenu');
-console.log('6️⃣ Menu latéral:', sideMenu ? '✅ Trouvé' : '❌ Non trouvé');
-
-// 7. Solution de force brute
-console.log('\n💡 SOLUTIONS:');
-console.log('1. Attendre 2-3 secondes que les produits se chargent');
-console.log('2. Ouvrir le menu hamburger (clic sur ☰)');
-console.log('3. Si toujours vide, exécutez: window.rafraichirMenu()');
-console.log('4. Vérifier la console pour les erreurs réseau Supabase');
-
-console.log('\n🔧 COMMANDES UTILES:');
-console.log('- window.rafraichirMenu()         → Force le rafraîchissement');
-console.log('- window.genererCategories()      → Régénère les catégories');
-console.log('- window.allProducts              → Voir tous les produits');
-
-console.log('========================\n');
-
-// Test automatique après 3 secondes
-setTimeout(() => {
-    console.log('⏰ Test automatique après 3 secondes...');
-    if (window.allProducts && window.allProducts.length > 0) {
-        console.log('✅ Produits chargés, régénération des catégories...');
-        window.rafraichirMenu?.();
-    } else {
-        console.log('⚠️ Produits toujours non chargés. Vérifiez la connexion Supabase.');
+// Mise à jour quand l'onglet redevient visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && window.cacheManager) {
+        const stats = window.cacheManager.getStats();
+        if (!stats.valid) {
+            console.log('🔄 Cache expiré, rechargement...');
+            loadAllProductsOptimized();
+        }
     }
-}, 3000);
- </script>
+});
+
+console.log('🎉 Système optimisé prêt !');
+</script>
 
 </body>
 </html>

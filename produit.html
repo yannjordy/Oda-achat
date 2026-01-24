@@ -973,28 +973,27 @@
         </div>
     </div>
 
-   <script type="module">
-    // Configuration Supabase
+
+<script type="module">
+    // ==================== PARTIE 1/4 : CONFIGURATION & ÉTAT GLOBAL ====================
+
+// Configuration Supabase
 const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
+
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Variables globales
+// ==================== VARIABLES GLOBALES ====================
 let currentProduct = null;
-let parametres = null;
-let currentImageIndex = 0;
-let allImages = [];
-let selectedPaymentMethod = null;
-let currentUserId = getUserId();
+let currentUser = null;
+let shopConfig = null;
 let productLikes = { count: 0, userLiked: false };
 let productComments = [];
+let currentUserId = getUserId();
+let currentImageIndex = 0;
+let allImages = [];
 
-// Récupérer l'ID du produit depuis l'URL
-const urlParams = new URLSearchParams(window.location.search);
-const productId = parseInt(urlParams.get('id'));
-const shopIdentifier = urlParams.get('shop');
-
-// ==================== GESTION UTILISATEUR ====================
+// ==================== UTILITAIRES ====================
 function getUserId() {
     let userId = localStorage.getItem('oda_user_id');
     if (!userId) {
@@ -1013,237 +1012,10 @@ function getUserName() {
     return userName;
 }
 
-// ==================== NOTIFICATIONS ====================
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    const icon = document.getElementById('notificationIcon');
-    const text = document.getElementById('notificationText');
-    
-    notification.className = `notification ${type} show`;
-    icon.textContent = type === 'success' ? '✅' : '❌';
-    text.textContent = message;
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
+function formatPrice(price, devise = 'FCFA') {
+    return `${price.toLocaleString('fr-FR')} ${devise}`;
 }
 
-// ==================== CHARGEMENT PARAMÈTRES ====================
-async function chargerParametres() {
-    try {
-        if (shopIdentifier) {
-            const { data, error } = await supabase
-                .from('parametres_boutique')
-                .select('*')
-                .eq('config->identifiant->>slug', shopIdentifier)
-                .single();
-
-            if (data && !error) {
-                parametres = data.config;
-                appliquerTheme();
-            }
-        } else {
-            const localParams = localStorage.getItem('parametres_boutique');
-            if (localParams) {
-                parametres = JSON.parse(localParams);
-                appliquerTheme();
-            }
-        }
-    } catch (error) {
-        console.error('Erreur chargement paramètres:', error);
-    }
-}
-
-// ==================== APPLIQUER THÈME ====================
-function appliquerTheme() {
-    if (!parametres) return;
-    
-    const root = document.documentElement;
-    if (parametres.apparence?.couleurPrimaire) {
-        root.style.setProperty('--primary-color', parametres.apparence.couleurPrimaire);
-    }
-    if (parametres.apparence?.couleurSecondaire) {
-        root.style.setProperty('--secondary-color', parametres.apparence.couleurSecondaire);
-    }
-
-    // Mettre à jour le favicon
-    if (parametres.apparence?.favicon) {
-        let link = document.querySelector("link[rel*='icon']");
-        if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.head.appendChild(link);
-        }
-        link.href = parametres.apparence.favicon;
-    }
-}
-
-// ==================== CHARGEMENT PRODUIT ====================
-async function chargerProduit() {
-    try {
-        if (!productId) {
-            showNotification('Produit non trouvé', 'error');
-            return;
-        }
-
-        // Essayer depuis Supabase
-        if (shopIdentifier) {
-            const { data: boutique } = await supabase
-                .from('parametres_boutique')
-                .select('user_id')
-                .eq('config->identifiant->>slug', shopIdentifier)
-                .single();
-
-            if (boutique) {
-                const { data, error } = await supabase
-                    .from('produits')
-                    .select('*')
-                    .eq('id', productId)
-                    .eq('user_id', boutique.user_id)
-                    .single();
-
-                if (data && !error) {
-                    currentProduct = {
-                        id: data.id,
-                        nom: data.nom,
-                        description: data.description,
-                        prix: data.prix,
-                        stock: data.stock,
-                        categorie: data.categorie,
-                        mainImage: data.main_image,
-                        descriptionImages: data.description_images || []
-                    };
-                    afficherProduit();
-                    await chargerEngagement();
-                    return;
-                }
-            }
-        }
-
-        // Fallback localStorage
-        const localProduits = localStorage.getItem('produits_ecommerce');
-        if (localProduits) {
-            const produits = JSON.parse(localProduits);
-            currentProduct = produits.find(p => p.id === productId);
-            if (currentProduct) {
-                afficherProduit();
-                await chargerEngagement();
-                return;
-            }
-        }
-
-        showNotification('Produit introuvable', 'error');
-    } catch (error) {
-        console.error('Erreur chargement produit:', error);
-        showNotification('Erreur de chargement', 'error');
-    }
-}
-
-// ==================== CHARGEMENT ENGAGEMENT ====================
-async function chargerEngagement() {
-    try {
-        // Charger les likes
-        const { data: likes, error: likesError } = await supabase
-            .from('product_likes')
-            .select('*')
-            .eq('product_id', productId);
-
-        if (!likesError && likes) {
-            const userLiked = likes.some(like => like.user_id === currentUserId);
-            productLikes = {
-                count: likes.length,
-                userLiked: userLiked
-            };
-            updateLikesUI();
-        }
-
-        // Charger les commentaires
-        const { data: comments, error: commentsError } = await supabase
-            .from('product_comments')
-            .select('*')
-            .eq('product_id', productId)
-            .order('created_at', { ascending: false });
-
-        if (!commentsError && comments) {
-            productComments = comments;
-            updateCommentsUI();
-        }
-    } catch (error) {
-        console.error('Erreur chargement engagement:', error);
-    }
-}
-
-// ==================== UI LIKES ====================
-function updateLikesUI() {
-    const likesCount = document.getElementById('likesCount');
-    const btnLike = document.getElementById('btnLike');
-    const likeIcon = document.getElementById('likeIcon');
-    const likeText = document.getElementById('likeText');
-
-    if (likesCount) likesCount.textContent = productLikes.count || 0;
-    
-    if (productLikes.userLiked) {
-        btnLike.classList.add('liked');
-        likeIcon.textContent = '❤️';
-        likeText.textContent = 'Aimé';
-    } else {
-        btnLike.classList.remove('liked');
-        likeIcon.textContent = '🤍';
-        likeText.textContent = 'J\'aime';
-    }
-}
-
-// ==================== TOGGLE LIKE ====================
-async function toggleLike() {
-    try {
-        if (productLikes.userLiked) {
-            // Retirer le like
-            const { error } = await supabase
-                .from('product_likes')
-                .delete()
-                .eq('product_id', productId)
-                .eq('user_id', currentUserId);
-
-            if (error) throw error;
-
-            productLikes = {
-                count: Math.max(0, (productLikes.count || 0) - 1),
-                userLiked: false
-            };
-            showNotification('Like retiré', 'info');
-        } else {
-            // Ajouter le like
-            const { error } = await supabase
-                .from('product_likes')
-                .insert({
-                    product_id: productId,
-                    user_id: currentUserId
-                });
-
-            if (error) throw error;
-
-            productLikes = {
-                count: (productLikes.count || 0) + 1,
-                userLiked: true
-            };
-            showNotification('Produit liké !', 'success');
-        }
-
-        updateLikesUI();
-    } catch (error) {
-        console.error('Erreur toggle like:', error);
-        showNotification('Erreur lors du like', 'error');
-    }
-}
-
-// ==================== CALCUL NOTE MOYENNE ====================
-function calculateAverageRating() {
-    if (productComments.length === 0) return '0.0';
-    const sum = productComments.reduce((acc, c) => acc + (c.rating || 0), 0);
-    return (sum / productComments.length).toFixed(1);
-}
-
-// ==================== FORMAT DATE ====================
 function formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -1257,61 +1029,474 @@ function formatDate(dateString) {
     return date.toLocaleDateString('fr-FR');
 }
 
-// ==================== UI COMMENTAIRES ====================
-function updateCommentsUI() {
-    const commentsCount = document.getElementById('commentsCount');
-    const averageRating = document.getElementById('averageRating');
-    const commentsList = document.getElementById('commentsList');
+function afficherNotification(message, type = 'info') {
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notificationText');
+    const notificationIcon = document.getElementById('notificationIcon');
+    
+    if (!notification || !notificationText || !notificationIcon) return;
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    notificationIcon.textContent = icons[type] || icons.info;
+    notificationText.textContent = message;
+    notification.className = `notification show ${type}`;
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
 
-    if (commentsCount) commentsCount.textContent = productComments.length;
-    if (averageRating) averageRating.textContent = calculateAverageRating();
-
-    if (commentsList) {
-        if (productComments.length === 0) {
-            commentsList.innerHTML = `
-                <div class="empty-comments">
-                    <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Aucun commentaire pour l'instant</p>
-                    <p>Soyez le premier à donner votre avis !</p>
-                </div>
-            `;
-        } else {
-            commentsList.innerHTML = productComments.map(comment => `
-                <div class="comment-item">
-                    <div class="comment-header">
-                        <div class="comment-user">
-                            <span class="user-avatar">${comment.user_name.charAt(0).toUpperCase()}</span>
-                            <span class="user-name">${comment.user_name}</span>
-                        </div>
-                        <div class="comment-rating">${'⭐'.repeat(comment.rating || 5)}</div>
-                    </div>
-                    <p class="comment-text">${comment.comment}</p>
-                    <span class="comment-date">${formatDate(comment.created_at)}</span>
-                </div>
-            `).join('');
+// ==================== CHARGEMENT PRODUIT ====================
+async function chargerProduit() {
+    try {
+        // Récupérer l'ID du produit depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+        
+        if (!productId) {
+            throw new Error('ID produit manquant');
         }
+        
+        console.log('📦 Chargement du produit:', productId);
+        
+        // Charger le produit depuis Supabase
+        const { data: product, error: productError } = await supabase
+            .from('produits')
+            .select('*')
+            .eq('id', productId)
+            .single();
+        
+        if (productError) throw productError;
+        if (!product) throw new Error('Produit non trouvé');
+        
+        currentProduct = product;
+        console.log('✅ Produit chargé:', product);
+        
+        // Charger la configuration de la boutique
+        await chargerConfigurationBoutique(product.user_id);
+        
+        // Charger les likes et commentaires
+        await Promise.all([
+            chargerLikes(productId),
+            chargerCommentaires(productId)
+        ]);
+        
+        // Afficher le produit
+        afficherProduit();
+        
+        // Masquer le loader
+        document.getElementById('loader').style.display = 'none';
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement produit:', error);
+        afficherNotification('Erreur lors du chargement du produit', 'error');
+        
+        // Rediriger vers la page d'accueil après 2 secondes
+        setTimeout(() => {
+            window.location.href = 'oda-achats.html';
+        }, 2000);
     }
 }
 
+// ==================== CHARGEMENT CONFIGURATION BOUTIQUE ====================
+async function chargerConfigurationBoutique(userId) {
+    try {
+        console.log(`🔍 Chargement config boutique pour user: ${userId}`);
+        
+        const { data, error } = await supabase
+            .from('parametres_boutique')
+            .select('config')
+            .eq('user_id', userId)
+            .single();
+        
+        if (data && !error) {
+            shopConfig = data.config;
+            console.log('✅ Configuration boutique chargée');
+            console.log('🏪 Nom boutique:', shopConfig?.general?.nom);
+            console.log('🔗 Slug boutique:', shopConfig?.identifiant?.slug);
+            appliquerConfigurationBoutique();
+        } else {
+            console.warn('⚠️ Config boutique non trouvée, utilisation config par défaut');
+            shopConfig = getDefaultShopConfig();
+        }
+    } catch (error) {
+        console.error('❌ Erreur chargement config boutique:', error);
+        shopConfig = getDefaultShopConfig();
+    }
+}
+
+function getDefaultShopConfig() {
+    return {
+        general: {
+            nom: 'Ma Boutique',
+            telephone: '',
+            email: ''
+        },
+        apparence: {
+            couleurPrimaire: '#FF6B00',
+            couleurSecondaire: '#1A1A1A'
+        },
+        paiement: {
+            devise: 'FCFA',
+            carte: { actif: false },
+            mobile: { actif: true },
+            cash: { actif: true }
+        }
+    };
+}
+
+function appliquerConfigurationBoutique() {
+    if (!shopConfig) return;
+    
+    const { couleurPrimaire, couleurSecondaire } = shopConfig.apparence || {};
+    
+    if (couleurPrimaire) {
+        document.documentElement.style.setProperty('--primary-color', couleurPrimaire);
+        document.documentElement.style.setProperty('--primary-dark', couleurPrimaire + 'dd');
+    }
+    
+    if (couleurSecondaire) {
+        document.documentElement.style.setProperty('--text-primary', couleurSecondaire);
+    }
+    
+    console.log('🎨 Configuration boutique appliquée');
+}
+
+// ==================== CHARGEMENT LIKES ====================
+async function chargerLikes(productId) {
+    try {
+        const { data: likes, error } = await supabase
+            .from('product_likes')
+            .select('user_id')
+            .eq('product_id', productId);
+        
+        if (error) throw error;
+        
+        productLikes = {
+            count: likes.length,
+            userLiked: likes.some(like => like.user_id === currentUserId)
+        };
+        
+        console.log(`👍 ${productLikes.count} likes chargés`);
+    } catch (error) {
+        console.error('Erreur chargement likes:', error);
+        productLikes = { count: 0, userLiked: false };
+    }
+}
+
+// ==================== CHARGEMENT COMMENTAIRES ====================
+async function chargerCommentaires(productId) {
+    try {
+        const { data: comments, error } = await supabase
+            .from('product_comments')
+            .select('*')
+            .eq('product_id', productId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        productComments = comments || [];
+        console.log(`💬 ${productComments.length} commentaires chargés`);
+    } catch (error) {
+        console.error('Erreur chargement commentaires:', error);
+        productComments = [];
+    }
+}
+
+// Export des fonctions pour les autres parties
+window.chargerProduit = chargerProduit;
+window.chargerConfigurationBoutique = chargerConfigurationBoutique;
+window.chargerLikes = chargerLikes;
+window.chargerCommentaires = chargerCommentaires;
+window.afficherNotification = afficherNotification;
+window.formatPrice = formatPrice;
+window.formatDate = formatDate;
+window.getUserName = getUserName;
+// ==================== PARTIE 2/4 : AFFICHAGE PRODUIT & CAROUSEL ====================
+
+// ==================== AFFICHAGE PRODUIT ====================
+function afficherProduit() {
+    if (!currentProduct) return;
+    
+    const devise = shopConfig?.paiement?.devise || 'FCFA';
+    
+    // Titre de la page
+    document.title = `${currentProduct.nom} - ODA Marketplace`;
+    document.getElementById('headerTitle').textContent = currentProduct.nom;
+    
+    // Informations principales
+    document.getElementById('productName').textContent = currentProduct.nom;
+    document.getElementById('productCategory').textContent = `📦 ${currentProduct.categorie || 'Produit'}`;
+    document.getElementById('productPrice').textContent = formatPrice(currentProduct.prix, devise);
+    document.getElementById('productDescription').textContent = currentProduct.description || 'Aucune description disponible.';
+    
+    // Stock
+    afficherStock();
+    
+    // Images
+    initialiserCarousel();
+    
+    // Engagement (likes et commentaires)
+    afficherEngagement();
+    
+    // Commentaires
+    afficherCommentaires();
+    
+    // Mettre à jour le bouton "Voir ma boutique"
+    mettreAJourBoutonBoutique();
+    
+    console.log('✅ Produit affiché');
+}
+
+// ==================== METTRE À JOUR BOUTON BOUTIQUE ====================
+function mettreAJourBoutonBoutique() {
+    const btnBoutique = document.getElementById('btnBoutique');
+    if (!btnBoutique) return;
+    
+    const nomBoutique = shopConfig?.general?.nom || 'la boutique';
+    btnBoutique.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Voir ${nomBoutique}
+    `;
+    
+    console.log(`🏪 Bouton boutique mis à jour: ${nomBoutique}`);
+}
+
+// ==================== AFFICHAGE STOCK ====================
+function afficherStock() {
+    const stock = currentProduct.stock || 0;
+    const stockIcon = document.getElementById('stockIcon');
+    const stockText = document.getElementById('stockText');
+    const stockQuantity = document.getElementById('stockQuantity');
+    
+    if (stock > 10) {
+        stockIcon.textContent = '✅';
+        stockText.textContent = 'En stock';
+        stockQuantity.textContent = `• ${stock} disponibles`;
+    } else if (stock > 0) {
+        stockIcon.textContent = '⚠️';
+        stockText.textContent = 'Stock limité';
+        stockQuantity.textContent = `• Plus que ${stock} !`;
+    } else {
+        stockIcon.textContent = '❌';
+        stockText.textContent = 'Rupture de stock';
+        stockQuantity.textContent = '';
+    }
+}
+
+// ==================== CAROUSEL D'IMAGES ====================
+function initialiserCarousel() {
+    allImages = [];
+    
+    // Image principale
+    if (currentProduct.main_image) {
+        allImages.push(currentProduct.main_image);
+    }
+    
+    // Images supplémentaires
+    if (currentProduct.images && Array.isArray(currentProduct.images)) {
+        allImages.push(...currentProduct.images);
+    }
+    
+    // Si aucune image, utiliser placeholder
+    if (allImages.length === 0) {
+        allImages.push('https://via.placeholder.com/600x600?text=Produit');
+    }
+    
+    currentImageIndex = 0;
+    afficherImageCourante();
+    genererThumbnails();
+    
+    // Gestion zoom
+    const mainImageWrapper = document.getElementById('mainImageWrapper');
+    const mainImage = document.getElementById('mainImage');
+    
+    mainImageWrapper.addEventListener('click', () => {
+        mainImage.classList.toggle('zoom');
+    });
+}
+
+function afficherImageCourante() {
+    const mainImage = document.getElementById('mainImage');
+    const imageCounter = document.getElementById('imageCounter');
+    
+    if (allImages.length > 0) {
+        mainImage.src = allImages[currentImageIndex];
+        imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+    }
+}
+
+function genererThumbnails() {
+    const container = document.getElementById('thumbnailsContainer');
+    
+    if (allImages.length <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.innerHTML = allImages.map((img, index) => `
+        <img src="${img}" 
+             class="thumbnail ${index === 0 ? 'active' : ''}" 
+             onclick="changerImage(${index})"
+             alt="Miniature ${index + 1}"
+             onerror="this.src='https://via.placeholder.com/70x70?text=${index + 1}'">
+    `).join('');
+}
+
+window.changerImage = function(index) {
+    currentImageIndex = index;
+    afficherImageCourante();
+    
+    // Mettre à jour les thumbnails
+    document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+        thumb.classList.toggle('active', i === index);
+    });
+};
+
+// ==================== AFFICHAGE ENGAGEMENT ====================
+function afficherEngagement() {
+    // Likes
+    document.getElementById('likesCount').textContent = productLikes.count;
+    
+    const btnLike = document.getElementById('btnLike');
+    const likeIcon = document.getElementById('likeIcon');
+    const likeText = document.getElementById('likeText');
+    
+    if (productLikes.userLiked) {
+        btnLike.classList.add('liked');
+        likeIcon.textContent = '❤️';
+        likeText.textContent = 'Aimé';
+    } else {
+        btnLike.classList.remove('liked');
+        likeIcon.textContent = '🤍';
+        likeText.textContent = 'J\'aime';
+    }
+    
+    // Commentaires
+    document.getElementById('commentsCount').textContent = productComments.length;
+    
+    // Note moyenne
+    const averageRating = calculerNoteMoyenne();
+    document.getElementById('averageRating').textContent = averageRating;
+}
+
+function calculerNoteMoyenne() {
+    if (productComments.length === 0) return '0.0';
+    
+    const sum = productComments.reduce((acc, comment) => acc + (comment.rating || 0), 0);
+    return (sum / productComments.length).toFixed(1);
+}
+
+// ==================== TOGGLE LIKE ====================
+async function toggleLike() {
+    if (!currentProduct) return;
+    
+    const btnLike = document.getElementById('btnLike');
+    btnLike.disabled = true;
+    
+    try {
+        if (productLikes.userLiked) {
+            // Retirer le like
+            const { error } = await supabase
+                .from('product_likes')
+                .delete()
+                .eq('product_id', currentProduct.id)
+                .eq('user_id', currentUserId);
+            
+            if (error) throw error;
+            
+            productLikes.count = Math.max(0, productLikes.count - 1);
+            productLikes.userLiked = false;
+            afficherNotification('Like retiré', 'info');
+        } else {
+            // Ajouter le like
+            const { error } = await supabase
+                .from('product_likes')
+                .insert({
+                    product_id: currentProduct.id,
+                    user_id: currentUserId
+                });
+            
+            if (error) throw error;
+            
+            productLikes.count++;
+            productLikes.userLiked = true;
+            afficherNotification('Produit liké !', 'success');
+        }
+        
+        afficherEngagement();
+    } catch (error) {
+        console.error('Erreur toggle like:', error);
+        afficherNotification('Erreur lors du like', 'error');
+    } finally {
+        btnLike.disabled = false;
+    }
+}
+
+// ==================== AFFICHAGE COMMENTAIRES ====================
+function afficherCommentaires() {
+    const commentsList = document.getElementById('commentsList');
+    
+    if (productComments.length === 0) {
+        commentsList.innerHTML = `
+            <div class="empty-comments">
+                <p style="font-weight: 600; font-size: 1.1rem; margin-bottom: 8px;">
+                    Aucun commentaire pour l'instant
+                </p>
+                <p>Soyez le premier à donner votre avis !</p>
+            </div>
+        `;
+        return;
+    }
+    
+    commentsList.innerHTML = productComments.map(comment => `
+        <div class="comment-item">
+            <div class="comment-header">
+                <div class="comment-user">
+                    <div class="user-avatar">${comment.user_name.charAt(0).toUpperCase()}</div>
+                    <span class="user-name">${comment.user_name}</span>
+                </div>
+                <div class="comment-rating">${'⭐'.repeat(comment.rating || 5)}</div>
+            </div>
+            <p class="comment-text">${comment.comment}</p>
+            <span class="comment-date">${formatDate(comment.created_at)}</span>
+        </div>
+    `).join('');
+}
+
 // ==================== SOUMETTRE COMMENTAIRE ====================
-window.submitComment = async function() {
+async function submitComment() {
     const commentInput = document.getElementById('commentInput');
     const ratingInput = document.querySelector('input[name="rating"]:checked');
     
+    if (!commentInput || !ratingInput) return;
+    
     const comment = commentInput.value.trim();
     const rating = parseInt(ratingInput.value);
-
+    
     if (!comment) {
-        showNotification('Le commentaire ne peut pas être vide', 'error');
+        afficherNotification('Le commentaire ne peut pas être vide', 'error');
         return;
     }
-
+    
+    if (!currentProduct) return;
+    
     const userName = getUserName();
-
+    
     try {
         const { data, error } = await supabase
             .from('product_comments')
             .insert({
-                product_id: productId,
+                product_id: currentProduct.id,
                 user_id: currentUserId,
                 user_name: userName,
                 comment: comment,
@@ -1319,338 +1504,744 @@ window.submitComment = async function() {
             })
             .select()
             .single();
-
-        if (error) throw error;
-
-        productComments.unshift(data);
-        updateCommentsUI();
-        commentInput.value = '';
         
-        showNotification('Commentaire ajouté !', 'success');
-
-        setTimeout(() => {
-            document.getElementById('commentsList').scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
-            });
-        }, 300);
+        if (error) throw error;
+        
+        // Ajouter le nouveau commentaire en haut de la liste
+        productComments.unshift(data);
+        
+        // Réinitialiser le formulaire
+        commentInput.value = '';
+        document.querySelector('input[name="rating"][value="5"]').checked = true;
+        
+        // Réafficher les commentaires
+        afficherCommentaires();
+        afficherEngagement();
+        
+        afficherNotification('Commentaire ajouté !', 'success');
     } catch (error) {
         console.error('Erreur ajout commentaire:', error);
-        showNotification('Erreur lors de l\'ajout du commentaire', 'error');
+        afficherNotification('Erreur lors de l\'ajout du commentaire', 'error');
     }
-};
+}
 
-// ==================== SCROLL COMMENTAIRES ====================
 window.scrollToComments = function() {
     const commentsSection = document.getElementById('commentsSection');
     if (commentsSection) {
         commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(() => {
-            document.getElementById('commentInput').focus();
-        }, 500);
     }
 };
-// ==================== AFFICHER PRODUIT ====================
-function afficherProduit() {
-    if (!currentProduct) return;
 
-    document.getElementById('headerTitle').textContent = currentProduct.nom;
-    document.getElementById('productName').textContent = currentProduct.nom;
-    document.getElementById('productCategory').textContent = `📦 ${currentProduct.categorie}`;
-    document.getElementById('productPrice').textContent = formatPrice(currentProduct.prix);
-    document.getElementById('productDescription').textContent = currentProduct.description;
+// Export des fonctions
+window.afficherProduit = afficherProduit;
+window.toggleLike = toggleLike;
+window.submitComment = submitComment;
+window.initialiserCarousel = initialiserCarousel;
+// ==================== PARTIE 3/4 : PAIEMENT & WHATSAPP ====================
 
-    // Stock
-    const stockIcon = document.getElementById('stockIcon');
-    const stockText = document.getElementById('stockText');
-    const stockQuantity = document.getElementById('stockQuantity');
-
-    if (currentProduct.stock > 0) {
-        stockIcon.textContent = '✅';
-        stockText.textContent = 'En stock';
-        stockQuantity.textContent = `• ${currentProduct.stock} disponibles`;
-    } else {
-        stockIcon.textContent = '❌';
-        stockText.textContent = 'Rupture de stock';
-        stockQuantity.style.display = 'none';
-    }
-
-    // Images
-    allImages = [currentProduct.mainImage];
-    if (currentProduct.descriptionImages && currentProduct.descriptionImages.length > 0) {
-        allImages = [...allImages, ...currentProduct.descriptionImages];
-    }
-
-    afficherCarrousel();
-}
-
-// ==================== CARROUSEL ====================
-function afficherCarrousel() {
-    const mainImage = document.getElementById('mainImage');
-    const thumbnailsContainer = document.getElementById('thumbnailsContainer');
-    const imageCounter = document.getElementById('imageCounter');
-
-    mainImage.src = allImages[currentImageIndex];
-    imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
-
-    thumbnailsContainer.innerHTML = '';
-    allImages.forEach((img, index) => {
-        const thumbnail = document.createElement('img');
-        thumbnail.src = img;
-        thumbnail.className = `thumbnail ${index === currentImageIndex ? 'active' : ''}`;
-        thumbnail.onclick = () => {
-            currentImageIndex = index;
-            afficherCarrousel();
-        };
-        thumbnailsContainer.appendChild(thumbnail);
+// ==================== INITIALISER BOUTONS D'ACTION ====================
+function initialiserBoutonsAction() {
+    // Bouton retour
+    document.getElementById('btnBack').addEventListener('click', () => {
+        window.history.back();
     });
-
-    mainImage.onclick = () => {
-        mainImage.classList.toggle('zoom');
-    };
+    
+    // Bouton partage
+    document.getElementById('btnShare').addEventListener('click', partagerProduit);
+    
+    // Bouton like
+    document.getElementById('btnLike').addEventListener('click', toggleLike);
+    
+    // Bouton acheter
+    document.getElementById('btnAcheter').addEventListener('click', ouvrirModalPaiement);
+    
+    // Bouton WhatsApp
+    document.getElementById('btnWhatsApp').addEventListener('click', contacterWhatsApp);
+    
+    // Bouton boutique
+    document.getElementById('btnBoutique').addEventListener('click', allerBoutique);
+    
+    console.log('✅ Boutons d\'action initialisés');
 }
 
-// ==================== FORMAT PRIX ====================
-function formatPrice(price) {
-    const devise = parametres?.paiement?.devise || 'FCFA';
-    return `${price.toLocaleString('fr-FR')} ${devise}`;
-}
-
-// ==================== WHATSAPP ====================
-async function envoyerViaWhatsApp() {
-    try {
-        if (!currentProduct) {
-            showNotification('Produit non disponible', 'error');
-            return;
+// ==================== PARTAGER PRODUIT ====================
+async function partagerProduit() {
+    if (!currentProduct) return;
+    
+    const url = window.location.href;
+    const text = `Découvrez ${currentProduct.nom} sur ODA Marketplace`;
+    
+    // Utiliser l'API Web Share si disponible
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: currentProduct.nom,
+                text: text,
+                url: url
+            });
+            console.log('✅ Partage réussi');
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Erreur partage:', error);
+            }
         }
-
-        let telephone = parametres?.contact?.whatsapp || 
-                       parametres?.general?.telephone || 
-                       parametres?.contact?.telephone || '';
-
-        if (!telephone) {
-            showNotification('Numéro WhatsApp non configuré', 'error');
-            return;
+    } else {
+        // Fallback : copier le lien
+        try {
+            await navigator.clipboard.writeText(url);
+            afficherNotification('Lien copié dans le presse-papiers !', 'success');
+        } catch (error) {
+            afficherNotification('Impossible de copier le lien', 'error');
         }
-
-        const cleanPhone = telephone.replace(/[^0-9+]/g, '');
-        const shopName = parametres?.general?.nom || 'Boutique';
-
-        let message = `╔═══════════════════╗
-   🛍️ DEMANDE DE RENSEIGNEMENT
-╚═══════════════════╝
-
-📦 *${currentProduct.nom}*
-
-🏪 Boutique: ${shopName}
-💰 Prix: ${formatPrice(currentProduct.prix)}
-📊 Stock: ${currentProduct.stock} disponible(s)
-🏷️ Catégorie: ${currentProduct.categorie || 'Divers'}
-
-${currentProduct.description ? `📝 Description:\n${currentProduct.description}\n` : ''}
-━━━━━━━━━━━━━━━━━━━━━
-
-📸 IMAGES DU PRODUIT (${allImages.length}):
-`;
-
-        allImages.forEach((imageUrl, index) => {
-            message += `\n🖼️ Image ${index + 1}:\n${imageUrl}\n`;
-        });
-
-        message += `
-━━━━━━━━━━━━━━━━━━━━━
-
-💬 Bonjour, je suis intéressé(e) par ce produit.
-Pouvez-vous me donner plus d'informations ?
-
-✨ Merci !`;
-
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-        
-        window.open(whatsappUrl, '_blank');
-        showNotification('✅ Redirection vers WhatsApp...', 'success');
-
-    } catch (error) {
-        console.error('Erreur envoi WhatsApp:', error);
-        showNotification('Erreur lors de l\'envoi vers WhatsApp', 'error');
     }
 }
 
-// ==================== OPTIONS PAIEMENT ====================
-function genererOptionsPayment() {
-    const container = document.getElementById('paymentMethods');
-    container.innerHTML = '';
-
-    const methodesActives = [];
-
-    if (parametres?.paiement?.carte?.actif && parametres?.paiement?.carte?.confirme) {
-        methodesActives.push({
-            id: 'card',
-            name: 'Carte bancaire',
-            desc: 'Visa, Mastercard',
-            icon: '💳'
-        });
-    }
-
-    if (parametres?.paiement?.mobile?.actif && parametres?.paiement?.mobile?.mtn?.actif) {
-        methodesActives.push({
-            id: 'mtn',
-            name: 'MTN Money',
-            desc: 'Paiement mobile MTN',
-            icon: '📱'
-        });
-    }
-
-    if (parametres?.paiement?.mobile?.actif && parametres?.paiement?.mobile?.orange?.actif) {
-        methodesActives.push({
-            id: 'orange',
-            name: 'Orange Money',
-            desc: 'Paiement mobile Orange',
-            icon: '🟠'
-        });
-    }
-
-    if (parametres?.paiement?.cash?.actif && parametres?.paiement?.cash?.confirme) {
-        methodesActives.push({
-            id: 'cash',
-            name: 'Paiement à la livraison',
-            desc: 'Payez en espèces',
-            icon: '💵'
-        });
-    }
-
-    if (methodesActives.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Aucun mode de paiement configuré</p>';
+// ==================== CONTACTER SUR WHATSAPP ====================
+function contacterWhatsApp() {
+    if (!currentProduct) return;
+    
+    const telephone = shopConfig?.general?.telephone || '';
+    
+    if (!telephone) {
+        afficherNotification('Numéro WhatsApp non disponible', 'error');
         return;
     }
+    
+    // Nettoyer le numéro de téléphone
+    const phoneNumber = telephone.replace(/\D/g, '');
+    
+    const message = encodeURIComponent(
+        `Bonjour, je suis intéressé(e) par ce produit :\n\n` +
+        `📦 ${currentProduct.nom}\n` +
+        `💰 ${formatPrice(currentProduct.prix, shopConfig?.paiement?.devise || 'FCFA')}\n\n` +
+        `Lien : ${window.location.href}`
+    );
+    
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    console.log('📱 WhatsApp ouvert');
+}
 
-    methodesActives.forEach(method => {
-        const option = document.createElement('div');
-        option.className = 'payment-option';
-        option.dataset.method = method.id;
+// ==================== ALLER À LA BOUTIQUE ====================
+async function allerBoutique() {
+    if (!currentProduct) return;
+    
+    try {
+        // 1️⃣ Essayer d'abord avec le slug du shopConfig
+        let slug = shopConfig?.identifiant?.slug;
         
-        option.innerHTML = `
-            <div class="payment-icon">${method.icon}</div>
-            <div class="payment-info">
-                <div class="payment-name">${method.name}</div>
-                <div class="payment-desc">${method.desc}</div>
+        // 2️⃣ Si pas de slug dans shopConfig, charger depuis Supabase
+        if (!slug) {
+            console.log('🔍 Recherche de l\'identifiant boutique...');
+            
+            const { data, error } = await supabase
+                .from('parametres_boutique')
+                .select('config')
+                .eq('user_id', currentProduct.user_id)
+                .single();
+            
+            if (data && !error) {
+                slug = data.config?.identifiant?.slug;
+            }
+        }
+        
+        // 3️⃣ Si toujours pas de slug, essayer avec user_id
+        if (!slug) {
+            console.log('⚠️ Aucun slug trouvé, utilisation de user_id');
+            slug = currentProduct.user_id;
+        }
+        
+        // 4️⃣ Rediriger vers la boutique
+        if (slug) {
+            const urlBoutique = `${window.location.origin}/boutique.html?shop=${slug}`;
+            console.log(`🏪 Redirection vers: ${urlBoutique}`);
+            window.location.href = urlBoutique;
+        } else {
+            throw new Error('Impossible de trouver l\'identifiant de la boutique');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur redirection boutique:', error);
+        afficherNotification('Boutique non disponible', 'error');
+    }
+}
+
+// ==================== MODAL PAIEMENT ====================
+async function ouvrirModalPaiement() {
+    if (!currentProduct) return;
+    
+    // Vérifier le stock
+    if (currentProduct.stock <= 0) {
+        afficherNotification('Ce produit n\'est plus en stock', 'error');
+        return;
+    }
+    
+    const modal = document.getElementById('paymentModal');
+    const devise = shopConfig?.paiement?.devise || 'FCFA';
+    
+    // Charger les paramètres de livraison
+    await chargerParametresLivraison();
+    
+    // Remplir le résumé de commande
+    mettreAJourResumePaiement(devise);
+    
+    // Générer les options de paiement
+    genererOptionsPaiement();
+    
+    modal.classList.add('active');
+    console.log('💳 Modal paiement ouverte');
+}
+
+function mettreAJourResumePaiement(devise) {
+    const fraisLivraison = calculerFraisLivraison();
+    const total = calculerTotalAvecLivraison();
+    
+    // Mettre à jour le contenu du résumé
+    const orderSummary = document.querySelector('.order-summary');
+    if (orderSummary) {
+        orderSummary.innerHTML = `
+            <div class="summary-item">
+                <span>Produit</span>
+                <span>${currentProduct.nom}</span>
+            </div>
+            <div class="summary-item">
+                <span>Prix unitaire</span>
+                <span>${formatPrice(currentProduct.prix, devise)}</span>
+            </div>
+            <div class="summary-item">
+                <span>Frais de livraison</span>
+                <span style="color: ${fraisLivraison === 0 ? 'var(--success-color)' : 'var(--text-primary)'}">
+                    ${fraisLivraison === 0 ? 'GRATUIT 🎁' : formatPrice(fraisLivraison, devise)}
+                </span>
+            </div>
+            ${fraisLivraison === 0 ? `
+                <div class="summary-item" style="color: var(--success-color); font-size: 0.85rem;">
+                    <span colspan="2">✨ Livraison gratuite activée !</span>
+                </div>
+            ` : ''}
+            <div class="summary-total">
+                <span>Total</span>
+                <span style="color: var(--primary-color);">${formatPrice(total, devise)}</span>
             </div>
         `;
-
-        option.onclick = () => {
-            document.querySelectorAll('.payment-option').forEach(opt => {
-                opt.classList.remove('active');
-            });
-            option.classList.add('active');
-            selectedPaymentMethod = method.id;
-        };
-
-        container.appendChild(option);
-    });
+    }
 }
 
-// ==================== EVENT LISTENERS ====================
-document.getElementById('btnShare').onclick = async () => {
-    const shareData = {
-        title: currentProduct.nom,
-        text: `${currentProduct.nom} - ${formatPrice(currentProduct.prix)}`,
-        url: window.location.href
-    };
+function fermerModalPaiement() {
+    const modal = document.getElementById('paymentModal');
+    modal.classList.remove('active');
+}
 
+// ==================== CHARGEMENT PARAMÈTRES LIVRAISON ====================
+async function chargerParametresLivraison() {
     try {
-        if (navigator.share) {
-            await navigator.share(shareData);
+        // 1️⃣ Essayer depuis shopConfig
+        if (shopConfig?.livraison) {
+            window.parametresLivraison = shopConfig.livraison;
+            console.log('📦 Paramètres livraison depuis shopConfig');
+            return;
+        }
+        
+        // 2️⃣ Charger depuis Supabase
+        const { data, error } = await supabase
+            .from('parametres_boutique')
+            .select('config')
+            .eq('user_id', currentProduct.user_id)
+            .single();
+        
+        if (data && !error) {
+            window.parametresLivraison = data.config.livraison || getDefaultLivraisonConfig();
+            console.log('📦 Paramètres livraison depuis Supabase');
         } else {
-            await navigator.clipboard.writeText(window.location.href);
-            showNotification('Lien copié !', 'success');
+            window.parametresLivraison = getDefaultLivraisonConfig();
+            console.log('📦 Paramètres livraison par défaut');
         }
     } catch (error) {
-        console.log('Erreur partage:', error);
+        console.error('Erreur chargement paramètres livraison:', error);
+        window.parametresLivraison = getDefaultLivraisonConfig();
     }
+}
+
+function getDefaultLivraisonConfig() {
+    return {
+        fraisDouala: 1000,
+        fraisAutres: 2500,
+        delai: '2-5 jours',
+        gratuit: false,
+        montantMin: 50000,
+        zonesPersonnalisees: []
+    };
+}
+
+// ==================== CALCUL TOTAL AVEC LIVRAISON ====================
+function calculerTotalAvecLivraison() {
+    if (!currentProduct) return 0;
+    
+    const prixProduit = currentProduct.prix;
+    const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
+    
+    // Vérifier si livraison gratuite
+    if (livraison.gratuit && prixProduit >= livraison.montantMin) {
+        console.log('🎁 Livraison gratuite appliquée');
+        return prixProduit;
+    }
+    
+    // Frais de livraison par défaut (Douala)
+    const fraisLivraison = livraison.fraisDouala || 1000;
+    const total = prixProduit + fraisLivraison;
+    
+    console.log(`📦 Total: ${prixProduit} + ${fraisLivraison} = ${total}`);
+    return total;
+}
+
+// ==================== GÉNÉRER OPTIONS DE PAIEMENT ====================
+function genererOptionsPaiement() {
+    const container = document.getElementById('paymentMethods');
+    const paiementConfig = shopConfig?.paiement || {};
+    
+    const options = [];
+    
+    // Mobile Money (Orange Money, MTN MoMo)
+    if (paiementConfig.mobile?.actif) {
+        options.push({
+            id: 'mobile',
+            icon: '📱',
+            name: 'Mobile Money',
+            desc: 'Orange Money, MTN MoMo'
+        });
+    }
+    
+    // Carte bancaire
+    if (paiementConfig.carte?.actif) {
+        options.push({
+            id: 'carte',
+            icon: '💳',
+            name: 'Carte bancaire',
+            desc: 'Visa, Mastercard'
+        });
+    }
+    
+    // Paiement à la livraison
+    if (paiementConfig.cash?.actif) {
+        options.push({
+            id: 'cash',
+            icon: '💵',
+            name: 'À la livraison',
+            desc: 'Paiement en espèces'
+        });
+    }
+    
+    // Si aucune option n'est active, afficher toutes par défaut
+    if (options.length === 0) {
+        options.push(
+            { id: 'mobile', icon: '📱', name: 'Mobile Money', desc: 'Orange Money, MTN MoMo' },
+            { id: 'cash', icon: '💵', name: 'À la livraison', desc: 'Paiement en espèces' }
+        );
+    }
+    
+    container.innerHTML = options.map((option, index) => `
+        <div class="payment-option ${index === 0 ? 'active' : ''}" 
+             data-payment-id="${option.id}"
+             onclick="selectionnerPaiement('${option.id}')">
+            <div class="payment-icon">${option.icon}</div>
+            <div class="payment-info">
+                <div class="payment-name">${option.name}</div>
+                <div class="payment-desc">${option.desc}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.selectionnerPaiement = function(paymentId) {
+    document.querySelectorAll('.payment-option').forEach(option => {
+        option.classList.toggle('active', option.dataset.paymentId === paymentId);
+    });
 };
 
-document.getElementById('btnBack').onclick = () => {
-    const referrer = document.referrer;
-    if (referrer && referrer.includes(window.location.origin)) {
-        window.history.back();
-    } else {
-        if (shopIdentifier) {
-            window.location.href = `oda-achats.html?shop=${shopIdentifier}`;
-        } else {
-            window.location.href = 'oda-achats.html';
-        }
-    }
-};
-
-document.getElementById('btnBoutique').onclick = () => {
-    if (shopIdentifier) {
-        window.location.href = `boutique.html?shop=${shopIdentifier}`;
-    } else {
-        window.location.href = 'boutique.html';
-    }
-};
-
-document.getElementById('btnWhatsApp').onclick = envoyerViaWhatsApp;
-
-document.getElementById('btnAcheter').onclick = () => {
-    if (currentProduct.stock <= 0) {
-        showNotification('Produit en rupture de stock', 'error');
+// ==================== CONFIRMER PAIEMENT ====================
+async function confirmerPaiement() {
+    const selectedPayment = document.querySelector('.payment-option.active');
+    
+    if (!selectedPayment) {
+        afficherNotification('Veuillez sélectionner un mode de paiement', 'error');
         return;
     }
-
-    document.getElementById('summaryProductName').textContent = currentProduct.nom;
-    document.getElementById('summaryPrice').textContent = formatPrice(currentProduct.prix);
-    document.getElementById('summaryTotal').textContent = formatPrice(currentProduct.prix);
-
-    genererOptionsPayment();
-
-    document.getElementById('paymentModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-};
-
-document.getElementById('btnCloseModal').onclick = () => {
-    document.getElementById('paymentModal').classList.remove('active');
-    document.body.style.overflow = 'auto';
-};
-
-document.getElementById('btnConfirmPayment').onclick = () => {
-    if (!selectedPaymentMethod) {
-        showNotification('Veuillez choisir un mode de paiement', 'error');
-        return;
-    }
-
-    const commande = {
+    
+    const paymentId = selectedPayment.dataset.paymentId;
+    
+    // Préparer les données de commande
+    const commandeData = {
         produit: {
             id: currentProduct.id,
             nom: currentProduct.nom,
             prix: currentProduct.prix,
-            image: currentProduct.mainImage,
-            quantite: 1
+            image: currentProduct.main_image,
+            vendeur_id: currentProduct.user_id
         },
-        montantTotal: currentProduct.prix,
-        methodePaiement: selectedPaymentMethod,
-        dateCreation: new Date().toISOString()
+        paiement: {
+            methode: paymentId,
+            devise: shopConfig?.paiement?.devise || 'FCFA'
+        },
+        livraison: {
+            frais: calculerFraisLivraison(),
+            delai: window.parametresLivraison?.delai || '2-5 jours'
+        },
+        total: calculerTotalAvecLivraison(),
+        boutique: {
+            nom: shopConfig?.general?.nom || 'Boutique',
+            slug: shopConfig?.identifiant?.slug,
+            telephone: shopConfig?.general?.telephone,
+            email: shopConfig?.general?.email
+        },
+        timestamp: new Date().toISOString()
     };
-
-    sessionStorage.setItem('commande_en_cours', JSON.stringify(commande));
-
-    showNotification('Redirection vers le paiement...', 'success');
+    
+    // Sauvegarder dans sessionStorage pour payment.html
+    sessionStorage.setItem('commande_en_cours', JSON.stringify(commandeData));
+    
+    console.log('📦 Commande préparée:', commandeData);
+    
+    // Rediriger vers payment.html
+    afficherNotification('Redirection vers le paiement...', 'info');
+    
     setTimeout(() => {
-        window.location.href = 'payement.html';
-    }, 1000);
-};
-
-document.getElementById('btnLike').onclick = toggleLike;
-
-// ==================== INITIALISATION ====================
-async function init() {
-    await chargerParametres();
-    await chargerProduit();
-    document.getElementById('loader').style.display = 'none';
+        window.location.href = `payment.html?product=${currentProduct.id}&method=${paymentId}`;
+    }, 500);
 }
 
-init();
-   </script>
+function calculerFraisLivraison() {
+    const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
+    const prixProduit = currentProduct?.prix || 0;
+    
+    // Vérifier si livraison gratuite
+    if (livraison.gratuit && prixProduit >= livraison.montantMin) {
+        return 0;
+    }
+    
+    // Frais par défaut (Douala)
+    return livraison.fraisDouala || 1000;
+}
+
+function creerMessageCommande(paymentMethod) {
+    const methodNames = {
+        mobile: 'Mobile Money',
+        carte: 'Carte bancaire',
+        cash: 'Paiement à la livraison'
+    };
+    
+    const devise = shopConfig?.paiement?.devise || 'FCFA';
+    const fraisLivraison = calculerFraisLivraison();
+    const total = calculerTotalAvecLivraison();
+    
+    return `🛒 NOUVELLE COMMANDE\n\n` +
+           `📦 Produit : ${currentProduct.nom}\n` +
+           `💰 Prix : ${formatPrice(currentProduct.prix, devise)}\n` +
+           `🚚 Livraison : ${fraisLivraison > 0 ? formatPrice(fraisLivraison, devise) : 'GRATUITE'}\n` +
+           `💳 Total : ${formatPrice(total, devise)}\n` +
+           `💳 Paiement : ${methodNames[paymentMethod] || paymentMethod}\n\n` +
+           `🔗 Lien : ${window.location.href}\n\n` +
+           `Je souhaite commander ce produit. Merci de me contacter pour finaliser la commande.`;
+}
+
+// ==================== INITIALISER MODAL ====================
+function initialiserModal() {
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnConfirmPayment = document.getElementById('btnConfirmPayment');
+    const modal = document.getElementById('paymentModal');
+    
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener('click', fermerModalPaiement);
+    }
+    
+    if (btnConfirmPayment) {
+        btnConfirmPayment.addEventListener('click', confirmerPaiement);
+    }
+    
+    // Fermer au clic sur le backdrop
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                fermerModalPaiement();
+            }
+        });
+    }
+    
+    console.log('✅ Modal paiement initialisée');
+}
+
+// Export des fonctions
+window.initialiserBoutonsAction = initialiserBoutonsAction;
+window.initialiserModal = initialiserModal;
+window.ouvrirModalPaiement = ouvrirModalPaiement;
+window.fermerModalPaiement = fermerModalPaiement;
+window.confirmerPaiement = confirmerPaiement;
+window.partagerProduit = partagerProduit;
+window.contacterWhatsApp = contacterWhatsApp;
+window.allerBoutique = allerBoutique;
+// ==================== PARTIE 4/4 : INITIALISATION COMPLÈTE ====================
+
+// ==================== INITIALISATION PRINCIPALE ====================
+async function initialiserPageProduit() {
+    try {
+        console.log('🚀 Initialisation de la page produit...');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // 1️⃣ Charger le produit
+        await chargerProduit();
+        console.log('✅ 1/4 - Produit chargé');
+        
+        // 2️⃣ Initialiser les boutons d'action
+        initialiserBoutonsAction();
+        console.log('✅ 2/4 - Boutons d\'action initialisés');
+        
+        // 3️⃣ Initialiser la modal de paiement
+        initialiserModal();
+        console.log('✅ 3/4 - Modal paiement initialisée');
+        
+        // 4️⃣ Initialiser les événements supplémentaires
+        initialiserEvenementsSupplementaires();
+        console.log('✅ 4/4 - Événements supplémentaires initialisés');
+        
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('✨ Page produit complètement initialisée !');
+        console.log('📦 Produit:', currentProduct?.nom || 'Non chargé');
+        console.log('🏪 Boutique:', shopConfig?.general?.nom || 'Non configurée');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation:', error);
+        afficherNotification('Erreur lors de l\'initialisation de la page', 'error');
+    }
+}
+
+// ==================== ÉVÉNEMENTS SUPPLÉMENTAIRES ====================
+function initialiserEvenementsSupplementaires() {
+    // Gestion du bouton Escape pour fermer la modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('paymentModal');
+            if (modal && modal.classList.contains('active')) {
+                fermerModalPaiement();
+            }
+        }
+    });
+    
+    // Prévenir le zoom lors du double tap sur mobile
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 300 && tapLength > 0) {
+            e.preventDefault();
+        }
+        
+        lastTap = currentTime;
+    });
+    
+    // Lazy loading des images
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        imageObserver.unobserve(img);
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+    
+    console.log('✅ Événements supplémentaires initialisés');
+}
+
+// ==================== GESTION DES ERREURS GLOBALES ====================
+window.addEventListener('error', (event) => {
+    console.error('❌ Erreur globale:', event.error);
+    
+    // Ne pas afficher de notification pour les erreurs d'images
+    if (event.target.tagName === 'IMG') {
+        return;
+    }
+});
+
+// ==================== GESTION DE LA NAVIGATION ====================
+window.addEventListener('popstate', () => {
+    // Gérer le retour arrière
+    const modal = document.getElementById('paymentModal');
+    if (modal && modal.classList.contains('active')) {
+        fermerModalPaiement();
+        history.pushState(null, null, window.location.href);
+    }
+});
+
+// ==================== ANALYTICS (OPTIONNEL) ====================
+function enregistrerVueProduit() {
+    if (!currentProduct) return;
+    
+    try {
+        // Enregistrer la vue dans localStorage pour analytics
+        const vues = JSON.parse(localStorage.getItem('product_views') || '{}');
+        const productId = currentProduct.id;
+        
+        if (!vues[productId]) {
+            vues[productId] = {
+                count: 0,
+                firstView: new Date().toISOString(),
+                lastView: new Date().toISOString()
+            };
+        }
+        
+        vues[productId].count++;
+        vues[productId].lastView = new Date().toISOString();
+        
+        localStorage.setItem('product_views', JSON.stringify(vues));
+        
+        console.log(`📊 Vue enregistrée (${vues[productId].count} vues)`);
+    } catch (error) {
+        console.error('Erreur analytics:', error);
+    }
+}
+
+// ==================== RAFRAÎCHISSEMENT AUTOMATIQUE ====================
+let refreshInterval;
+
+function demarrerRafraichissement() {
+    // Rafraîchir les likes et commentaires toutes les 30 secondes
+    refreshInterval = setInterval(async () => {
+        if (currentProduct) {
+            await Promise.all([
+                chargerLikes(currentProduct.id),
+                chargerCommentaires(currentProduct.id)
+            ]);
+            
+            afficherEngagement();
+            afficherCommentaires();
+            
+            console.log('🔄 Données rafraîchies');
+        }
+    }, 30000);
+}
+
+function arreterRafraichissement() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+}
+
+// Arrêter le rafraîchissement quand l'utilisateur quitte la page
+window.addEventListener('beforeunload', arreterRafraichissement);
+
+// ==================== FONCTIONS DE DEBUG ====================
+window.debugProduit = function() {
+    console.log('🔍 DEBUG PRODUIT');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('Produit actuel:', currentProduct);
+    console.log('Configuration boutique:', shopConfig);
+    console.log('Likes:', productLikes);
+    console.log('Commentaires:', productComments.length);
+    console.log('User ID:', currentUserId);
+    console.log('Images:', allImages);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+};
+
+window.forceReload = async function() {
+    console.log('🔄 Rechargement forcé...');
+    await chargerProduit();
+    afficherNotification('Données rechargées', 'success');
+};
+
+// ==================== DÉTECTION MODE PWA ====================
+function detecterModePWA() {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                  window.navigator.standalone === true;
+    
+    if (isPWA) {
+        console.log('📱 Application lancée en mode PWA');
+        document.body.classList.add('pwa-mode');
+        
+        // Cacher le bouton partage si en PWA (car déjà dans l'app)
+        const btnShare = document.getElementById('btnShare');
+        if (btnShare && navigator.share) {
+            btnShare.style.display = 'flex';
+        }
+    }
+}
+
+// ==================== VÉRIFIER COMPATIBILITÉ ====================
+function verifierCompatibilite() {
+    const features = {
+        webShare: 'share' in navigator,
+        clipboard: 'clipboard' in navigator,
+        serviceWorker: 'serviceWorker' in navigator,
+        localStorage: typeof Storage !== 'undefined'
+    };
+    
+    console.log('🔍 Fonctionnalités disponibles:');
+    Object.entries(features).forEach(([feature, available]) => {
+        console.log(`  ${available ? '✅' : '❌'} ${feature}`);
+    });
+    
+    if (!features.localStorage) {
+        console.warn('⚠️ localStorage non disponible, certaines fonctionnalités seront limitées');
+    }
+}
+
+// ==================== INITIALISATION AU CHARGEMENT DU DOM ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('📄 DOM chargé, démarrage de l\'initialisation...');
+    
+    // Vérifier compatibilité
+    verifierCompatibilite();
+    
+    // Détecter mode PWA
+    detecterModePWA();
+    
+    // Initialiser la page
+    await initialiserPageProduit();
+    
+    // Enregistrer la vue
+    enregistrerVueProduit();
+    
+    // Démarrer le rafraîchissement automatique
+    demarrerRafraichissement();
+});
+
+// ==================== GESTION DU CYCLE DE VIE ====================
+// Pause le rafraîchissement quand la page n'est pas visible
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        arreterRafraichissement();
+        console.log('⏸️ Rafraîchissement en pause');
+    } else {
+        demarrerRafraichissement();
+        console.log('▶️ Rafraîchissement repris');
+    }
+});
+
+// ==================== CONSOLE LOG STYLISÉ FINAL ====================
+console.log('%c🛒 PAGE PRODUIT CHARGÉE', 'color: #FF6B00; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);');
+console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #FF6B00;');
+console.log('%c✨ Tapez debugProduit() pour voir les détails', 'color: #34C759; font-size: 12px;');
+console.log('%c🔄 Tapez forceReload() pour recharger', 'color: #34C759; font-size: 12px;');
+console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #FF6B00;');
+
+// ==================== EXPORT FINAL ====================
+window.initialiserPageProduit = initialiserPageProduit;
+window.enregistrerVueProduit = enregistrerVueProduit;
+window.demarrerRafraichissement = demarrerRafraichissement;
+window.arreterRafraichissement = arreterRafraichissement;
+
+console.log('📦 Tous les modules JavaScript chargés avec succès');
+</script>
 </body>
 </html>

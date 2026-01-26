@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#FF6B00">
-    <title>Détails du Produit</title>
+    <title>Détails du Produit - ODA Marketplace</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" type="image/png" href="oda.png">
     <style>
-        /* ==================== VARIABLES ==================== */
+        /* ==================== VARIABLES CSS ==================== */
         :root {
             --primary-color: #FF6B00;
             --primary-dark: #E55D00;
@@ -45,6 +45,34 @@
             overflow-x: hidden;
         }
 
+        /* ==================== LOADER ==================== */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* ==================== HEADER ==================== */
         .header {
             position: fixed;
@@ -60,7 +88,7 @@
             justify-content: space-between;
         }
 
-        .btn-back {
+        .btn-back, .btn-share {
             width: 44px;
             height: 44px;
             border-radius: var(--radius-md);
@@ -74,7 +102,7 @@
             transition: var(--transition);
         }
 
-        .btn-back:active {
+        .btn-back:active, .btn-share:active {
             transform: scale(0.95);
             background: var(--border-color);
         }
@@ -91,25 +119,6 @@
             text-overflow: ellipsis;
         }
 
-        .btn-share {
-            width: 44px;
-            height: 44px;
-            border-radius: var(--radius-md);
-            border: none;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .btn-share:active {
-            transform: scale(0.95);
-            background: var(--border-color);
-        }
-
         /* ==================== CARROUSEL VERTICAL ==================== */
         .carousel-container {
             margin-top: 72px;
@@ -123,6 +132,7 @@
             padding-top: 100%;
             background: var(--bg-secondary);
             overflow: hidden;
+            cursor: zoom-in;
         }
 
         .main-image {
@@ -137,6 +147,7 @@
 
         .main-image.zoom {
             transform: scale(1.5);
+            cursor: zoom-out;
         }
 
         .image-counter {
@@ -150,6 +161,7 @@
             font-size: 0.85rem;
             font-weight: 600;
             backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
         .thumbnails-container {
@@ -265,7 +277,7 @@
             font-size: 0.95rem;
         }
 
-        /* Engagement Section */
+        /* ==================== ENGAGEMENT ==================== */
         .engagement-section {
             background: var(--bg-primary);
             padding: 20px 24px;
@@ -329,7 +341,7 @@
             color: var(--error-color);
         }
 
-        /* Comments Section */
+        /* ==================== COMMENTAIRES ==================== */
         .comments-section {
             background: var(--bg-primary);
             padding: 24px;
@@ -395,8 +407,8 @@
             transition: all 0.3s ease;
         }
 
-        .btn-submit-comment:active {
-            transform: translateY(-2px);
+        .btn-submit-comment:hover {
+            background: var(--primary-dark);
         }
 
         .comments-list {
@@ -409,7 +421,6 @@
             padding: 16px;
             background: var(--bg-secondary);
             border-radius: var(--radius-md);
-            transition: all 0.3s ease;
         }
 
         .comment-header {
@@ -464,6 +475,59 @@
             color: var(--text-secondary);
         }
 
+        /* ==================== BOUTIQUE ==================== */
+        .shop-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .shop-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .shop-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .shop-details h3 {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+
+        .shop-details p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .btn-visit-shop {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            color: var(--primary-color);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-visit-shop:active {
+            transform: translateY(-2px);
+        }
+
         /* ==================== BOUTONS D'ACTION ==================== */
         .action-buttons {
             position: fixed;
@@ -500,237 +564,38 @@
 
         .btn-primary:active {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #25D366, #128C7E);
+            background: #25D366;
             color: white;
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
         }
 
         .btn-secondary:active {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
         }
 
-        .btn-boutique {
-            width: 100%;
-            padding: 14px;
-            background: white;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-boutique:active {
-            transform: scale(0.98);
-            border-color: var(--primary-color);
-            background: var(--bg-secondary);
-        }
-
-        /* ==================== MODAL PAIEMENT ==================== */
-        .payment-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            z-index: 3000;
-            display: none;
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .payment-modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--bg-primary);
-            width: 100%;
-            max-height: 85vh;
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease;
-            position: relative;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .modal-header {
-            position: sticky;
-            top: 0;
-            background: var(--bg-primary);
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-
-        .btn-close-modal {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        .order-summary {
-            background: linear-gradient(135deg, rgba(255, 107, 0, 0.05), rgba(255, 107, 0, 0.1));
-            padding: 20px;
-            border-radius: var(--radius-md);
-            margin-bottom: 24px;
-            border: 2px solid rgba(255, 107, 0, 0.2);
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-        }
-
-        .summary-total {
-            display: flex;
-            justify-content: space-between;
-            padding-top: 12px;
-            margin-top: 12px;
-            border-top: 2px solid rgba(255, 107, 0, 0.3);
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-
-        .payment-methods {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .payment-option {
-            padding: 16px;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .payment-option:active {
-            transform: scale(0.98);
-        }
-
-        .payment-option.active {
-            border-color: var(--primary-color);
-            background: rgba(255, 107, 0, 0.05);
-        }
-
-        .payment-icon {
-            width: 48px;
-            height: 48px;
-            background: white;
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .payment-info {
-            flex: 1;
-        }
-
-        .payment-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .payment-desc {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        /* ==================== LOADER ==================== */
-        .loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ==================== NOTIFICATIONS ==================== */
+        /* ==================== NOTIFICATION ==================== */
         .notification {
             position: fixed;
             top: 80px;
-            right: 16px;
-            left: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
             background: white;
-            padding: 16px;
+            padding: 16px 24px;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            z-index: 10000;
-            display: none;
-            animation: slideIn 0.3s ease;
-        }
-
-        .notification.show {
             display: flex;
             align-items: center;
             gap: 12px;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
 
         .notification.success {
@@ -741,544 +606,481 @@
             border-left: 4px solid var(--error-color);
         }
 
+        .notification.info {
+            border-left: 4px solid var(--primary-color);
+        }
+
         /* ==================== RESPONSIVE ==================== */
-        @media (min-width: 768px) {
-            .product-content {
-                max-width: 600px;
-                margin: 0 auto;
+        @media (max-width: 768px) {
+            .product-name {
+                font-size: 1.3rem;
             }
 
-            .action-buttons {
-                max-width: 600px;
-                left: 50%;
-                transform: translateX(-50%);
+            .product-price {
+                font-size: 1.7rem;
             }
 
-            .modal-content {
-                max-width: 500px;
-                border-radius: var(--radius-lg);
-                max-height: 80vh;
-            }
-
-            .payment-modal {
-                align-items: center;
+            .stat-value {
+                font-size: 1.1rem;
             }
         }
     </style>
 </head>
 <body>
     <!-- Loader -->
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
-        <div style="font-weight: 600; color: var(--primary-color);">Chargement...</div>
+    <div id="loader">
+        <div class="loader-spinner"></div>
+        <p style="margin-top: 16px; color: var(--text-secondary);">Chargement...</p>
     </div>
 
     <!-- Notification -->
-    <div class="notification" id="notification">
-        <span id="notificationIcon">✅</span>
+    <div id="notification" class="notification">
+        <span id="notificationIcon"></span>
         <span id="notificationText"></span>
     </div>
 
     <!-- Header -->
     <header class="header">
-        <button class="btn-back" id="btnBack">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <button id="btnBack" class="btn-back">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
         </button>
-        <h1 class="header-title" id="headerTitle">Détails du produit</h1>
-        <button class="btn-share" id="btnShare">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
-                <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-                <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
-                <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="currentColor" stroke-width="2"/>
+        <h1 id="headerTitle" class="header-title">Produit</h1>
+        <button id="btnShare" class="btn-share">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
         </button>
     </header>
 
     <!-- Carrousel d'images -->
     <div class="carousel-container">
-        <div class="main-image-wrapper" id="mainImageWrapper">
-            <img src="" alt="Produit" class="main-image" id="mainImage">
-            <div class="image-counter" id="imageCounter">1 / 1</div>
+        <div id="mainImageWrapper" class="main-image-wrapper">
+            <img id="mainImage" class="main-image" src="" alt="Produit">
+            <div id="imageCounter" class="image-counter">1 / 1</div>
         </div>
-        <div class="thumbnails-container" id="thumbnailsContainer">
-            <!-- Thumbnails générées dynamiquement -->
-        </div>
+        <div id="thumbnailsContainer" class="thumbnails-container"></div>
     </div>
 
     <!-- Contenu produit -->
     <div class="product-content">
+        <!-- En-tête produit -->
         <div class="product-header">
-            <h2 class="product-name" id="productName">Nom du produit</h2>
-            <span class="product-category" id="productCategory">📦 Catégorie</span>
+            <h2 id="productName" class="product-name">Nom du produit</h2>
+            <span id="productCategory" class="product-category">📦 Catégorie</span>
         </div>
 
+        <!-- Prix -->
         <div class="price-section">
-            <div class="product-price" id="productPrice">0 FCFA</div>
+            <div id="productPrice" class="product-price">0 FCFA</div>
             <div class="stock-info">
-                <span class="stock-badge">
+                <div class="stock-badge">
                     <span id="stockIcon">✅</span>
                     <span id="stockText">En stock</span>
-                </span>
-                <span id="stockQuantity">• 10 disponibles</span>
+                </div>
+                <span id="stockQuantity"></span>
             </div>
         </div>
 
+        <!-- Description -->
         <div class="description-section">
-            <h3 class="section-title">
-                <span>📝</span>
-                Description
-            </h3>
-            <p class="product-description" id="productDescription">
-                Chargement de la description...
-            </p>
+            <h3 class="section-title">📝 Description</h3>
+            <p id="productDescription" class="product-description">Chargement...</p>
         </div>
 
-        <!-- Section Engagement (Likes et Commentaires) -->
+        <!-- Engagement -->
         <div class="engagement-section">
             <div class="engagement-stats">
                 <div class="stat-item">
-                    <span class="stat-value" id="likesCount">0</span>
-                    <span class="stat-label">Likes</span>
+                    <div id="likesCount" class="stat-value">0</div>
+                    <div class="stat-label">J'aime</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value" id="commentsCount">0</span>
-                    <span class="stat-label">Commentaires</span>
+                    <div id="commentsCount" class="stat-value">0</div>
+                    <div class="stat-label">Commentaires</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value" id="averageRating">0.0</span>
-                    <span class="stat-label">⭐ Note</span>
+                    <div class="stat-value">⭐ <span id="averageRating">0.0</span></div>
+                    <div class="stat-label">Note</div>
                 </div>
             </div>
-            
             <div class="engagement-buttons">
-                <button class="btn-like" id="btnLike">
+                <button id="btnLike" class="btn-like">
                     <span id="likeIcon">🤍</span>
                     <span id="likeText">J'aime</span>
                 </button>
-                <button class="btn-comments" onclick="scrollToComments()">
+                <button onclick="scrollToComments()" class="btn-comments">
                     <span>💬</span>
                     <span>Commenter</span>
                 </button>
             </div>
         </div>
 
-        <!-- Section Commentaires -->
-        <div class="comments-section" id="commentsSection">
-            <h3 class="section-title">
-                <span>💬</span>
-                Commentaires
-            </h3>
-            
-            <div class="comment-form">
-                <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">Donner votre avis</h4>
-                <div class="rating-input">
-                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Note :</span>
-                    <label>
-                        <input type="radio" name="rating" value="5" checked>
-                        <span>⭐⭐⭐⭐⭐</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="rating" value="4">
-                        <span>⭐⭐⭐⭐</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="rating" value="3">
-                        <span>⭐⭐⭐</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="rating" value="2">
-                        <span>⭐⭐</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="rating" value="1">
-                        <span>⭐</span>
-                    </label>
+        <!-- Boutique -->
+        <div id="shopSection" class="shop-section">
+            <div class="shop-info">
+                <div class="shop-icon">🏪</div>
+                <div class="shop-details">
+                    <h3 id="shopName">Ma Boutique</h3>
+                    <p>Visitez la boutique pour plus de produits</p>
                 </div>
-                <textarea id="commentInput" placeholder="Partagez votre expérience avec ce produit..." rows="3"></textarea>
-                <button class="btn-submit-comment" onclick="submitComment()">
+            </div>
+            <button id="btnBoutique" class="btn-visit-shop">
+                🏪 Voir la boutique
+            </button>
+        </div>
+
+        <!-- Commentaires -->
+        <div id="commentsSection" class="comments-section">
+            <h3 class="section-title">💬 Commentaires</h3>
+            
+            <!-- Formulaire -->
+            <div class="comment-form">
+                <div class="rating-input">
+                    <span>Note :</span>
+                    <input type="radio" name="rating" value="1" id="star1">
+                    <label for="star1">⭐</label>
+                    <input type="radio" name="rating" value="2" id="star2">
+                    <label for="star2">⭐</label>
+                    <input type="radio" name="rating" value="3" id="star3">
+                    <label for="star3">⭐</label>
+                    <input type="radio" name="rating" value="4" id="star4">
+                    <label for="star4">⭐</label>
+                    <input type="radio" name="rating" value="5" id="star5" checked>
+                    <label for="star5">⭐</label>
+                </div>
+                <textarea id="commentInput" placeholder="Partagez votre avis sur ce produit..."></textarea>
+                <button onclick="submitComment()" class="btn-submit-comment">
                     Publier le commentaire
                 </button>
             </div>
 
-            <div class="comments-list" id="commentsList">
-                <!-- Commentaires générés dynamiquement -->
-            </div>
+            <!-- Liste des commentaires -->
+            <div id="commentsList" class="comments-list"></div>
         </div>
     </div>
 
     <!-- Boutons d'action -->
     <div class="action-buttons">
-        <button class="btn-primary" id="btnAcheter">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 2L7.17 4M15 2l1.83 2M9 20c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/>
-                <path d="M7.17 4H20l-2 9H9L7.17 4zm0 0L6 1"/>
-            </svg>
-            Acheter maintenant
+        <button id="btnAcheter" class="btn-primary">
+            🛒 Acheter maintenant
         </button>
-
-        <button class="btn-secondary" id="btnWhatsApp">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/>
-            </svg>
-            Contacter sur WhatsApp
-        </button>
-
-        <button class="btn-boutique" id="btnBoutique">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            Voir ma boutique
+        <button id="btnWhatsApp" class="btn-secondary">
+            📱 Contacter sur WhatsApp
         </button>
     </div>
-
-    <!-- Modal Paiement -->
-    <div class="payment-modal" id="paymentModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">💳 Choisir le paiement</h2>
-                <button class="btn-close-modal" id="btnCloseModal">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="order-summary">
-                    <div class="summary-item">
-                        <span>Produit</span>
-                        <span id="summaryProductName">-</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Prix unitaire</span>
-                        <span id="summaryPrice">-</span>
-                    </div>
-                    <div class="summary-total">
-                        <span>Total</span>
-                        <span id="summaryTotal" style="color: var(--primary-color);">-</span>
-                    </div>
-                </div>
-
-                <h3 style="font-weight: 700; margin-bottom: 16px;">Méthode de paiement</h3>
-                <div class="payment-methods" id="paymentMethods">
-                    <!-- Options générées dynamiquement -->
-                </div>
-
-                <button class="btn-primary" id="btnConfirmPayment" style="margin-top: 24px;">
-                    Confirmer le paiement
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-
-<script type="module">
-    // ==================== PARTIE 1/5 : CONFIGURATION & ÉTAT GLOBAL ====================
-
-// Configuration Supabase
-const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ==================== VARIABLES GLOBALES ====================
-let currentProduct = null;
-let currentUser = null;
-let shopConfig = null;
-let productLikes = { count: 0, userLiked: false };
-let productComments = [];
-let currentUserId = getUserId();
-let currentImageIndex = 0;
-let allImages = [];
-
-// ==================== UTILITAIRES ====================
-function getUserId() {
-    let userId = localStorage.getItem('oda_user_id');
-    if (!userId) {
-        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('oda_user_id', userId);
-    }
-    return userId;
-}
-
-function getUserName() {
-    let userName = localStorage.getItem('oda_user_name');
-    if (!userName) {
-        userName = prompt('Entrez votre nom pour commenter:') || 'Anonyme';
-        localStorage.setItem('oda_user_name', userName);
-    }
-    return userName;
-}
-
-function formatPrice(price, devise = 'FCFA') {
-    return `${price.toLocaleString('fr-FR')} ${devise}`;
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Aujourd\'hui';
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
-    return date.toLocaleDateString('fr-FR');
-}
-
-function afficherNotification(message, type = 'info') {
-    const notification = document.getElementById('notification');
-    const notificationText = document.getElementById('notificationText');
-    const notificationIcon = document.getElementById('notificationIcon');
-    
-    if (!notification || !notificationText || !notificationIcon) return;
-    
-    const icons = {
-        success: '✅',
-        error: '❌',
-        warning: '⚠️',
-        info: 'ℹ️'
-    };
-    
-    notificationIcon.textContent = icons[type] || icons.info;
-    notificationText.textContent = message;
-    notification.className = `notification show ${type}`;
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
-}
-
-// ==================== CHARGEMENT PRODUIT ====================
-async function chargerProduit() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
+    <script type="module">
+        // ==================== PARTIE 2/4 : CONFIGURATION & CHARGEMENT DES DONNÉES ====================
         
-        if (!productId) {
-            throw new Error('ID produit manquant');
+        // Configuration Supabase
+        const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ==================== VARIABLES GLOBALES ====================
+        let currentProduct = null;
+        let currentUser = null;
+        let shopConfig = null;
+        let productLikes = { count: 0, userLiked: false };
+        let productComments = [];
+        let currentUserId = getUserId();
+        let currentImageIndex = 0;
+        let allImages = [];
+        
+        
+        // ==================== FONCTIONS UTILITAIRES ====================
+        
+        function getUserId() {
+            let userId = localStorage.getItem('oda_user_id');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('oda_user_id', userId);
+            }
+            return userId;
         }
         
-        console.log('📦 Chargement du produit:', productId);
-        
-        const { data: product, error: productError } = await supabase
-            .from('produits')
-            .select('*')
-            .eq('id', productId)
-            .single();
-        
-        if (productError) throw productError;
-        if (!product) throw new Error('Produit non trouvé');
-        
-        currentProduct = product;
-        console.log('✅ Produit chargé:', product);
-        
-        await chargerConfigurationBoutique(product.user_id);
-        
-        await Promise.all([
-            chargerLikes(productId),
-            chargerCommentaires(productId)
-        ]);
-        
-        afficherProduit();
-        
-        document.getElementById('loader').style.display = 'none';
-        
-    } catch (error) {
-        console.error('❌ Erreur chargement produit:', error);
-        afficherNotification('Erreur lors du chargement du produit', 'error');
-        
-        setTimeout(() => {
-            window.location.href = 'oda-achats.html';
-        }, 2000);
-    }
-}
-
-// ==================== CHARGEMENT CONFIGURATION BOUTIQUE ====================
-async function chargerConfigurationBoutique(userId) {
-    try {
-        console.log(`🔍 Chargement config boutique pour user: ${userId}`);
-        
-        const { data, error } = await supabase
-            .from('parametres_boutique')
-            .select('config')
-            .eq('user_id', userId)
-            .single();
-        
-        if (data && !error) {
-            shopConfig = data.config;
-            console.log('✅ Configuration boutique chargée');
-            console.log('🏪 Nom boutique:', shopConfig?.general?.nom);
-            console.log('🔗 Slug boutique:', shopConfig?.identifiant?.slug);
-            appliquerConfigurationBoutique();
-        } else {
-            console.warn('⚠️ Config boutique non trouvée, utilisation config par défaut');
-            shopConfig = getDefaultShopConfig();
+        function getUserName() {
+            let userName = localStorage.getItem('oda_user_name');
+            if (!userName) {
+                userName = prompt('Entrez votre nom pour commenter:') || 'Anonyme';
+                localStorage.setItem('oda_user_name', userName);
+            }
+            return userName;
         }
-    } catch (error) {
-        console.error('❌ Erreur chargement config boutique:', error);
-        shopConfig = getDefaultShopConfig();
-    }
-}
-
-function getDefaultShopConfig() {
-    return {
-        general: {
-            nom: 'Ma Boutique',
-            telephone: '',
-            email: ''
-        },
-        apparence: {
-            couleurPrimaire: '#FF6B00',
-            couleurSecondaire: '#1A1A1A'
-        },
-        paiement: {
-            devise: 'FCFA',
-            carte: { actif: false },
-            mobile: { actif: true },
-            cash: { actif: true }
-        },
-        identifiant: {
-            slug: ''
+        
+        function formatPrice(price, devise = 'FCFA') {
+            return `${price.toLocaleString('fr-FR')} ${devise}`;
         }
-    };
-}
-
-function appliquerConfigurationBoutique() {
-    if (!shopConfig) return;
-    
-    const { couleurPrimaire, couleurSecondaire } = shopConfig.apparence || {};
-    
-    if (couleurPrimaire) {
-        document.documentElement.style.setProperty('--primary-color', couleurPrimaire);
-        document.documentElement.style.setProperty('--primary-dark', couleurPrimaire + 'dd');
-    }
-    
-    if (couleurSecondaire) {
-        document.documentElement.style.setProperty('--text-primary', couleurSecondaire);
-    }
-    
-    console.log('🎨 Configuration boutique appliquée');
-}
-
-// ==================== CHARGEMENT LIKES ====================
-async function chargerLikes(productId) {
-    try {
-        const { data: likes, error } = await supabase
-            .from('product_likes')
-            .select('user_id')
-            .eq('product_id', productId);
         
-        if (error) throw error;
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Aujourd\'hui';
+            if (diffDays === 1) return 'Hier';
+            if (diffDays < 7) return `Il y a ${diffDays} jours`;
+            if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+            return date.toLocaleDateString('fr-FR');
+        }
         
-        productLikes = {
-            count: likes.length,
-            userLiked: likes.some(like => like.user_id === currentUserId)
-        };
+        function afficherNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            const notificationIcon = document.getElementById('notificationIcon');
+            
+            if (!notification || !notificationText || !notificationIcon) return;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            notificationIcon.textContent = icons[type] || icons.info;
+            notificationText.textContent = message;
+            notification.className = `notification show ${type}`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
         
-        console.log(`👍 ${productLikes.count} likes chargés`);
-    } catch (error) {
-        console.error('Erreur chargement likes:', error);
-        productLikes = { count: 0, userLiked: false };
-    }
-}
-
-// ==================== CHARGEMENT COMMENTAIRES ====================
-async function chargerCommentaires(productId) {
-    try {
-        const { data: comments, error } = await supabase
-            .from('product_comments')
-            .select('*')
-            .eq('product_id', productId)
-            .order('created_at', { ascending: false });
+        // ==================== CHARGEMENT PRODUIT ====================
         
-        if (error) throw error;
+        async function chargerProduit() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const productId = urlParams.get('id');
+                
+                if (!productId) {
+                    throw new Error('ID produit manquant');
+                }
+                
+                console.log('📦 Chargement du produit:', productId);
+                
+                const { data: product, error: productError } = await supabase
+                    .from('produits')
+                    .select('*')
+                    .eq('id', productId)
+                    .single();
+                
+                if (productError) throw productError;
+                if (!product) throw new Error('Produit non trouvé');
+                
+                currentProduct = product;
+                console.log('✅ Produit chargé:', product);
+                
+                // Charger la configuration de la boutique
+                await chargerConfigurationBoutique(product.user_id);
+                
+                // Charger les likes et commentaires en parallèle
+                await Promise.all([
+                    chargerLikes(productId),
+                    chargerCommentaires(productId)
+                ]);
+                
+                // Afficher le produit
+                afficherProduit();
+                
+                // Masquer le loader
+                document.getElementById('loader').style.display = 'none';
+                
+            } catch (error) {
+                console.error('❌ Erreur chargement produit:', error);
+                afficherNotification('Erreur lors du chargement du produit', 'error');
+                
+                setTimeout(() => {
+                    window.location.href = 'oda-achats.html';
+                }, 2000);
+            }
+        }
         
-        productComments = comments || [];
-        console.log(`💬 ${productComments.length} commentaires chargés`);
-    } catch (error) {
-        console.error('Erreur chargement commentaires:', error);
-        productComments = [];
-    }
-}
+        // ==================== CHARGEMENT CONFIGURATION BOUTIQUE ====================
+        
+        async function chargerConfigurationBoutique(userId) {
+            try {
+                console.log(`🔍 Chargement config boutique pour user: ${userId}`);
+                
+                const { data, error } = await supabase
+                    .from('parametres_boutique')
+                    .select('config')
+                    .eq('user_id', userId)
+                    .single();
+                
+                if (data && !error) {
+                    shopConfig = data.config;
+                    console.log('✅ Configuration boutique chargée');
+                    console.log('🏪 Nom boutique:', shopConfig?.general?.nom);
+                    console.log('🔗 Slug boutique:', shopConfig?.identifiant?.slug);
+                    appliquerConfigurationBoutique();
+                } else {
+                    console.warn('⚠️ Config boutique non trouvée, utilisation config par défaut');
+                    shopConfig = getDefaultShopConfig();
+                }
+            } catch (error) {
+                console.error('❌ Erreur chargement config boutique:', error);
+                shopConfig = getDefaultShopConfig();
+            }
+        }
+        
+        function getDefaultShopConfig() {
+            return {
+                general: {
+                    nom: 'Ma Boutique',
+                    telephone: '',
+                    email: ''
+                },
+                apparence: {
+                    couleurPrimaire: '#FF6B00',
+                    couleurSecondaire: '#1A1A1A'
+                },
+                paiement: {
+                    devise: 'FCFA',
+                    carte: { actif: false },
+                    mobile: { actif: true },
+                    cash: { actif: true }
+                },
+                identifiant: {
+                    slug: ''
+                }
+            };
+        }
+        
+        function appliquerConfigurationBoutique() {
+            if (!shopConfig) return;
+            
+            const { couleurPrimaire, couleurSecondaire } = shopConfig.apparence || {};
+            
+            if (couleurPrimaire) {
+                document.documentElement.style.setProperty('--primary-color', couleurPrimaire);
+                document.documentElement.style.setProperty('--primary-dark', couleurPrimaire + 'dd');
+            }
+            
+            if (couleurSecondaire) {
+                document.documentElement.style.setProperty('--text-primary', couleurSecondaire);
+            }
+            
+            console.log('🎨 Configuration boutique appliquée');
+        }
+        
+        // ==================== CHARGEMENT LIKES ====================
+        
+        async function chargerLikes(productId) {
+            try {
+                const { data: likes, error } = await supabase
+                    .from('product_likes')
+                    .select('user_id')
+                    .eq('product_id', productId);
+                
+                if (error) throw error;
+                
+                productLikes = {
+                    count: likes.length,
+                    userLiked: likes.some(like => like.user_id === currentUserId)
+                };
+                
+                console.log(`👍 ${productLikes.count} likes chargés`);
+            } catch (error) {
+                console.error('Erreur chargement likes:', error);
+                productLikes = { count: 0, userLiked: false };
+            }
+        }
+        
+        // ==================== CHARGEMENT COMMENTAIRES ====================
+        
+        async function chargerCommentaires(productId) {
+            try {
+                const { data: comments, error } = await supabase
+                    .from('product_comments')
+                    .select('*')
+                    .eq('product_id', productId)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                productComments = comments || [];
+                console.log(`💬 ${productComments.length} commentaires chargés`);
+            } catch (error) {
+                console.error('Erreur chargement commentaires:', error);
+                productComments = [];
+            }
+        }
+        
+        // ==================== AFFICHAGE PRODUIT ====================
+        
+        function afficherProduit() {
+            if (!currentProduct) return;
+            
+            const devise = shopConfig?.paiement?.devise || 'FCFA';
+            
+            // Mise à jour des informations
+            document.title = `${currentProduct.nom} - ODA Marketplace`;
+            document.getElementById('headerTitle').textContent = currentProduct.nom;
+            document.getElementById('productName').textContent = currentProduct.nom;
+            document.getElementById('productCategory').textContent = `📦 ${currentProduct.categorie || 'Produit'}`;
+            document.getElementById('productPrice').textContent = formatPrice(currentProduct.prix, devise);
+            document.getElementById('productDescription').textContent = currentProduct.description || 'Aucune description disponible.';
+            
+            // Afficher les différentes sections
+            afficherStock();
+            initialiserCarousel();
+            afficherEngagement();
+            afficherCommentaires();
+            mettreAJourBoutonBoutique();
+            
+            console.log('✅ Produit affiché');
+        }
+        
+        function afficherStock() {
+            const stock = currentProduct.stock || 0;
+            const stockIcon = document.getElementById('stockIcon');
+            const stockText = document.getElementById('stockText');
+            const stockQuantity = document.getElementById('stockQuantity');
+            
+            if (stock > 10) {
+                stockIcon.textContent = '✅';
+                stockText.textContent = 'En stock';
+                stockQuantity.textContent = `• ${stock} disponibles`;
+            } else if (stock > 0) {
+                stockIcon.textContent = '⚠️';
+                stockText.textContent = 'Stock limité';
+                stockQuantity.textContent = `• Plus que ${stock} !`;
+            } else {
+                stockIcon.textContent = '❌';
+                stockText.textContent = 'Rupture de stock';
+                stockQuantity.textContent = '';
+            }
+        }
+        
+        function mettreAJourBoutonBoutique() {
+            const shopNameEl = document.getElementById('shopName');
+            if (shopNameEl && shopConfig?.general?.nom) {
+                shopNameEl.textContent = shopConfig.general.nom;
+            }
+        }
+        
+        // ==================== EXPORTS ====================
+        
+        window.chargerProduit = chargerProduit;
+        window.chargerConfigurationBoutique = chargerConfigurationBoutique;
+        window.chargerLikes = chargerLikes;
+        window.chargerCommentaires = chargerCommentaires;
+        window.afficherNotification = afficherNotification;
+        window.formatPrice = formatPrice;
+        window.formatDate = formatDate;
+        window.getUserName = getUserName;
+        window.afficherProduit = afficherProduit;
+        
+        console.log('✅ Module 2: Configuration et chargement des données - Chargé');
 
-// Export des fonctions pour les autres parties
-window.chargerProduit = chargerProduit;
-window.chargerConfigurationBoutique = chargerConfigurationBoutique;
-window.chargerLikes = chargerLikes;
-window.chargerCommentaires = chargerCommentaires;
-window.afficherNotification = afficherNotification;
-window.formatPrice = formatPrice;
-window.formatDate = formatDate;
-window.getUserName = getUserName;
-// ==================== PARTIE 2/5 : AFFICHAGE PRODUIT & CARROUSEL CORRIGÉ ====================
 
-// ==================== AFFICHAGE PRODUIT ====================
-function afficherProduit() {
-    if (!currentProduct) return;
-    
-    const devise = shopConfig?.paiement?.devise || 'FCFA';
-    
-    document.title = `${currentProduct.nom} - ODA Marketplace`;
-    document.getElementById('headerTitle').textContent = currentProduct.nom;
-    
-    document.getElementById('productName').textContent = currentProduct.nom;
-    document.getElementById('productCategory').textContent = `📦 ${currentProduct.categorie || 'Produit'}`;
-    document.getElementById('productPrice').textContent = formatPrice(currentProduct.prix, devise);
-    document.getElementById('productDescription').textContent = currentProduct.description || 'Aucune description disponible.';
-    
-    afficherStock();
-    initialiserCarousel();
-    afficherEngagement();
-    afficherCommentaires();
-    mettreAJourBoutonBoutique();
-    
-    console.log('✅ Produit affiché');
-}
-
-// ==================== METTRE À JOUR BOUTON BOUTIQUE ====================
-function mettreAJourBoutonBoutique() {
-    const btnBoutique = document.getElementById('btnBoutique');
-    if (!btnBoutique) return;
-    
-    const nomBoutique = shopConfig?.general?.nom || 'la boutique';
-    btnBoutique.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-        Voir ${nomBoutique}
-    `;
-    
-    console.log(`🏪 Bouton boutique mis à jour: ${nomBoutique}`);
-}
-
-// ==================== AFFICHAGE STOCK ====================
-function afficherStock() {
-    const stock = currentProduct.stock || 0;
-    const stockIcon = document.getElementById('stockIcon');
-    const stockText = document.getElementById('stockText');
-    const stockQuantity = document.getElementById('stockQuantity');
-    
-    if (stock > 10) {
-        stockIcon.textContent = '✅';
-        stockText.textContent = 'En stock';
-        stockQuantity.textContent = `• ${stock} disponibles`;
-    } else if (stock > 0) {
-        stockIcon.textContent = '⚠️';
-        stockText.textContent = 'Stock limité';
-        stockQuantity.textContent = `• Plus que ${stock} !`;
-    } else {
-        stockIcon.textContent = '❌';
-        stockText.textContent = 'Rupture de stock';
-        stockQuantity.textContent = '';
-    }
-}
-
-// ==================== CARROUSEL D'IMAGES OPTIMISÉ - CORRIGÉ ✅ ====================
+// ==================== INITIALISATION CARROUSEL ====================
 
 function initialiserCarousel() {
     allImages = [];
@@ -1288,16 +1090,31 @@ function initialiserCarousel() {
     console.log('  main_image:', currentProduct.main_image);
     console.log('  description_images:', currentProduct.description_images);
     console.log('  images:', currentProduct.images);
+    console.log('  additional_images:', currentProduct.additional_images);
     
+    // Étape 1: Extraire l'image principale
     const mainImageUrl = extraireImagePrincipale();
+    
+    // Étape 2: Extraire les images supplémentaires
     const imagesSupplementaires = extraireImagesSupplementaires();
     
+    // Étape 3: Construire le tableau dans le bon ordre
     construireTableauImages(mainImageUrl, imagesSupplementaires);
-    dedupliquerImagesAvecPriorite(); // ✅ CORRIGÉ : Nouvelle fonction qui préserve l'image principale
+    
+    // Étape 4: Dédupliquer en préservant la principale
+    dedupliquerImagesAvecPriorite();
+    
+    // Étape 5: Ajouter fallback si vide (CORRECTION ICI ✅)
     ajouterFallbackSiVide();
+    
+    // Étape 6: Afficher le carrousel (MÊME AVEC 1 IMAGE ✅)
     afficherCarousel();
+    
+    // Étape 7: Afficher les statistiques
     afficherStatistiques();
 }
+
+// ==================== EXTRACTION IMAGE PRINCIPALE ====================
 
 function extraireImagePrincipale() {
     if (!currentProduct.main_image) {
@@ -1321,8 +1138,11 @@ function extraireImagePrincipale() {
     return null;
 }
 
+// ==================== EXTRACTION IMAGES SUPPLÉMENTAIRES ====================
+
 function extraireImagesSupplementaires() {
     const sources = [
+        { nom: 'additional_images', data: currentProduct.additional_images },
         { nom: 'description_images', data: currentProduct.description_images },
         { nom: 'images', data: currentProduct.images }
     ];
@@ -1345,12 +1165,16 @@ function extraireImagesSupplementaires() {
     return toutesLesImages;
 }
 
+// ==================== PARSING DES IMAGES ====================
+
 function parseImages(data, sourceName) {
+    // Format: Tableau direct
     if (Array.isArray(data)) {
         console.log(`  📦 ${sourceName}: Tableau direct`);
         return filtrerURLsValides(data);
     }
     
+    // Format: String
     if (typeof data === 'string') {
         const trimmed = data.trim();
         
@@ -1358,21 +1182,25 @@ function parseImages(data, sourceName) {
             return [];
         }
         
+        // Format: JSON array
         if (trimmed.startsWith('[')) {
             console.log(`  📦 ${sourceName}: JSON array`);
             return parseJSONArray(trimmed, sourceName);
         }
         
+        // Format: JSON object
         if (trimmed.startsWith('{')) {
             console.log(`  📦 ${sourceName}: JSON object`);
             return parseJSONObject(trimmed, sourceName);
         }
         
+        // Format: URL unique
         if (estURLValide(trimmed)) {
             console.log(`  📦 ${sourceName}: URL unique`);
             return [trimmed];
         }
         
+        // Format: URLs séparées par virgules
         if (trimmed.includes(',')) {
             console.log(`  📦 ${sourceName}: URLs séparées par virgules`);
             return trimmed.split(',')
@@ -1384,6 +1212,7 @@ function parseImages(data, sourceName) {
         return [];
     }
     
+    // Format: Objet
     if (typeof data === 'object' && data !== null) {
         console.log(`  📦 ${sourceName}: Objet`);
         return Object.values(data)
@@ -1398,6 +1227,7 @@ function parseJSONArray(jsonString, sourceName) {
     try {
         let parsed = JSON.parse(jsonString);
         
+        // Double parsing si nécessaire
         if (typeof parsed === 'string') {
             try {
                 parsed = JSON.parse(parsed);
@@ -1453,6 +1283,8 @@ function estURLValide(str) {
            trimmed.startsWith('data:');
 }
 
+// ==================== CONSTRUCTION DU TABLEAU ====================
+
 function construireTableauImages(mainImageUrl, imagesSupplementaires) {
     allImages = [];
     
@@ -1461,13 +1293,14 @@ function construireTableauImages(mainImageUrl, imagesSupplementaires) {
         console.log('🎯 Image principale ajoutée en position 1');
         console.log(`   URL: ${mainImageUrl.substring(0, 80)}...`);
         
-        // ✅ CORRIGÉ : Retirer la principale des supplémentaires AVANT de les ajouter
+        // Retirer la principale des supplémentaires
         imagesSupplementaires = imagesSupplementaires.filter(img => img !== mainImageUrl);
         console.log(`   ✅ Image principale retirée des supplémentaires (${imagesSupplementaires.length} restantes)`);
     } else {
-        console.warn('⚠️ Aucune image principale, utilisation images supplémentaires');
+        console.warn('⚠️ Aucune image principale');
     }
     
+    // Ajouter les images supplémentaires
     imagesSupplementaires.forEach((img, index) => {
         allImages.push(img);
         console.log(`  ✅ [${allImages.length}] Image supplémentaire ajoutée`);
@@ -1476,22 +1309,29 @@ function construireTableauImages(mainImageUrl, imagesSupplementaires) {
     console.log(`📊 Total avant déduplication: ${allImages.length} images`);
 }
 
-// ✅ CORRIGÉ : Nouvelle fonction qui préserve toujours l'image principale en position 1
+// ==================== DÉDUPLICATION AVEC PRIORITÉ ====================
+
 function dedupliquerImagesAvecPriorite() {
     if (allImages.length === 0) return;
     
-    const imagePrincipale = allImages[0]; // Sauvegarder l'image principale
-    const autresImages = allImages.slice(1); // Les autres images
+    // ✅ CAS SPÉCIAL : Une seule image, pas besoin de dédupliquer
+    if (allImages.length === 1) {
+        console.log('✅ Une seule image, pas de déduplication nécessaire');
+        return;
+    }
     
-    // Dédupliquer les autres images (sans toucher à la principale)
+    const imagePrincipale = allImages[0];
+    const autresImages = allImages.slice(1);
+    
+    // Dédupliquer les autres images
     const autresImagesDedupliquees = [...new Set(autresImages)];
     
-    // Retirer l'image principale des autres si elle apparaît (sécurité supplémentaire)
+    // Retirer l'image principale des autres si elle apparaît
     const autresImagesSansPrincipale = autresImagesDedupliquees.filter(
         img => img !== imagePrincipale
     );
     
-    // Reconstruire le tableau : principale + autres
+    // Reconstruire le tableau
     const avant = allImages.length;
     allImages = [imagePrincipale, ...autresImagesSansPrincipale];
     const apres = allImages.length;
@@ -1502,27 +1342,49 @@ function dedupliquerImagesAvecPriorite() {
     console.log(`   ✅ Image principale préservée en position 1`);
 }
 
+// ==================== FALLBACK ====================
+
 function ajouterFallbackSiVide() {
     if (allImages.length === 0) {
         console.warn('⚠️ Aucune image valide, ajout placeholder');
-        allImages.push('https://via.placeholder.com/600x600?text=Produit');
+        allImages.push('https://via.placeholder.com/600x600?text=Aucune+Image');
     }
 }
 
+// ==================== AFFICHAGE ====================
+
 function afficherCarousel() {
-    currentImageIndex = 0; // ✅ TOUJOURS commencer à 0 (image principale)
+    currentImageIndex = 0;
+    
+    // ✅ CORRECTION : Toujours afficher l'image, même si une seule
     afficherImageCourante();
-    genererThumbnails();
+    
+    // ✅ CORRECTION : Miniatures uniquement si plusieurs images
+    if (allImages.length > 1) {
+        genererThumbnails();
+    } else {
+        masquerThumbnails();
+    }
+    
     ajouterGestionZoom();
     
-    console.log('🎯 Carrousel initialisé - Image principale affichée');
+    const imageText = allImages.length === 1 ? 'image unique' : `${allImages.length} images`;
+    console.log(`🎯 Carrousel initialisé - ${imageText}`);
 }
 
 function afficherImageCourante() {
     const mainImage = document.getElementById('mainImage');
     const imageCounter = document.getElementById('imageCounter');
     
-    if (!mainImage || allImages.length === 0) return;
+    if (!mainImage) {
+        console.error('❌ Élément #mainImage introuvable !');
+        return;
+    }
+    
+    if (allImages.length === 0) {
+        console.error('❌ Aucune image à afficher !');
+        return;
+    }
     
     const currentUrl = allImages[currentImageIndex];
     
@@ -1531,20 +1393,30 @@ function afficherImageCourante() {
         console.log('  🎯 ✅ IMAGE PRINCIPALE AFFICHÉE');
     }
     
-    // ✅ MISE À JOUR IMMÉDIATE DU COMPTEUR
+    // ✅ CORRECTION : Mise à jour du compteur (masqué si 1 seule image)
     if (imageCounter) {
-        imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
-        imageCounter.style.display = allImages.length > 1 ? 'block' : 'none';
+        if (allImages.length > 1) {
+            imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+            imageCounter.style.display = 'block';
+        } else {
+            imageCounter.style.display = 'none';
+        }
     }
     
+    // ✅ CORRECTION : Affichage IMMÉDIAT puis préchargement
+    mainImage.style.opacity = '0.5';
+    mainImage.src = currentUrl;
+    
+    // Préchargement pour vérifier si l'image charge
     const preloadImg = new Image();
     preloadImg.onload = () => {
-        mainImage.src = currentUrl;
+        mainImage.style.opacity = '1';
         console.log('  ✅ Image chargée avec succès');
     };
     preloadImg.onerror = () => {
         console.error('  ❌ Erreur chargement:', currentUrl.substring(0, 100));
         mainImage.src = 'https://via.placeholder.com/600x600?text=Image+non+disponible';
+        mainImage.style.opacity = '1';
     };
     preloadImg.src = currentUrl;
 }
@@ -1552,12 +1424,6 @@ function afficherImageCourante() {
 function genererThumbnails() {
     const container = document.getElementById('thumbnailsContainer');
     if (!container) return;
-    
-    if (allImages.length <= 1) {
-        container.style.display = 'none';
-        console.log('📸 Une seule image, masquage miniatures');
-        return;
-    }
     
     container.style.display = 'flex';
     
@@ -1573,7 +1439,15 @@ function genererThumbnails() {
              ${index === 0 ? 'style="border-color: var(--primary-color); box-shadow: 0 0 8px rgba(255,107,0,0.5);"' : ''}>
     `).join('');
     
-    console.log(`✅ ${allImages.length} miniatures générées (première = 🎯 principale)`);
+    console.log(`✅ ${allImages.length} miniatures générées`);
+}
+
+function masquerThumbnails() {
+    const container = document.getElementById('thumbnailsContainer');
+    if (container) {
+        container.style.display = 'none';
+        console.log('📸 Une seule image, miniatures masquées');
+    }
 }
 
 window.changerImage = function(index) {
@@ -1585,10 +1459,11 @@ window.changerImage = function(index) {
     currentImageIndex = index;
     afficherImageCourante();
     
+    // Mise à jour des miniatures
     document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
         thumb.classList.toggle('active', i === index);
         
-        // ✅ Mise en valeur de la principale
+        // Mise en valeur de la principale
         if (i === 0) {
             thumb.style.borderColor = 'var(--primary-color)';
             thumb.style.boxShadow = '0 0 8px rgba(255,107,0,0.5)';
@@ -1610,18 +1485,27 @@ function ajouterGestionZoom() {
     
     if (!mainImageWrapper || !mainImage) return;
     
+    // Supprimer les anciens événements
     const newWrapper = mainImageWrapper.cloneNode(true);
     mainImageWrapper.parentNode.replaceChild(newWrapper, mainImageWrapper);
     
+    // Ajouter le nouvel événement
     document.getElementById('mainImageWrapper').addEventListener('click', () => {
         document.getElementById('mainImage').classList.toggle('zoom');
     });
 }
 
+// ==================== STATISTIQUES ====================
+
 function afficherStatistiques() {
     console.log('┌─────────────────────────────────────────┐');
     console.log(`📸 RÉSULTAT: ${allImages.length} image(s) dans le carrousel`);
-    console.log('   Ordre des images:');
+    
+    if (allImages.length === 1) {
+        console.log('   ✅ IMAGE UNIQUE (comportement normal)');
+    } else {
+        console.log('   Ordre des images:');
+    }
     
     allImages.forEach((img, i) => {
         const isMain = i === 0;
@@ -1633,7 +1517,8 @@ function afficherStatistiques() {
     console.log('└─────────────────────────────────────────┘');
 }
 
-// ✅ FONCTION DE VÉRIFICATION POUR DEBUG
+// ==================== FONCTION DE VÉRIFICATION POUR DEBUG ====================
+
 window.verifierImagePrincipale = function() {
     console.log('🔍 VÉRIFICATION IMAGE PRINCIPALE');
     console.log('┌─────────────────────────────────────────┐');
@@ -1645,24 +1530,38 @@ window.verifierImagePrincipale = function() {
     console.log('📋 Données produit :');
     console.log(`   - main_image : ${currentProduct?.main_image?.substring(0, 80)}...`);
     console.log('');
-    console.log('🖼️ Première image du carrousel :');
-    console.log(`   ${allImages[0]?.substring(0, 80)}...`);
+    
+    if (allImages.length > 0) {
+        console.log('🖼️ Première image du carrousel :');
+        console.log(`   ${allImages[0]?.substring(0, 80)}...`);
+        console.log('');
+        console.log(`✅ Correspondance : ${currentProduct?.main_image === allImages[0] ? 'OUI ✓' : 'NON ✗'}`);
+    } else {
+        console.log('❌ AUCUNE IMAGE dans le carrousel !');
+    }
+    
     console.log('');
-    console.log(`✅ Correspondance : ${currentProduct?.main_image === allImages[0] ? 'OUI ✓' : 'NON ✗'}`);
+    console.log('🔍 Vérification DOM :');
+    const mainImage = document.getElementById('mainImage');
+    console.log(`   - Élément #mainImage existe : ${!!mainImage}`);
+    console.log(`   - Source actuelle : ${mainImage?.src?.substring(0, 80)}...`);
+    console.log(`   - Visible : ${mainImage?.style.display !== 'none'}`);
+    
     console.log('└─────────────────────────────────────────┘');
     
     return currentProduct?.main_image === allImages[0];
 };
 
-// Export des fonctions
-window.afficherProduit = afficherProduit;
+// ==================== EXPORTS ====================
+
 window.initialiserCarousel = initialiserCarousel;
 window.afficherImageCourante = afficherImageCourante;
 window.genererThumbnails = genererThumbnails;
 window.dedupliquerImagesAvecPriorite = dedupliquerImagesAvecPriorite;
-// ==================== PARTIE 3/5 : ENGAGEMENT & COMMENTAIRES ====================
 
+console.log('✅ Module Carrousel (version corrigée 1 image) - Chargé');
 // ==================== AFFICHAGE ENGAGEMENT ====================
+
 function afficherEngagement() {
     document.getElementById('likesCount').textContent = productLikes.count;
     
@@ -1694,6 +1593,7 @@ function calculerNoteMoyenne() {
 }
 
 // ==================== TOGGLE LIKE ====================
+
 async function toggleLike() {
     if (!currentProduct) return;
     
@@ -1738,6 +1638,7 @@ async function toggleLike() {
 }
 
 // ==================== AFFICHAGE COMMENTAIRES ====================
+
 function afficherCommentaires() {
     const commentsList = document.getElementById('commentsList');
     
@@ -1771,6 +1672,7 @@ function afficherCommentaires() {
 }
 
 // ==================== SOUMETTRE COMMENTAIRE ====================
+
 async function submitComment() {
     const commentInput = document.getElementById('commentInput');
     const ratingInput = document.querySelector('input[name="rating"]:checked');
@@ -1826,7 +1728,10 @@ window.scrollToComments = function() {
     }
 };
 
-// ==================== INITIALISER BOUTONS D'ACTION ====================
+window.submitComment = submitComment;
+
+// ==================== BOUTONS D'ACTION ====================
+
 function initialiserBoutonsAction() {
     const btnBack = document.getElementById('btnBack');
     if (btnBack) {
@@ -1847,7 +1752,9 @@ function initialiserBoutonsAction() {
     
     const btnAcheter = document.getElementById('btnAcheter');
     if (btnAcheter) {
-        btnAcheter.addEventListener('click', ouvrirModalPaiement);
+        btnAcheter.addEventListener('click', () => {
+            afficherNotification('Fonctionnalité d\'achat à venir !', 'info');
+        });
     }
     
     const btnWhatsApp = document.getElementById('btnWhatsApp');
@@ -1864,6 +1771,7 @@ function initialiserBoutonsAction() {
 }
 
 // ==================== PARTAGER PRODUIT ====================
+
 async function partagerProduit() {
     if (!currentProduct) return;
     
@@ -1894,6 +1802,7 @@ async function partagerProduit() {
 }
 
 // ==================== CONTACTER SUR WHATSAPP ====================
+
 function contacterWhatsApp() {
     if (!currentProduct) return;
     
@@ -1920,6 +1829,7 @@ function contacterWhatsApp() {
 }
 
 // ==================== ALLER À LA BOUTIQUE ====================
+
 async function allerBoutique() {
     if (!currentProduct) {
         afficherNotification('Impossible de charger la boutique', 'error');
@@ -1932,11 +1842,13 @@ async function allerBoutique() {
         
         let slug = null;
         
+        // Essayer de récupérer le slug depuis shopConfig
         if (shopConfig?.identifiant?.slug) {
             slug = shopConfig.identifiant.slug;
             console.log('✅ Slug trouvé dans shopConfig:', slug);
         }
         
+        // Si pas de slug, le chercher dans Supabase
         if (!slug) {
             console.log('🔍 Recherche du slug dans Supabase...');
             
@@ -1957,6 +1869,7 @@ async function allerBoutique() {
             }
         }
         
+        // Fallback : utiliser le user_id
         if (!slug) {
             console.log('⚠️ Aucun slug trouvé, utilisation du user_id comme fallback');
             slug = currentProduct.user_id;
@@ -1977,589 +1890,59 @@ async function allerBoutique() {
     }
 }
 
-// ==================== MODAL PAIEMENT ====================
-async function ouvrirModalPaiement() {
-    if (!currentProduct) return;
-    
-    if (currentProduct.stock <= 0) {
-        afficherNotification('Ce produit n\'est plus en stock', 'error');
-        return;
-    }
-    
-    const modal = document.getElementById('paymentModal');
-    const devise = shopConfig?.paiement?.devise || 'FCFA';
-    
-    await chargerParametresLivraison();
-    mettreAJourResumePaiement(devise);
-    genererOptionsPaiement();
-    
-    if (modal) {
-        modal.classList.add('active');
-        console.log('💳 Modal paiement ouverte');
-    }
-}
+// ==================== INITIALISATION COMPLÈTE ====================
 
-function mettreAJourResumePaiement(devise) {
-    const fraisLivraison = calculerFraisLivraison();
-    const total = calculerTotalAvecLivraison();
-    
-    const orderSummary = document.querySelector('.order-summary');
-    if (orderSummary) {
-        orderSummary.innerHTML = `
-            <div class="summary-item">
-                <span>Produit</span>
-                <span>${currentProduct.nom}</span>
-            </div>
-            <div class="summary-item">
-                <span>Prix unitaire</span>
-                <span>${formatPrice(currentProduct.prix, devise)}</span>
-            </div>
-            <div class="summary-item">
-                <span>Frais de livraison</span>
-                <span style="color: ${fraisLivraison === 0 ? 'var(--success-color)' : 'var(--text-primary)'}">
-                    ${fraisLivraison === 0 ? 'GRATUIT 🎁' : formatPrice(fraisLivraison, devise)}
-                </span>
-            </div>
-            ${fraisLivraison === 0 ? `
-                <div class="summary-item" style="color: var(--success-color); font-size: 0.85rem;">
-                    <span colspan="2">✨ Livraison gratuite activée !</span>
-                </div>
-            ` : ''}
-            <div class="summary-total">
-                <span>Total</span>
-                <span style="color: var(--primary-color);">${formatPrice(total, devise)}</span>
-            </div>
-        `;
-    }
-}
-
-function fermerModalPaiement() {
-    const modal = document.getElementById('paymentModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-}
-
-async function chargerParametresLivraison() {
-    try {
-        if (shopConfig?.livraison) {
-            window.parametresLivraison = shopConfig.livraison;
-            console.log('📦 Paramètres livraison depuis shopConfig');
-            return;
-        }
-        
-        const { data, error } = await supabase
-            .from('parametres_boutique')
-            .select('config')
-            .eq('user_id', currentProduct.user_id)
-            .single();
-        
-        if (data && !error) {
-            window.parametresLivraison = data.config.livraison || getDefaultLivraisonConfig();
-            console.log('📦 Paramètres livraison depuis Supabase');
-        } else {
-            window.parametresLivraison = getDefaultLivraisonConfig();
-            console.log('📦 Paramètres livraison par défaut');
-        }
-    } catch (error) {
-        console.error('Erreur chargement paramètres livraison:', error);
-        window.parametresLivraison = getDefaultLivraisonConfig();
-    }
-}
-
-function getDefaultLivraisonConfig() {
-    return {
-        fraisDouala: 1000,
-        fraisAutres: 2500,
-        delai: '2-5 jours',
-        gratuit: false,
-        montantMin: 50000,
-        zonesPersonnalisees: []
-    };
-}
-
-function calculerTotalAvecLivraison() {
-    if (!currentProduct) return 0;
-    
-    const prixProduit = currentProduct.prix;
-    const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
-    
-    if (livraison.gratuit && prixProduit >= livraison.montantMin) {
-        console.log('🎁 Livraison gratuite appliquée');
-        return prixProduit;
-    }
-    
-    const fraisLivraison = livraison.fraisDouala || 1000;
-    const total = prixProduit + fraisLivraison;
-    
-    console.log(`📦 Total: ${prixProduit} + ${fraisLivraison} = ${total}`);
-    return total;
-}
-
-function calculerFraisLivraison() {
-    const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
-    const prixProduit = currentProduct?.prix || 0;
-    
-    if (livraison.gratuit && prixProduit >= livraison.montantMin) {
-        return 0;
-    }
-    
-    return livraison.fraisDouala || 1000;
-}
-
-function genererOptionsPaiement() {
-    const container = document.getElementById('paymentMethods');
-    if (!container) return;
-    
-    const paiementConfig = shopConfig?.paiement || {};
-    
-    const options = [];
-    
-    if (paiementConfig.mobile?.actif) {
-        options.push({
-            id: 'mobile',
-            icon: '📱',
-            name: 'Mobile Money',
-            desc: 'Orange Money, MTN MoMo'
-        });
-    }
-    
-    if (paiementConfig.carte?.actif) {
-        options.push({
-            id: 'carte',
-            icon: '💳',
-            name: 'Carte bancaire',
-            desc: 'Visa, Mastercard'
-        });
-    }
-    
-    if (paiementConfig.cash?.actif) {
-        options.push({
-            id: 'cash',
-            icon: '💵',
-            name: 'À la livraison',
-            desc: 'Paiement en espèces'
-        });
-    }
-    
-    if (options.length === 0) {
-        options.push(
-            { id: 'mobile', icon: '📱', name: 'Mobile Money', desc: 'Orange Money, MTN MoMo' },
-            { id: 'cash', icon: '💵', name: 'À la livraison', desc: 'Paiement en espèces' }
-        );
-    }
-    
-    container.innerHTML = options.map((option, index) => `
-        <div class="payment-option ${index === 0 ? 'active' : ''}" 
-             data-payment-id="${option.id}"
-             onclick="selectionnerPaiement('${option.id}')">
-            <div class="payment-icon">${option.icon}</div>
-            <div class="payment-info">
-                <div class="payment-name">${option.name}</div>
-                <div class="payment-desc">${option.desc}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-window.selectionnerPaiement = function(paymentId) {
-    document.querySelectorAll('.payment-option').forEach(option => {
-        option.classList.toggle('active', option.dataset.paymentId === paymentId);
-    });
-};
-
-async function confirmerPaiement() {
-    const selectedPayment = document.querySelector('.payment-option.active');
-    
-    if (!selectedPayment) {
-        afficherNotification('Veuillez sélectionner un mode de paiement', 'error');
-        return;
-    }
-    
-    const paymentId = selectedPayment.dataset.paymentId;
-    
-    const commandeData = {
-        produit: {
-            id: currentProduct.id,
-            nom: currentProduct.nom,
-            prix: currentProduct.prix,
-            image: currentProduct.main_image,
-            vendeur_id: currentProduct.user_id
-        },
-        paiement: {
-            methode: paymentId,
-            devise: shopConfig?.paiement?.devise || 'FCFA'
-        },
-        livraison: {
-            frais: calculerFraisLivraison(),
-            delai: window.parametresLivraison?.delai || '2-5 jours'
-        },
-        total: calculerTotalAvecLivraison(),
-        boutique: {
-            nom: shopConfig?.general?.nom || 'Boutique',
-            slug: shopConfig?.identifiant?.slug,
-            telephone: shopConfig?.general?.telephone,
-            email: shopConfig?.general?.email
-        },
-        timestamp: new Date().toISOString()
-    };
-    
-    sessionStorage.setItem('commande_en_cours', JSON.stringify(commandeData));
-    
-    console.log('📦 Commande préparée:', commandeData);
-    
-    afficherNotification('Redirection vers le paiement...', 'info');
-    
-    setTimeout(() => {
-        window.location.href = `payment.html?product=${currentProduct.id}&method=${paymentId}`;
-    }, 500);
-}
-
-function initialiserModal() {
-    const btnCloseModal = document.getElementById('btnCloseModal');
-    const btnConfirmPayment = document.getElementById('btnConfirmPayment');
-    const modal = document.getElementById('paymentModal');
-    
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener('click', fermerModalPaiement);
-    }
-    
-    if (btnConfirmPayment) {
-        btnConfirmPayment.addEventListener('click', confirmerPaiement);
-    }
-    
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                fermerModalPaiement();
-            }
-        });
-    }
-    
-    console.log('✅ Modal paiement initialisée');
-}
-
-// Export des fonctions
-window.afficherEngagement = afficherEngagement;
-window.toggleLike = toggleLike;
-window.submitComment = submitComment;
-window.afficherCommentaires = afficherCommentaires;
-window.initialiserBoutonsAction = initialiserBoutonsAction;
-window.initialiserModal = initialiserModal;
-window.ouvrirModalPaiement = ouvrirModalPaiement;
-window.fermerModalPaiement = fermerModalPaiement;
-window.confirmerPaiement = confirmerPaiement;
-window.partagerProduit = partagerProduit;
-window.contacterWhatsApp = contacterWhatsApp;
-window.allerBoutique = allerBoutique;
-// ==================== PARTIE 4/5 : INITIALISATION COMPLÈTE & UTILITAIRES ====================
-
-// ==================== INITIALISATION PRINCIPALE ====================
 async function initialiserPageProduit() {
+    console.log('🚀 ========== INITIALISATION PAGE PRODUIT ==========');
+    
     try {
-        console.log('🚀 Initialisation de la page produit...');
-        console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
-        
+        // Charger le produit
         await chargerProduit();
-        console.log('✅ 1/4 - Produit chargé');
         
+        // Initialiser les boutons
         initialiserBoutonsAction();
-        console.log('✅ 2/4 - Boutons d\'action initialisés');
         
-        initialiserModal();
-        console.log('✅ 3/4 - Modal paiement initialisée');
-        
-        initialiserEvenementsSupplementaires();
-        console.log('✅ 4/4 - Événements supplémentaires initialisés');
-        
-        console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
-        console.log('✨ Page produit complètement initialisée !');
-        console.log('📦 Produit:', currentProduct?.nom || 'Non chargé');
-        console.log('🏪 Boutique:', shopConfig?.general?.nom || 'Non configurée');
-        console.log('🔗 Slug boutique:', shopConfig?.identifiant?.slug || 'Non défini');
-        console.log('🖼️ Total images:', allImages.length);
-        console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
+        console.log('✅ ========== PAGE PRODUIT INITIALISÉE ==========');
         
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation:', error);
-        afficherNotification('Erreur lors de l\'initialisation de la page', 'error');
+        afficherNotification('Erreur de chargement', 'error');
     }
 }
 
-// ==================== ÉVÉNEMENTS SUPPLÉMENTAIRES ====================
-function initialiserEvenementsSupplementaires() {
-    // Gestion du bouton Escape pour fermer la modal
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('paymentModal');
-            if (modal && modal.classList.contains('active')) {
-                fermerModalPaiement();
-            }
-        }
-    });
-    
-    // Prévenir le zoom lors du double tap sur mobile
-    let lastTap = 0;
-    document.addEventListener('touchend', (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        
-        if (tapLength < 300 && tapLength > 0) {
-            e.preventDefault();
-        }
-        
-        lastTap = currentTime;
-    });
-    
-    // Lazy loading des images
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.removeAttribute('data-src');
-                        imageObserver.unobserve(img);
-                    }
-                }
-            });
-        });
-        
-        document.querySelectorAll('img[data-src]').forEach(img => {
-            imageObserver.observe(img);
-        });
-    }
-    
-    console.log('✅ Événements supplémentaires initialisés');
-}
+// ==================== LANCEMENT AU CHARGEMENT DU DOM ====================
 
-// ==================== GESTION DES ERREURS GLOBALES ====================
-window.addEventListener('error', (event) => {
-    console.error('❌ Erreur globale:', event.error);
-    
-    if (event.target.tagName === 'IMG') {
-        return;
-    }
-});
-
-// ==================== GESTION DE LA NAVIGATION ====================
-window.addEventListener('popstate', () => {
-    const modal = document.getElementById('paymentModal');
-    if (modal && modal.classList.contains('active')) {
-        fermerModalPaiement();
-        history.pushState(null, null, window.location.href);
-    }
-});
-
-// ==================== ANALYTICS ====================
-function enregistrerVueProduit() {
-    if (!currentProduct) return;
-    
-    try {
-        const vues = JSON.parse(localStorage.getItem('product_views') || '{}');
-        const productId = currentProduct.id;
-        
-        if (!vues[productId]) {
-            vues[productId] = {
-                count: 0,
-                firstView: new Date().toISOString(),
-                lastView: new Date().toISOString()
-            };
-        }
-        
-        vues[productId].count++;
-        vues[productId].lastView = new Date().toISOString();
-        
-        localStorage.setItem('product_views', JSON.stringify(vues));
-        
-        console.log(`📊 Vue enregistrée (${vues[productId].count} vues)`);
-    } catch (error) {
-        console.error('Erreur analytics:', error);
-    }
-}
-
-// ==================== RAFRAÎCHISSEMENT AUTOMATIQUE ====================
-let refreshInterval;
-
-function demarrerRafraichissement() {
-    refreshInterval = setInterval(async () => {
-        if (currentProduct) {
-            await Promise.all([
-                chargerLikes(currentProduct.id),
-                chargerCommentaires(currentProduct.id)
-            ]);
-            
-            afficherEngagement();
-            afficherCommentaires();
-            
-            console.log('🔄 Données rafraîchies');
-        }
-    }, 30000);
-}
-
-function arreterRafraichissement() {
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-    }
-}
-
-window.addEventListener('beforeunload', arreterRafraichissement);
-
-// ==================== FONCTIONS DE DEBUG ====================
-window.debugProduit = function() {
-    console.log('🔍 DEBUG PRODUIT');
-    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
-    console.log('Produit actuel:', currentProduct);
-    console.log('Configuration boutique:', shopConfig);
-    console.log('Slug boutique:', shopConfig?.identifiant?.slug);
-    console.log('Likes:', productLikes);
-    console.log('Commentaires:', productComments.length);
-    console.log('User ID:', currentUserId);
-    console.log('Images totales:', allImages.length);
-    console.log('Images:', allImages);
-    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
-};
-
-window.forceReload = async function() {
-    console.log('🔄 Rechargement forcé...');
-    await chargerProduit();
-    afficherNotification('Données rechargées', 'success');
-};
-
-window.testBoutique = function() {
-    console.log('🧪 TEST REDIRECTION BOUTIQUE');
-    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
-    console.log('User ID vendeur:', currentProduct?.user_id);
-    console.log('Slug dans shopConfig:', shopConfig?.identifiant?.slug);
-    console.log('URL qui sera générée:', `${window.location.origin}/boutique.html?shop=${shopConfig?.identifiant?.slug || currentProduct?.user_id}`);
-    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
-};
-
-window.verifierCarrousel = function() {
-    console.log('🔍 VÉRIFICATION CARROUSEL');
-    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
-    console.log('📊 Statistiques:');
-    console.log('  - Total images:', allImages.length);
-    console.log('  - Image actuelle:', currentImageIndex + 1);
-    console.log('  - Image principale:', currentProduct?.main_image?.substring(0, 80));
-    console.log('');
-    console.log('📋 Liste complète:');
-    
-    allImages.forEach((img, i) => {
-        const isMain = i === 0;
-        const isCurrent = i === currentImageIndex;
-        const markers = [];
-        if (isMain) markers.push('PRINCIPALE');
-        if (isCurrent) markers.push('ACTUELLE');
-        const label = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
-        console.log(`  ${i + 1}.${label} ${img.substring(0, 80)}`);
-    });
-    
-    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
-};
-
-window.rechargerCarrousel = function() {
-    console.log('🔄 Rechargement forcé du carrousel...');
-    initialiserCarousel();
-    console.log('✅ Carrousel rechargé');
-};
-
-window.debugCompteur = function() {
-    const imageCounter = document.getElementById('imageCounter');
-    const mainImage = document.getElementById('mainImage');
-    
-    console.log('🔍 DEBUG COMPTEUR D\'IMAGES');
-    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
-    console.log('📊 État actuel :');
-    console.log(`  - Total images : ${allImages.length}`);
-    console.log(`  - Index actuel : ${currentImageIndex}`);
-    console.log(`  - Compteur existe : ${!!imageCounter}`);
-    console.log(`  - Compteur texte : "${imageCounter?.textContent}"`);
-    console.log(`  - Compteur visible : ${imageCounter?.style.display !== 'none'}`);
-    console.log(`  - Image chargée : ${mainImage?.src?.substring(0, 80)}...`);
-    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
-};
-
-// ==================== DÉTECTION MODE PWA ====================
-function detecterModePWA() {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-                  window.navigator.standalone === true;
-    
-    if (isPWA) {
-        console.log('📱 Application lancée en mode PWA');
-        document.body.classList.add('pwa-mode');
-        
-        const btnShare = document.getElementById('btnShare');
-        if (btnShare && navigator.share) {
-            btnShare.style.display = 'flex';
-        }
-    }
-}
-
-// ==================== VÉRIFIER COMPATIBILITÉ ====================
-function verifierCompatibilite() {
-    const features = {
-        webShare: 'share' in navigator,
-        clipboard: 'clipboard' in navigator,
-        serviceWorker: 'serviceWorker' in navigator,
-        localStorage: typeof Storage !== 'undefined'
-    };
-    
-    console.log('🔍 Fonctionnalités disponibles:');
-    Object.entries(features).forEach(([feature, available]) => {
-        console.log(`  ${available ? '✅' : '❌'} ${feature}`);
-    });
-    
-    if (!features.localStorage) {
-        console.warn('⚠️ localStorage non disponible, certaines fonctionnalités seront limitées');
-    }
-}
-
-// ==================== INITIALISATION AU CHARGEMENT DU DOM ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📄 DOM chargé, démarrage de l\'initialisation...');
-    
-    verifierCompatibilite();
-    detecterModePWA();
+    console.log('📄 DOM chargé');
+    console.log('🎯 Lancement de l\'initialisation...');
     
     await initialiserPageProduit();
     
-    enregistrerVueProduit();
-    demarrerRafraichissement();
+    console.log('🎉 Application prête !');
 });
 
-// ==================== GESTION DU CYCLE DE VIE ====================
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        arreterRafraichissement();
-        console.log('⏸️ Rafraîchissement en pause');
-    } else {
-        demarrerRafraichissement();
-        console.log('▶️ Rafraîchissement repris');
-    }
-});
+// ==================== EXPORTS ====================
 
-// ==================== CONSOLE LOG STYLISÉ FINAL ====================
-console.log('%c🛒 PAGE PRODUIT CHARGÉE', 'color: #FF6B00; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);');
+window.afficherEngagement = afficherEngagement;
+window.afficherCommentaires = afficherCommentaires;
+window.toggleLike = toggleLike;
+window.partagerProduit = partagerProduit;
+window.contacterWhatsApp = contacterWhatsApp;
+window.allerBoutique = allerBoutique;
+window.initialiserPageProduit = initialiserPageProduit;
+
+// ==================== CONSOLE LOG FINAL ====================
+
+console.log('%c🛒 MODULE PAGE PRODUIT CHARGÉ', 'color: #FF6B00; font-size: 24px; font-weight: bold;');
 console.log('%c┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓', 'color: #FF6B00;');
-console.log('%c✨ Tapez debugProduit() pour voir les détails', 'color: #34C759; font-size: 12px; font-weight: 500;');
-console.log('%c🔄 Tapez forceReload() pour recharger', 'color: #34C759; font-size: 12px; font-weight: 500;');
-console.log('%c🧪 Tapez testBoutique() pour tester la redirection', 'color: #34C759; font-size: 12px; font-weight: 500;');
-console.log('%c🖼️ Tapez verifierCarrousel() pour voir les images', 'color: #34C759; font-size: 12px; font-weight: 500;');
-console.log('%c📊 Tapez debugCompteur() pour voir le compteur', 'color: #34C759; font-size: 12px; font-weight: 500;');
-console.log('%c🎯 Tapez verifierImagePrincipale() pour vérifier l\'image', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c✨ Tapez debugProduit() pour voir les détails', 'color: #34C759; font-size: 12px;');
+console.log('%c🔄 Tapez forceReload() pour recharger', 'color: #34C759; font-size: 12px;');
+console.log('%c🖼️ Tapez verifierImagePrincipale() pour vérifier le carrousel', 'color: #34C759; font-size: 12px;');
 console.log('%c┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛', 'color: #FF6B00;');
 
-// ==================== EXPORT FINAL ====================
-window.initialiserPageProduit = initialiserPageProduit;
-window.enregistrerVueProduit = enregistrerVueProduit;
-window.demarrerRafraichissement = demarrerRafraichissement;
-window.arreterRafraichissement = arreterRafraichissement;
+console.log('✅ Module 4: Engagement, commentaires et actions - Chargé');
 
-console.log('📦 Tous les modules JavaScript chargés avec succès');
-
-</script>
+        
+    </script>
 </body>
 </html>

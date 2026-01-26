@@ -975,7 +975,7 @@
 
 
 <script type="module">
-    // ==================== PARTIE 1/4 : CONFIGURATION & ÉTAT GLOBAL ====================
+    // ==================== PARTIE 1/5 : CONFIGURATION & ÉTAT GLOBAL ====================
 
 // Configuration Supabase
 const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
@@ -1055,7 +1055,6 @@ function afficherNotification(message, type = 'info') {
 // ==================== CHARGEMENT PRODUIT ====================
 async function chargerProduit() {
     try {
-        // Récupérer l'ID du produit depuis l'URL
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
         
@@ -1065,7 +1064,6 @@ async function chargerProduit() {
         
         console.log('📦 Chargement du produit:', productId);
         
-        // Charger le produit depuis Supabase
         const { data: product, error: productError } = await supabase
             .from('produits')
             .select('*')
@@ -1078,26 +1076,21 @@ async function chargerProduit() {
         currentProduct = product;
         console.log('✅ Produit chargé:', product);
         
-        // Charger la configuration de la boutique
         await chargerConfigurationBoutique(product.user_id);
         
-        // Charger les likes et commentaires
         await Promise.all([
             chargerLikes(productId),
             chargerCommentaires(productId)
         ]);
         
-        // Afficher le produit
         afficherProduit();
         
-        // Masquer le loader
         document.getElementById('loader').style.display = 'none';
         
     } catch (error) {
         console.error('❌ Erreur chargement produit:', error);
         afficherNotification('Erreur lors du chargement du produit', 'error');
         
-        // Rediriger vers la page d'accueil après 2 secondes
         setTimeout(() => {
             window.location.href = 'oda-achats.html';
         }, 2000);
@@ -1147,6 +1140,9 @@ function getDefaultShopConfig() {
             carte: { actif: false },
             mobile: { actif: true },
             cash: { actif: true }
+        },
+        identifiant: {
+            slug: ''
         }
     };
 }
@@ -1218,7 +1214,7 @@ window.afficherNotification = afficherNotification;
 window.formatPrice = formatPrice;
 window.formatDate = formatDate;
 window.getUserName = getUserName;
-// ==================== PARTIE 2/4 : AFFICHAGE PRODUIT & CAROUSEL ====================
+// ==================== PARTIE 2/5 : AFFICHAGE PRODUIT & CARROUSEL CORRIGÉ ====================
 
 // ==================== AFFICHAGE PRODUIT ====================
 function afficherProduit() {
@@ -1226,29 +1222,18 @@ function afficherProduit() {
     
     const devise = shopConfig?.paiement?.devise || 'FCFA';
     
-    // Titre de la page
     document.title = `${currentProduct.nom} - ODA Marketplace`;
     document.getElementById('headerTitle').textContent = currentProduct.nom;
     
-    // Informations principales
     document.getElementById('productName').textContent = currentProduct.nom;
     document.getElementById('productCategory').textContent = `📦 ${currentProduct.categorie || 'Produit'}`;
     document.getElementById('productPrice').textContent = formatPrice(currentProduct.prix, devise);
     document.getElementById('productDescription').textContent = currentProduct.description || 'Aucune description disponible.';
     
-    // Stock
     afficherStock();
-    
-    // Images
     initialiserCarousel();
-    
-    // Engagement (likes et commentaires)
     afficherEngagement();
-    
-    // Commentaires
     afficherCommentaires();
-    
-    // Mettre à jour le bouton "Voir ma boutique"
     mettreAJourBoutonBoutique();
     
     console.log('✅ Produit affiché');
@@ -1293,78 +1278,392 @@ function afficherStock() {
     }
 }
 
-// ==================== CAROUSEL D'IMAGES ====================
+// ==================== CARROUSEL D'IMAGES OPTIMISÉ - CORRIGÉ ✅ ====================
+
 function initialiserCarousel() {
     allImages = [];
     
-    // Image principale
-    if (currentProduct.main_image) {
-        allImages.push(currentProduct.main_image);
+    console.log('🖼️ ========== INITIALISATION CARROUSEL ==========');
+    console.log('📋 Données produit:');
+    console.log('  main_image:', currentProduct.main_image);
+    console.log('  description_images:', currentProduct.description_images);
+    console.log('  images:', currentProduct.images);
+    
+    const mainImageUrl = extraireImagePrincipale();
+    const imagesSupplementaires = extraireImagesSupplementaires();
+    
+    construireTableauImages(mainImageUrl, imagesSupplementaires);
+    dedupliquerImagesAvecPriorite(); // ✅ CORRIGÉ : Nouvelle fonction qui préserve l'image principale
+    ajouterFallbackSiVide();
+    afficherCarousel();
+    afficherStatistiques();
+}
+
+function extraireImagePrincipale() {
+    if (!currentProduct.main_image) {
+        console.warn('⚠️ Pas de main_image définie');
+        return null;
     }
     
-    // Images supplémentaires
-    if (currentProduct.images && Array.isArray(currentProduct.images)) {
-        allImages.push(...currentProduct.images);
+    const mainImg = String(currentProduct.main_image).trim();
+    
+    if (!mainImg || mainImg === '' || mainImg === 'null' || mainImg === 'undefined') {
+        console.warn('⚠️ main_image invalide:', mainImg);
+        return null;
     }
     
-    // Si aucune image, utiliser placeholder
+    if (mainImg.startsWith('http') || mainImg.startsWith('/') || mainImg.startsWith('data:')) {
+        console.log('✅ Image principale détectée:', mainImg.substring(0, 80) + '...');
+        return mainImg;
+    }
+    
+    console.warn('⚠️ main_image ne ressemble pas à une URL:', mainImg.substring(0, 50));
+    return null;
+}
+
+function extraireImagesSupplementaires() {
+    const sources = [
+        { nom: 'description_images', data: currentProduct.description_images },
+        { nom: 'images', data: currentProduct.images }
+    ];
+    
+    let toutesLesImages = [];
+    
+    sources.forEach(source => {
+        if (!source.data) return;
+        
+        console.log(`🔍 Traitement de "${source.nom}":`, typeof source.data);
+        
+        const images = parseImages(source.data, source.nom);
+        
+        if (images.length > 0) {
+            console.log(`  ✅ ${images.length} image(s) trouvée(s) dans ${source.nom}`);
+            toutesLesImages.push(...images);
+        }
+    });
+    
+    return toutesLesImages;
+}
+
+function parseImages(data, sourceName) {
+    if (Array.isArray(data)) {
+        console.log(`  📦 ${sourceName}: Tableau direct`);
+        return filtrerURLsValides(data);
+    }
+    
+    if (typeof data === 'string') {
+        const trimmed = data.trim();
+        
+        if (!trimmed || trimmed === 'null' || trimmed === 'undefined') {
+            return [];
+        }
+        
+        if (trimmed.startsWith('[')) {
+            console.log(`  📦 ${sourceName}: JSON array`);
+            return parseJSONArray(trimmed, sourceName);
+        }
+        
+        if (trimmed.startsWith('{')) {
+            console.log(`  📦 ${sourceName}: JSON object`);
+            return parseJSONObject(trimmed, sourceName);
+        }
+        
+        if (estURLValide(trimmed)) {
+            console.log(`  📦 ${sourceName}: URL unique`);
+            return [trimmed];
+        }
+        
+        if (trimmed.includes(',')) {
+            console.log(`  📦 ${sourceName}: URLs séparées par virgules`);
+            return trimmed.split(',')
+                .map(url => url.trim())
+                .filter(estURLValide);
+        }
+        
+        console.warn(`  ⚠️ ${sourceName}: Format non reconnu`);
+        return [];
+    }
+    
+    if (typeof data === 'object' && data !== null) {
+        console.log(`  📦 ${sourceName}: Objet`);
+        return Object.values(data)
+            .filter(v => typeof v === 'string')
+            .filter(estURLValide);
+    }
+    
+    return [];
+}
+
+function parseJSONArray(jsonString, sourceName) {
+    try {
+        let parsed = JSON.parse(jsonString);
+        
+        if (typeof parsed === 'string') {
+            try {
+                parsed = JSON.parse(parsed);
+            } catch (e) {
+                console.warn(`  ⚠️ Double parsing échoué pour ${sourceName}`);
+            }
+        }
+        
+        if (Array.isArray(parsed)) {
+            return filtrerURLsValides(parsed);
+        }
+        
+        console.warn(`  ⚠️ ${sourceName}: Parse JSON OK mais pas un array`);
+        return [];
+        
+    } catch (error) {
+        console.error(`  ❌ ${sourceName}: Erreur parse JSON:`, error.message);
+        return [];
+    }
+}
+
+function parseJSONObject(jsonString, sourceName) {
+    try {
+        const parsed = JSON.parse(jsonString);
+        
+        if (typeof parsed === 'object' && parsed !== null) {
+            return Object.values(parsed)
+                .filter(v => typeof v === 'string')
+                .filter(estURLValide);
+        }
+        
+        return [];
+        
+    } catch (error) {
+        console.error(`  ❌ ${sourceName}: Erreur parse object:`, error.message);
+        return [];
+    }
+}
+
+function filtrerURLsValides(array) {
+    return array
+        .filter(item => item && typeof item === 'string')
+        .map(item => item.trim())
+        .filter(item => item !== '' && item !== 'null' && item !== 'undefined')
+        .filter(estURLValide);
+}
+
+function estURLValide(str) {
+    if (!str || typeof str !== 'string') return false;
+    const trimmed = str.trim();
+    return trimmed.startsWith('http') || 
+           trimmed.startsWith('/') || 
+           trimmed.startsWith('data:');
+}
+
+function construireTableauImages(mainImageUrl, imagesSupplementaires) {
+    allImages = [];
+    
+    if (mainImageUrl) {
+        allImages.push(mainImageUrl);
+        console.log('🎯 Image principale ajoutée en position 1');
+        console.log(`   URL: ${mainImageUrl.substring(0, 80)}...`);
+        
+        // ✅ CORRIGÉ : Retirer la principale des supplémentaires AVANT de les ajouter
+        imagesSupplementaires = imagesSupplementaires.filter(img => img !== mainImageUrl);
+        console.log(`   ✅ Image principale retirée des supplémentaires (${imagesSupplementaires.length} restantes)`);
+    } else {
+        console.warn('⚠️ Aucune image principale, utilisation images supplémentaires');
+    }
+    
+    imagesSupplementaires.forEach((img, index) => {
+        allImages.push(img);
+        console.log(`  ✅ [${allImages.length}] Image supplémentaire ajoutée`);
+    });
+    
+    console.log(`📊 Total avant déduplication: ${allImages.length} images`);
+}
+
+// ✅ CORRIGÉ : Nouvelle fonction qui préserve toujours l'image principale en position 1
+function dedupliquerImagesAvecPriorite() {
+    if (allImages.length === 0) return;
+    
+    const imagePrincipale = allImages[0]; // Sauvegarder l'image principale
+    const autresImages = allImages.slice(1); // Les autres images
+    
+    // Dédupliquer les autres images (sans toucher à la principale)
+    const autresImagesDedupliquees = [...new Set(autresImages)];
+    
+    // Retirer l'image principale des autres si elle apparaît (sécurité supplémentaire)
+    const autresImagesSansPrincipale = autresImagesDedupliquees.filter(
+        img => img !== imagePrincipale
+    );
+    
+    // Reconstruire le tableau : principale + autres
+    const avant = allImages.length;
+    allImages = [imagePrincipale, ...autresImagesSansPrincipale];
+    const apres = allImages.length;
+    
+    if (avant !== apres) {
+        console.log(`🔄 Déduplication avec priorité: ${avant} → ${apres} images`);
+    }
+    console.log(`   ✅ Image principale préservée en position 1`);
+}
+
+function ajouterFallbackSiVide() {
     if (allImages.length === 0) {
+        console.warn('⚠️ Aucune image valide, ajout placeholder');
         allImages.push('https://via.placeholder.com/600x600?text=Produit');
     }
-    
-    currentImageIndex = 0;
+}
+
+function afficherCarousel() {
+    currentImageIndex = 0; // ✅ TOUJOURS commencer à 0 (image principale)
     afficherImageCourante();
     genererThumbnails();
+    ajouterGestionZoom();
     
-    // Gestion zoom
-    const mainImageWrapper = document.getElementById('mainImageWrapper');
-    const mainImage = document.getElementById('mainImage');
-    
-    mainImageWrapper.addEventListener('click', () => {
-        mainImage.classList.toggle('zoom');
-    });
+    console.log('🎯 Carrousel initialisé - Image principale affichée');
 }
 
 function afficherImageCourante() {
     const mainImage = document.getElementById('mainImage');
     const imageCounter = document.getElementById('imageCounter');
     
-    if (allImages.length > 0) {
-        mainImage.src = allImages[currentImageIndex];
-        imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+    if (!mainImage || allImages.length === 0) return;
+    
+    const currentUrl = allImages[currentImageIndex];
+    
+    console.log(`🖼️ Affichage image ${currentImageIndex + 1}/${allImages.length}`);
+    if (currentImageIndex === 0) {
+        console.log('  🎯 ✅ IMAGE PRINCIPALE AFFICHÉE');
     }
+    
+    // ✅ MISE À JOUR IMMÉDIATE DU COMPTEUR
+    if (imageCounter) {
+        imageCounter.textContent = `${currentImageIndex + 1} / ${allImages.length}`;
+        imageCounter.style.display = allImages.length > 1 ? 'block' : 'none';
+    }
+    
+    const preloadImg = new Image();
+    preloadImg.onload = () => {
+        mainImage.src = currentUrl;
+        console.log('  ✅ Image chargée avec succès');
+    };
+    preloadImg.onerror = () => {
+        console.error('  ❌ Erreur chargement:', currentUrl.substring(0, 100));
+        mainImage.src = 'https://via.placeholder.com/600x600?text=Image+non+disponible';
+    };
+    preloadImg.src = currentUrl;
 }
 
 function genererThumbnails() {
     const container = document.getElementById('thumbnailsContainer');
+    if (!container) return;
     
     if (allImages.length <= 1) {
         container.style.display = 'none';
+        console.log('📸 Une seule image, masquage miniatures');
         return;
     }
+    
+    container.style.display = 'flex';
     
     container.innerHTML = allImages.map((img, index) => `
         <img src="${img}" 
              class="thumbnail ${index === 0 ? 'active' : ''}" 
              onclick="changerImage(${index})"
-             alt="Miniature ${index + 1}"
-             onerror="this.src='https://via.placeholder.com/70x70?text=${index + 1}'">
+             alt="Miniature ${index + 1}${index === 0 ? ' (🎯 Principale)' : ''}"
+             title="${index === 0 ? '🎯 Image principale' : `Image ${index + 1}`}"
+             loading="lazy"
+             onerror="this.src='https://via.placeholder.com/70x70?text=${index + 1}'"
+             data-index="${index}"
+             ${index === 0 ? 'style="border-color: var(--primary-color); box-shadow: 0 0 8px rgba(255,107,0,0.5);"' : ''}>
     `).join('');
+    
+    console.log(`✅ ${allImages.length} miniatures générées (première = 🎯 principale)`);
 }
 
 window.changerImage = function(index) {
+    if (index < 0 || index >= allImages.length) {
+        console.warn(`⚠️ Index invalide: ${index}`);
+        return;
+    }
+    
     currentImageIndex = index;
     afficherImageCourante();
     
-    // Mettre à jour les thumbnails
     document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
         thumb.classList.toggle('active', i === index);
+        
+        // ✅ Mise en valeur de la principale
+        if (i === 0) {
+            thumb.style.borderColor = 'var(--primary-color)';
+            thumb.style.boxShadow = '0 0 8px rgba(255,107,0,0.5)';
+        } else if (i === index && i !== 0) {
+            thumb.style.borderColor = 'var(--primary-color)';
+            thumb.style.boxShadow = 'none';
+        } else {
+            thumb.style.borderColor = 'transparent';
+            thumb.style.boxShadow = 'none';
+        }
     });
+    
+    console.log(`📍 Image ${index + 1}/${allImages.length} sélectionnée${index === 0 ? ' (🎯 Principale)' : ''}`);
 };
+
+function ajouterGestionZoom() {
+    const mainImageWrapper = document.getElementById('mainImageWrapper');
+    const mainImage = document.getElementById('mainImage');
+    
+    if (!mainImageWrapper || !mainImage) return;
+    
+    const newWrapper = mainImageWrapper.cloneNode(true);
+    mainImageWrapper.parentNode.replaceChild(newWrapper, mainImageWrapper);
+    
+    document.getElementById('mainImageWrapper').addEventListener('click', () => {
+        document.getElementById('mainImage').classList.toggle('zoom');
+    });
+}
+
+function afficherStatistiques() {
+    console.log('┌─────────────────────────────────────────┐');
+    console.log(`📸 RÉSULTAT: ${allImages.length} image(s) dans le carrousel`);
+    console.log('   Ordre des images:');
+    
+    allImages.forEach((img, i) => {
+        const isMain = i === 0;
+        const prefix = isMain ? '🎯 [PRINCIPALE]' : `   [${i + 1}]`;
+        const preview = img.length > 80 ? img.substring(0, 80) + '...' : img;
+        console.log(`${prefix} ${preview}`);
+    });
+    
+    console.log('└─────────────────────────────────────────┘');
+}
+
+// ✅ FONCTION DE VÉRIFICATION POUR DEBUG
+window.verifierImagePrincipale = function() {
+    console.log('🔍 VÉRIFICATION IMAGE PRINCIPALE');
+    console.log('┌─────────────────────────────────────────┐');
+    console.log(`📊 État actuel :`);
+    console.log(`   - Total images : ${allImages.length}`);
+    console.log(`   - Index actuel : ${currentImageIndex}`);
+    console.log(`   - Image affichée : ${currentImageIndex === 0 ? '🎯 PRINCIPALE' : `Supplémentaire #${currentImageIndex + 1}`}`);
+    console.log('');
+    console.log('📋 Données produit :');
+    console.log(`   - main_image : ${currentProduct?.main_image?.substring(0, 80)}...`);
+    console.log('');
+    console.log('🖼️ Première image du carrousel :');
+    console.log(`   ${allImages[0]?.substring(0, 80)}...`);
+    console.log('');
+    console.log(`✅ Correspondance : ${currentProduct?.main_image === allImages[0] ? 'OUI ✓' : 'NON ✗'}`);
+    console.log('└─────────────────────────────────────────┘');
+    
+    return currentProduct?.main_image === allImages[0];
+};
+
+// Export des fonctions
+window.afficherProduit = afficherProduit;
+window.initialiserCarousel = initialiserCarousel;
+window.afficherImageCourante = afficherImageCourante;
+window.genererThumbnails = genererThumbnails;
+window.dedupliquerImagesAvecPriorite = dedupliquerImagesAvecPriorite;
+// ==================== PARTIE 3/5 : ENGAGEMENT & COMMENTAIRES ====================
 
 // ==================== AFFICHAGE ENGAGEMENT ====================
 function afficherEngagement() {
-    // Likes
     document.getElementById('likesCount').textContent = productLikes.count;
     
     const btnLike = document.getElementById('btnLike');
@@ -1381,10 +1680,8 @@ function afficherEngagement() {
         likeText.textContent = 'J\'aime';
     }
     
-    // Commentaires
     document.getElementById('commentsCount').textContent = productComments.length;
     
-    // Note moyenne
     const averageRating = calculerNoteMoyenne();
     document.getElementById('averageRating').textContent = averageRating;
 }
@@ -1405,7 +1702,6 @@ async function toggleLike() {
     
     try {
         if (productLikes.userLiked) {
-            // Retirer le like
             const { error } = await supabase
                 .from('product_likes')
                 .delete()
@@ -1418,7 +1714,6 @@ async function toggleLike() {
             productLikes.userLiked = false;
             afficherNotification('Like retiré', 'info');
         } else {
-            // Ajouter le like
             const { error } = await supabase
                 .from('product_likes')
                 .insert({
@@ -1445,6 +1740,8 @@ async function toggleLike() {
 // ==================== AFFICHAGE COMMENTAIRES ====================
 function afficherCommentaires() {
     const commentsList = document.getElementById('commentsList');
+    
+    if (!commentsList) return;
     
     if (productComments.length === 0) {
         commentsList.innerHTML = `
@@ -1507,14 +1804,11 @@ async function submitComment() {
         
         if (error) throw error;
         
-        // Ajouter le nouveau commentaire en haut de la liste
         productComments.unshift(data);
         
-        // Réinitialiser le formulaire
         commentInput.value = '';
         document.querySelector('input[name="rating"][value="5"]').checked = true;
         
-        // Réafficher les commentaires
         afficherCommentaires();
         afficherEngagement();
         
@@ -1532,34 +1826,39 @@ window.scrollToComments = function() {
     }
 };
 
-// Export des fonctions
-window.afficherProduit = afficherProduit;
-window.toggleLike = toggleLike;
-window.submitComment = submitComment;
-window.initialiserCarousel = initialiserCarousel;
-// ==================== PARTIE 3/4 : PAIEMENT & WHATSAPP ====================
-
 // ==================== INITIALISER BOUTONS D'ACTION ====================
 function initialiserBoutonsAction() {
-    // Bouton retour
-    document.getElementById('btnBack').addEventListener('click', () => {
-        window.history.back();
-    });
+    const btnBack = document.getElementById('btnBack');
+    if (btnBack) {
+        btnBack.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
     
-    // Bouton partage
-    document.getElementById('btnShare').addEventListener('click', partagerProduit);
+    const btnShare = document.getElementById('btnShare');
+    if (btnShare) {
+        btnShare.addEventListener('click', partagerProduit);
+    }
     
-    // Bouton like
-    document.getElementById('btnLike').addEventListener('click', toggleLike);
+    const btnLike = document.getElementById('btnLike');
+    if (btnLike) {
+        btnLike.addEventListener('click', toggleLike);
+    }
     
-    // Bouton acheter
-    document.getElementById('btnAcheter').addEventListener('click', ouvrirModalPaiement);
+    const btnAcheter = document.getElementById('btnAcheter');
+    if (btnAcheter) {
+        btnAcheter.addEventListener('click', ouvrirModalPaiement);
+    }
     
-    // Bouton WhatsApp
-    document.getElementById('btnWhatsApp').addEventListener('click', contacterWhatsApp);
+    const btnWhatsApp = document.getElementById('btnWhatsApp');
+    if (btnWhatsApp) {
+        btnWhatsApp.addEventListener('click', contacterWhatsApp);
+    }
     
-    // Bouton boutique
-    document.getElementById('btnBoutique').addEventListener('click', allerBoutique);
+    const btnBoutique = document.getElementById('btnBoutique');
+    if (btnBoutique) {
+        btnBoutique.addEventListener('click', allerBoutique);
+    }
     
     console.log('✅ Boutons d\'action initialisés');
 }
@@ -1571,7 +1870,6 @@ async function partagerProduit() {
     const url = window.location.href;
     const text = `Découvrez ${currentProduct.nom} sur ODA Marketplace`;
     
-    // Utiliser l'API Web Share si disponible
     if (navigator.share) {
         try {
             await navigator.share({
@@ -1586,7 +1884,6 @@ async function partagerProduit() {
             }
         }
     } else {
-        // Fallback : copier le lien
         try {
             await navigator.clipboard.writeText(url);
             afficherNotification('Lien copié dans le presse-papiers !', 'success');
@@ -1607,7 +1904,6 @@ function contacterWhatsApp() {
         return;
     }
     
-    // Nettoyer le numéro de téléphone
     const phoneNumber = telephone.replace(/\D/g, '');
     
     const message = encodeURIComponent(
@@ -1625,15 +1921,24 @@ function contacterWhatsApp() {
 
 // ==================== ALLER À LA BOUTIQUE ====================
 async function allerBoutique() {
-    if (!currentProduct) return;
+    if (!currentProduct) {
+        afficherNotification('Impossible de charger la boutique', 'error');
+        return;
+    }
     
     try {
-        // 1️⃣ Essayer d'abord avec le slug du shopConfig
-        let slug = shopConfig?.identifiant?.slug;
+        console.log('🏪 Redirection vers la boutique...');
+        console.log('User ID du vendeur:', currentProduct.user_id);
         
-        // 2️⃣ Si pas de slug dans shopConfig, charger depuis Supabase
+        let slug = null;
+        
+        if (shopConfig?.identifiant?.slug) {
+            slug = shopConfig.identifiant.slug;
+            console.log('✅ Slug trouvé dans shopConfig:', slug);
+        }
+        
         if (!slug) {
-            console.log('🔍 Recherche de l\'identifiant boutique...');
+            console.log('🔍 Recherche du slug dans Supabase...');
             
             const { data, error } = await supabase
                 .from('parametres_boutique')
@@ -1641,29 +1946,34 @@ async function allerBoutique() {
                 .eq('user_id', currentProduct.user_id)
                 .single();
             
-            if (data && !error) {
-                slug = data.config?.identifiant?.slug;
+            if (data && !error && data.config?.identifiant?.slug) {
+                slug = data.config.identifiant.slug;
+                console.log('✅ Slug trouvé dans Supabase:', slug);
+            } else if (data && !error && data.config?.slug) {
+                slug = data.config.slug;
+                console.log('✅ Slug trouvé (ancienne structure):', slug);
+            } else {
+                console.warn('⚠️ Aucun slug trouvé dans Supabase');
             }
         }
         
-        // 3️⃣ Si toujours pas de slug, essayer avec user_id
         if (!slug) {
-            console.log('⚠️ Aucun slug trouvé, utilisation de user_id');
+            console.log('⚠️ Aucun slug trouvé, utilisation du user_id comme fallback');
             slug = currentProduct.user_id;
         }
         
-        // 4️⃣ Rediriger vers la boutique
-        if (slug) {
-            const urlBoutique = `${window.location.origin}/boutique.html?shop=${slug}`;
-            console.log(`🏪 Redirection vers: ${urlBoutique}`);
+        const urlBoutique = `${window.location.origin}/boutique.html?shop=${slug}`;
+        console.log('🔗 URL de redirection:', urlBoutique);
+        
+        afficherNotification('Redirection vers la boutique...', 'info');
+        
+        setTimeout(() => {
             window.location.href = urlBoutique;
-        } else {
-            throw new Error('Impossible de trouver l\'identifiant de la boutique');
-        }
+        }, 500);
         
     } catch (error) {
-        console.error('❌ Erreur redirection boutique:', error);
-        afficherNotification('Boutique non disponible', 'error');
+        console.error('❌ Erreur lors de la redirection vers la boutique:', error);
+        afficherNotification('Erreur lors de l\'accès à la boutique', 'error');
     }
 }
 
@@ -1671,7 +1981,6 @@ async function allerBoutique() {
 async function ouvrirModalPaiement() {
     if (!currentProduct) return;
     
-    // Vérifier le stock
     if (currentProduct.stock <= 0) {
         afficherNotification('Ce produit n\'est plus en stock', 'error');
         return;
@@ -1680,24 +1989,20 @@ async function ouvrirModalPaiement() {
     const modal = document.getElementById('paymentModal');
     const devise = shopConfig?.paiement?.devise || 'FCFA';
     
-    // Charger les paramètres de livraison
     await chargerParametresLivraison();
-    
-    // Remplir le résumé de commande
     mettreAJourResumePaiement(devise);
-    
-    // Générer les options de paiement
     genererOptionsPaiement();
     
-    modal.classList.add('active');
-    console.log('💳 Modal paiement ouverte');
+    if (modal) {
+        modal.classList.add('active');
+        console.log('💳 Modal paiement ouverte');
+    }
 }
 
 function mettreAJourResumePaiement(devise) {
     const fraisLivraison = calculerFraisLivraison();
     const total = calculerTotalAvecLivraison();
     
-    // Mettre à jour le contenu du résumé
     const orderSummary = document.querySelector('.order-summary');
     if (orderSummary) {
         orderSummary.innerHTML = `
@@ -1730,20 +2035,19 @@ function mettreAJourResumePaiement(devise) {
 
 function fermerModalPaiement() {
     const modal = document.getElementById('paymentModal');
-    modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
 
-// ==================== CHARGEMENT PARAMÈTRES LIVRAISON ====================
 async function chargerParametresLivraison() {
     try {
-        // 1️⃣ Essayer depuis shopConfig
         if (shopConfig?.livraison) {
             window.parametresLivraison = shopConfig.livraison;
             console.log('📦 Paramètres livraison depuis shopConfig');
             return;
         }
         
-        // 2️⃣ Charger depuis Supabase
         const { data, error } = await supabase
             .from('parametres_boutique')
             .select('config')
@@ -1774,20 +2078,17 @@ function getDefaultLivraisonConfig() {
     };
 }
 
-// ==================== CALCUL TOTAL AVEC LIVRAISON ====================
 function calculerTotalAvecLivraison() {
     if (!currentProduct) return 0;
     
     const prixProduit = currentProduct.prix;
     const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
     
-    // Vérifier si livraison gratuite
     if (livraison.gratuit && prixProduit >= livraison.montantMin) {
         console.log('🎁 Livraison gratuite appliquée');
         return prixProduit;
     }
     
-    // Frais de livraison par défaut (Douala)
     const fraisLivraison = livraison.fraisDouala || 1000;
     const total = prixProduit + fraisLivraison;
     
@@ -1795,14 +2096,25 @@ function calculerTotalAvecLivraison() {
     return total;
 }
 
-// ==================== GÉNÉRER OPTIONS DE PAIEMENT ====================
+function calculerFraisLivraison() {
+    const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
+    const prixProduit = currentProduct?.prix || 0;
+    
+    if (livraison.gratuit && prixProduit >= livraison.montantMin) {
+        return 0;
+    }
+    
+    return livraison.fraisDouala || 1000;
+}
+
 function genererOptionsPaiement() {
     const container = document.getElementById('paymentMethods');
+    if (!container) return;
+    
     const paiementConfig = shopConfig?.paiement || {};
     
     const options = [];
     
-    // Mobile Money (Orange Money, MTN MoMo)
     if (paiementConfig.mobile?.actif) {
         options.push({
             id: 'mobile',
@@ -1812,7 +2124,6 @@ function genererOptionsPaiement() {
         });
     }
     
-    // Carte bancaire
     if (paiementConfig.carte?.actif) {
         options.push({
             id: 'carte',
@@ -1822,7 +2133,6 @@ function genererOptionsPaiement() {
         });
     }
     
-    // Paiement à la livraison
     if (paiementConfig.cash?.actif) {
         options.push({
             id: 'cash',
@@ -1832,7 +2142,6 @@ function genererOptionsPaiement() {
         });
     }
     
-    // Si aucune option n'est active, afficher toutes par défaut
     if (options.length === 0) {
         options.push(
             { id: 'mobile', icon: '📱', name: 'Mobile Money', desc: 'Orange Money, MTN MoMo' },
@@ -1859,7 +2168,6 @@ window.selectionnerPaiement = function(paymentId) {
     });
 };
 
-// ==================== CONFIRMER PAIEMENT ====================
 async function confirmerPaiement() {
     const selectedPayment = document.querySelector('.payment-option.active');
     
@@ -1870,7 +2178,6 @@ async function confirmerPaiement() {
     
     const paymentId = selectedPayment.dataset.paymentId;
     
-    // Préparer les données de commande
     const commandeData = {
         produit: {
             id: currentProduct.id,
@@ -1897,12 +2204,10 @@ async function confirmerPaiement() {
         timestamp: new Date().toISOString()
     };
     
-    // Sauvegarder dans sessionStorage pour payment.html
     sessionStorage.setItem('commande_en_cours', JSON.stringify(commandeData));
     
     console.log('📦 Commande préparée:', commandeData);
     
-    // Rediriger vers payment.html
     afficherNotification('Redirection vers le paiement...', 'info');
     
     setTimeout(() => {
@@ -1910,41 +2215,6 @@ async function confirmerPaiement() {
     }, 500);
 }
 
-function calculerFraisLivraison() {
-    const livraison = window.parametresLivraison || getDefaultLivraisonConfig();
-    const prixProduit = currentProduct?.prix || 0;
-    
-    // Vérifier si livraison gratuite
-    if (livraison.gratuit && prixProduit >= livraison.montantMin) {
-        return 0;
-    }
-    
-    // Frais par défaut (Douala)
-    return livraison.fraisDouala || 1000;
-}
-
-function creerMessageCommande(paymentMethod) {
-    const methodNames = {
-        mobile: 'Mobile Money',
-        carte: 'Carte bancaire',
-        cash: 'Paiement à la livraison'
-    };
-    
-    const devise = shopConfig?.paiement?.devise || 'FCFA';
-    const fraisLivraison = calculerFraisLivraison();
-    const total = calculerTotalAvecLivraison();
-    
-    return `🛒 NOUVELLE COMMANDE\n\n` +
-           `📦 Produit : ${currentProduct.nom}\n` +
-           `💰 Prix : ${formatPrice(currentProduct.prix, devise)}\n` +
-           `🚚 Livraison : ${fraisLivraison > 0 ? formatPrice(fraisLivraison, devise) : 'GRATUITE'}\n` +
-           `💳 Total : ${formatPrice(total, devise)}\n` +
-           `💳 Paiement : ${methodNames[paymentMethod] || paymentMethod}\n\n` +
-           `🔗 Lien : ${window.location.href}\n\n` +
-           `Je souhaite commander ce produit. Merci de me contacter pour finaliser la commande.`;
-}
-
-// ==================== INITIALISER MODAL ====================
 function initialiserModal() {
     const btnCloseModal = document.getElementById('btnCloseModal');
     const btnConfirmPayment = document.getElementById('btnConfirmPayment');
@@ -1958,7 +2228,6 @@ function initialiserModal() {
         btnConfirmPayment.addEventListener('click', confirmerPaiement);
     }
     
-    // Fermer au clic sur le backdrop
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1971,6 +2240,10 @@ function initialiserModal() {
 }
 
 // Export des fonctions
+window.afficherEngagement = afficherEngagement;
+window.toggleLike = toggleLike;
+window.submitComment = submitComment;
+window.afficherCommentaires = afficherCommentaires;
 window.initialiserBoutonsAction = initialiserBoutonsAction;
 window.initialiserModal = initialiserModal;
 window.ouvrirModalPaiement = ouvrirModalPaiement;
@@ -1979,35 +2252,33 @@ window.confirmerPaiement = confirmerPaiement;
 window.partagerProduit = partagerProduit;
 window.contacterWhatsApp = contacterWhatsApp;
 window.allerBoutique = allerBoutique;
-// ==================== PARTIE 4/4 : INITIALISATION COMPLÈTE ====================
+// ==================== PARTIE 4/5 : INITIALISATION COMPLÈTE & UTILITAIRES ====================
 
 // ==================== INITIALISATION PRINCIPALE ====================
 async function initialiserPageProduit() {
     try {
         console.log('🚀 Initialisation de la page produit...');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
         
-        // 1️⃣ Charger le produit
         await chargerProduit();
         console.log('✅ 1/4 - Produit chargé');
         
-        // 2️⃣ Initialiser les boutons d'action
         initialiserBoutonsAction();
         console.log('✅ 2/4 - Boutons d\'action initialisés');
         
-        // 3️⃣ Initialiser la modal de paiement
         initialiserModal();
         console.log('✅ 3/4 - Modal paiement initialisée');
         
-        // 4️⃣ Initialiser les événements supplémentaires
         initialiserEvenementsSupplementaires();
         console.log('✅ 4/4 - Événements supplémentaires initialisés');
         
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
         console.log('✨ Page produit complètement initialisée !');
         console.log('📦 Produit:', currentProduct?.nom || 'Non chargé');
         console.log('🏪 Boutique:', shopConfig?.general?.nom || 'Non configurée');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🔗 Slug boutique:', shopConfig?.identifiant?.slug || 'Non défini');
+        console.log('🖼️ Total images:', allImages.length);
+        console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
         
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation:', error);
@@ -2067,7 +2338,6 @@ function initialiserEvenementsSupplementaires() {
 window.addEventListener('error', (event) => {
     console.error('❌ Erreur globale:', event.error);
     
-    // Ne pas afficher de notification pour les erreurs d'images
     if (event.target.tagName === 'IMG') {
         return;
     }
@@ -2075,7 +2345,6 @@ window.addEventListener('error', (event) => {
 
 // ==================== GESTION DE LA NAVIGATION ====================
 window.addEventListener('popstate', () => {
-    // Gérer le retour arrière
     const modal = document.getElementById('paymentModal');
     if (modal && modal.classList.contains('active')) {
         fermerModalPaiement();
@@ -2083,12 +2352,11 @@ window.addEventListener('popstate', () => {
     }
 });
 
-// ==================== ANALYTICS (OPTIONNEL) ====================
+// ==================== ANALYTICS ====================
 function enregistrerVueProduit() {
     if (!currentProduct) return;
     
     try {
-        // Enregistrer la vue dans localStorage pour analytics
         const vues = JSON.parse(localStorage.getItem('product_views') || '{}');
         const productId = currentProduct.id;
         
@@ -2115,7 +2383,6 @@ function enregistrerVueProduit() {
 let refreshInterval;
 
 function demarrerRafraichissement() {
-    // Rafraîchir les likes et commentaires toutes les 30 secondes
     refreshInterval = setInterval(async () => {
         if (currentProduct) {
             await Promise.all([
@@ -2138,26 +2405,81 @@ function arreterRafraichissement() {
     }
 }
 
-// Arrêter le rafraîchissement quand l'utilisateur quitte la page
 window.addEventListener('beforeunload', arreterRafraichissement);
 
 // ==================== FONCTIONS DE DEBUG ====================
 window.debugProduit = function() {
     console.log('🔍 DEBUG PRODUIT');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
     console.log('Produit actuel:', currentProduct);
     console.log('Configuration boutique:', shopConfig);
+    console.log('Slug boutique:', shopConfig?.identifiant?.slug);
     console.log('Likes:', productLikes);
     console.log('Commentaires:', productComments.length);
     console.log('User ID:', currentUserId);
+    console.log('Images totales:', allImages.length);
     console.log('Images:', allImages);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
 };
 
 window.forceReload = async function() {
     console.log('🔄 Rechargement forcé...');
     await chargerProduit();
     afficherNotification('Données rechargées', 'success');
+};
+
+window.testBoutique = function() {
+    console.log('🧪 TEST REDIRECTION BOUTIQUE');
+    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
+    console.log('User ID vendeur:', currentProduct?.user_id);
+    console.log('Slug dans shopConfig:', shopConfig?.identifiant?.slug);
+    console.log('URL qui sera générée:', `${window.location.origin}/boutique.html?shop=${shopConfig?.identifiant?.slug || currentProduct?.user_id}`);
+    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
+};
+
+window.verifierCarrousel = function() {
+    console.log('🔍 VÉRIFICATION CARROUSEL');
+    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
+    console.log('📊 Statistiques:');
+    console.log('  - Total images:', allImages.length);
+    console.log('  - Image actuelle:', currentImageIndex + 1);
+    console.log('  - Image principale:', currentProduct?.main_image?.substring(0, 80));
+    console.log('');
+    console.log('📋 Liste complète:');
+    
+    allImages.forEach((img, i) => {
+        const isMain = i === 0;
+        const isCurrent = i === currentImageIndex;
+        const markers = [];
+        if (isMain) markers.push('PRINCIPALE');
+        if (isCurrent) markers.push('ACTUELLE');
+        const label = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
+        console.log(`  ${i + 1}.${label} ${img.substring(0, 80)}`);
+    });
+    
+    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
+};
+
+window.rechargerCarrousel = function() {
+    console.log('🔄 Rechargement forcé du carrousel...');
+    initialiserCarousel();
+    console.log('✅ Carrousel rechargé');
+};
+
+window.debugCompteur = function() {
+    const imageCounter = document.getElementById('imageCounter');
+    const mainImage = document.getElementById('mainImage');
+    
+    console.log('🔍 DEBUG COMPTEUR D\'IMAGES');
+    console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
+    console.log('📊 État actuel :');
+    console.log(`  - Total images : ${allImages.length}`);
+    console.log(`  - Index actuel : ${currentImageIndex}`);
+    console.log(`  - Compteur existe : ${!!imageCounter}`);
+    console.log(`  - Compteur texte : "${imageCounter?.textContent}"`);
+    console.log(`  - Compteur visible : ${imageCounter?.style.display !== 'none'}`);
+    console.log(`  - Image chargée : ${mainImage?.src?.substring(0, 80)}...`);
+    console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
 };
 
 // ==================== DÉTECTION MODE PWA ====================
@@ -2169,7 +2491,6 @@ function detecterModePWA() {
         console.log('📱 Application lancée en mode PWA');
         document.body.classList.add('pwa-mode');
         
-        // Cacher le bouton partage si en PWA (car déjà dans l'app)
         const btnShare = document.getElementById('btnShare');
         if (btnShare && navigator.share) {
             btnShare.style.display = 'flex';
@@ -2200,24 +2521,16 @@ function verifierCompatibilite() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('📄 DOM chargé, démarrage de l\'initialisation...');
     
-    // Vérifier compatibilité
     verifierCompatibilite();
-    
-    // Détecter mode PWA
     detecterModePWA();
     
-    // Initialiser la page
     await initialiserPageProduit();
     
-    // Enregistrer la vue
     enregistrerVueProduit();
-    
-    // Démarrer le rafraîchissement automatique
     demarrerRafraichissement();
 });
 
 // ==================== GESTION DU CYCLE DE VIE ====================
-// Pause le rafraîchissement quand la page n'est pas visible
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         arreterRafraichissement();
@@ -2230,10 +2543,14 @@ document.addEventListener('visibilitychange', () => {
 
 // ==================== CONSOLE LOG STYLISÉ FINAL ====================
 console.log('%c🛒 PAGE PRODUIT CHARGÉE', 'color: #FF6B00; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);');
-console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #FF6B00;');
-console.log('%c✨ Tapez debugProduit() pour voir les détails', 'color: #34C759; font-size: 12px;');
-console.log('%c🔄 Tapez forceReload() pour recharger', 'color: #34C759; font-size: 12px;');
-console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #FF6B00;');
+console.log('%c┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓', 'color: #FF6B00;');
+console.log('%c✨ Tapez debugProduit() pour voir les détails', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c🔄 Tapez forceReload() pour recharger', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c🧪 Tapez testBoutique() pour tester la redirection', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c🖼️ Tapez verifierCarrousel() pour voir les images', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c📊 Tapez debugCompteur() pour voir le compteur', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c🎯 Tapez verifierImagePrincipale() pour vérifier l\'image', 'color: #34C759; font-size: 12px; font-weight: 500;');
+console.log('%c┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛', 'color: #FF6B00;');
 
 // ==================== EXPORT FINAL ====================
 window.initialiserPageProduit = initialiserPageProduit;
@@ -2242,6 +2559,7 @@ window.demarrerRafraichissement = demarrerRafraichissement;
 window.arreterRafraichissement = arreterRafraichissement;
 
 console.log('📦 Tous les modules JavaScript chargés avec succès');
+
 </script>
 </body>
 </html>

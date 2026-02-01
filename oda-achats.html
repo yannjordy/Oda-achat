@@ -1542,7 +1542,7 @@ body.dark-mode .toggle-desc {
 body.dark-mode .section-header h3 {
     color: white;
 }
-/* ==================== MENU LATÉRAL ==================== */
+/* Structure du menu - 3 sections */
 .side-menu {
     position: fixed;
     top: 0;
@@ -1551,30 +1551,37 @@ body.dark-mode .section-header h3 {
     max-width: 320px;
     height: 100vh;
     background: var(--bg-primary);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     z-index: 2000;
-    transition: left 0.3s ease;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Empêche le scroll global */
 }
 
 .side-menu.active {
     left: 0;
 }
 
+/* Header - FIXE */
 .menu-header {
+    flex-shrink: 0; /* Ne rétrécit pas */
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
     border-bottom: 1px solid var(--border-color);
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.2);
 }
 
 .menu-header h2 {
     font-size: 1.25rem;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-close {
@@ -1596,12 +1603,53 @@ body.dark-mode .section-header h3 {
     transform: rotate(90deg);
 }
 
-.menu-content {
-    padding: 20px;
+.btn-close:active {
+    transform: rotate(90deg) scale(0.9);
 }
 
-.menu-section {
-    margin-bottom: 32px;
+/* Contenu du menu - Flex pour séparer les sections */
+.menu-content {
+    flex: 1; /* Prend l'espace restant */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Section Catégories - SCROLLABLE */
+.menu-section.categories-section {
+    flex: 1; /* Prend tout l'espace disponible */
+    overflow-y: auto; /* Scroll uniquement pour les catégories */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+}
+
+/* Personnalisation de la scrollbar pour les catégories */
+.menu-section.categories-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.menu-section.categories-section::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+}
+
+.menu-section.categories-section::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary-color), var(--primary-dark));
+    border-radius: 10px;
+}
+
+.menu-section.categories-section::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Sections Navigation et Informations - FIXES */
+.menu-section.fixed-section {
+    flex-shrink: 0; /* Ne rétrécit jamais */
+    padding: 16px 20px;
+    background: var(--bg-primary);
 }
 
 .menu-section h3 {
@@ -1611,6 +1659,9 @@ body.dark-mode .section-header h3 {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* Liste de catégories */
@@ -1621,7 +1672,7 @@ body.dark-mode .section-header h3 {
 }
 
 .category-item {
-    padding: 12px 16px;
+    padding: 14px 16px;
     background: var(--bg-secondary);
     border-radius: 12px;
     font-weight: 500;
@@ -1629,6 +1680,9 @@ body.dark-mode .section-header h3 {
     transition: all 0.3s ease;
     border: 2px solid transparent;
     position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .category-item::before {
@@ -1639,7 +1693,7 @@ body.dark-mode .section-header h3 {
     height: 100%;
     width: 0;
     background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
-    transition: width 0.3s ease;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 12px;
     z-index: -1;
 }
@@ -1654,8 +1708,35 @@ body.dark-mode .section-header h3 {
 }
 
 .category-item:active {
-    transform: scale(0.98);
-    border-color: var(--primary-color);
+    transform: translateX(5px) scale(0.98);
+}
+
+.category-item.active {
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 10px;
+    background: rgba(255, 107, 0, 0.15);
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 14px;
+    margin-left: auto;
+    transition: all 0.3s ease;
+}
+
+.category-item.active .category-badge,
+.category-item:hover .category-badge {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
 }
 
 /* Liens du menu */
@@ -1671,21 +1752,41 @@ body.dark-mode .section-header h3 {
     font-weight: 500;
     margin-bottom: 8px;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-link::before {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--primary-color);
+    transition: left 0.3s ease;
+}
+
+.menu-link:hover::before {
+    left: 0;
 }
 
 .menu-link:hover {
-    background: linear-gradient(90deg, rgba(255, 107, 0, 0.1), rgba(255, 107, 0, 0.05));
-    border-left: 4px solid var(--primary-color);
-    padding-left: 12px;
+    background: rgba(255, 107, 0, 0.05);
+    transform: translateX(4px);
 }
 
 .menu-link:active {
-    transform: scale(0.98);
-    background: var(--border-color);
+    transform: translateX(4px) scale(0.98);
 }
 
 .menu-link svg {
     flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.menu-link:hover svg {
+    transform: scale(1.1);
 }
 
 /* Overlay */
@@ -1695,7 +1796,7 @@ body.dark-mode .section-header h3 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     z-index: 1500;
     opacity: 0;
@@ -1713,6 +1814,55 @@ body.dark-mode .section-header h3 {
     .side-menu {
         max-width: 400px;
     }
+}
+
+/* Indicateur de scroll pour les catégories */
+.scroll-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(to top, var(--bg-primary), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+}
+
+.scroll-indicator::after {
+    content: '⬇';
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.menu-section.categories-section.has-scroll .scroll-indicator {
+    opacity: 1;
+}
+
+/* Animation smooth pour le scroll */
+.category-list {
+    scroll-behavior: smooth;
+}
+
+/* Badge "NEW" pour nouvelles catégories (optionnel) */
+.category-new {
+    background: var(--success-color);
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 700;
 }
 </style>
 <body>
@@ -1772,11 +1922,15 @@ body.dark-mode .section-header h3 {
             </div>
         </div>
     </header>
-    <!-- Menu Latéral -->
-<div class="side-menu" id="sideMenu">
+   <!-- Menu latéral avec structure améliorée -->
+   <div class="side-menu" id="sideMenu">
+    <!-- Header - FIXE -->
     <div class="menu-header">
-        <h2>Menu</h2>
-        <button class="btn-close" id="closeMenuBtn">
+        <h2>
+            <span>📂</span>
+            <span>Menu</span>
+        </h2>
+        <button class="btn-close" id="closeMenuBtn" aria-label="Fermer le menu">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
@@ -1784,17 +1938,28 @@ body.dark-mode .section-header h3 {
     </div>
     
     <div class="menu-content">
-        <!-- Section Catégories -->
-        <div class="menu-section">
-            <h3>Catégories</h3>
+        <!-- Section Catégories - SCROLLABLE -->
+        <div class="menu-section categories-section" id="categoriesSection">
+            <h3>
+                <span>🏷️</span>
+                <span>Catégories</span>
+            </h3>
             <div class="category-list" id="categoryList">
-                <!-- Généré dynamiquement -->
+                <!-- Généré dynamiquement par JavaScript -->
+                <div class="category-item active" data-category="Tous">
+                    <span>Tous les produits</span>
+                    <span class="category-badge">0</span>
+                </div>
             </div>
+            <div class="scroll-indicator"></div>
         </div>
         
-        <!-- Section Navigation -->
-        <div class="menu-section">
-            <h3>Navigation</h3>
+        <!-- Section Navigation - FIXE -->
+        <div class="menu-section fixed-section">
+            <h3>
+                <span>🧭</span>
+                <span>Navigation</span>
+            </h3>
             <a href="oda-achats.html" class="menu-link">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2"/>
@@ -1817,9 +1982,12 @@ body.dark-mode .section-header h3 {
             </a>
         </div>
         
-        <!-- Section Informations -->
-        <div class="menu-section">
-            <h3>Informations</h3>
+        <!-- Section Informations - FIXE -->
+        <div class="menu-section fixed-section">
+            <h3>
+                <span>ℹ️</span>
+                <span>Informations</span>
+            </h3>
             <a href="#" class="menu-link" id="aboutLink">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
@@ -1846,6 +2014,7 @@ body.dark-mode .section-header h3 {
 
 <!-- Overlay -->
 <div class="overlay" id="overlay"></div>
+
 
 
     <!-- Carousel Produits Populaires avec boutons transparents -->
@@ -3362,8 +3531,7 @@ function createProductCard(product, isHorizontal = false) {
     `;
 }
 
-// ==================== FILTRAGE PAR CATÉGORIE ====================
-// ==================== FILTRAGE PAR CATÉGORIE ====================
+
 // ==================== FILTRAGE PAR CATÉGORIE ====================
 function filterByCategory(category, subcategory = 'all') {
     const grid = document.getElementById('productsGrid');
@@ -3993,6 +4161,634 @@ document.addEventListener('visibilitychange', () => {
 });
 
 console.log('🎉 Système optimisé prêt !');
+// ==================== ODA MARKETPLACE - CODE OPTIMISÉ ULTRA-RAPIDE ====================
+// Version Play Store : Chargement progressif + Virtual Scrolling + Cache intelligent
+
+// ==================== CONFIGURATION ====================
+const CONFIG = {
+    INITIAL_LOAD: 20,        // Nombre de produits au premier chargement
+    LOAD_MORE: 15,           // Nombre de produits à charger au scroll
+    CACHE_DURATION: 24 * 60, // Cache 24h au lieu de 5min
+    IMAGE_QUALITY: 'medium', // Qualité images (low/medium/high)
+    INTERSECTION_THRESHOLD: 0.1,
+    DEBOUNCE_DELAY: 300
+};
+
+// ==================== GESTIONNAIRE DE CACHE AMÉLIORÉ ====================
+class SmartCacheManager {
+    constructor() {
+        this.CACHE_KEY = 'oda_products_v2';
+        this.CACHE_TIMESTAMP = 'oda_cache_timestamp_v2';
+        this.MAX_AGE = CONFIG.CACHE_DURATION * 60 * 1000;
+    }
+
+    async get() {
+        try {
+            const timestamp = localStorage.getItem(this.CACHE_TIMESTAMP);
+            const now = Date.now();
+            
+            if (timestamp && (now - parseInt(timestamp)) < this.MAX_AGE) {
+                const cached = localStorage.getItem(this.CACHE_KEY);
+                if (cached) {
+                    console.log('✅ Cache local valide - Chargement instantané');
+                    return JSON.parse(cached);
+                }
+            }
+            return null;
+        } catch (e) {
+            console.warn('Cache error:', e);
+            return null;
+        }
+    }
+
+    async set(data) {
+        try {
+            localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(this.CACHE_TIMESTAMP, Date.now().toString());
+            console.log('💾 Cache sauvegardé');
+        } catch (e) {
+            console.warn('Cache save error:', e);
+        }
+    }
+
+    clear() {
+        localStorage.removeItem(this.CACHE_KEY);
+        localStorage.removeItem(this.CACHE_TIMESTAMP);
+    }
+
+    getAge() {
+        const timestamp = localStorage.getItem(this.CACHE_TIMESTAMP);
+        if (!timestamp) return null;
+        const age = Date.now() - parseInt(timestamp);
+        const minutes = Math.floor(age / 60000);
+        return minutes < 60 ? `${minutes}min` : `${Math.floor(minutes / 60)}h`;
+    }
+}
+
+// ==================== CHARGEUR DE DONNÉES ULTRA-RAPIDE ====================
+class FastDataLoader {
+    constructor(supabase) {
+        this.supabase = supabase;
+        this.cache = new SmartCacheManager();
+        this.data = { products: [], likes: {}, comments: {} };
+        this.loading = false;
+    }
+
+    async load() {
+        if (this.loading) return this.data;
+        this.loading = true;
+
+        try {
+            // 1. Essayer le cache d'abord
+            const cached = await this.cache.get();
+            if (cached) {
+                this.data = cached;
+                this.updateInBackground(); // Mise à jour silencieuse
+                return this.data;
+            }
+
+            // 2. Chargement depuis Supabase
+            console.log('📡 Chargement depuis Supabase...');
+            const [products, likes, comments] = await Promise.all([
+                this.supabase.from('oda-shop').select('*').order('created_at', { ascending: false }),
+                this.supabase.from('product_likes').select('*'),
+                this.supabase.from('product_comments').select('*')
+            ]);
+
+            this.data = {
+                products: products.data || [],
+                likes: this.processLikes(likes.data || []),
+                comments: this.processComments(comments.data || [])
+            };
+
+            await this.cache.set(this.data);
+            return this.data;
+
+        } catch (error) {
+            console.error('Erreur chargement:', error);
+            throw error;
+        } finally {
+            this.loading = false;
+        }
+    }
+
+    async updateInBackground() {
+        try {
+            const [products, likes, comments] = await Promise.all([
+                this.supabase.from('oda-shop').select('*').order('created_at', { ascending: false }),
+                this.supabase.from('product_likes').select('*'),
+                this.supabase.from('product_comments').select('*')
+            ]);
+
+            this.data = {
+                products: products.data || [],
+                likes: this.processLikes(likes.data || []),
+                comments: this.processComments(comments.data || [])
+            };
+
+            await this.cache.set(this.data);
+            console.log('🔄 Cache mis à jour en arrière-plan');
+        } catch (error) {
+            console.warn('Mise à jour silencieuse échouée:', error);
+        }
+    }
+
+    processLikes(likesArray) {
+        const likesMap = {};
+        likesArray.forEach(like => {
+            if (!likesMap[like.product_id]) likesMap[like.product_id] = [];
+            likesMap[like.product_id].push(like);
+        });
+        return likesMap;
+    }
+
+    processComments(commentsArray) {
+        const commentsMap = {};
+        commentsArray.forEach(comment => {
+            if (!commentsMap[comment.product_id]) commentsMap[comment.product_id] = [];
+            commentsMap[comment.product_id].push(comment);
+        });
+        return commentsMap;
+    }
+
+    async forceReload() {
+        this.cache.clear();
+        return await this.load();
+    }
+}
+
+// ==================== GESTIONNAIRE D'IMAGES LAZY ====================
+class LazyImageLoader {
+    constructor() {
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.dataset.src;
+                    if (src) {
+                        img.src = src;
+                        img.removeAttribute('data-src');
+                        this.observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px',
+            threshold: CONFIG.INTERSECTION_THRESHOLD
+        });
+    }
+
+    observe(img) {
+        this.observer.observe(img);
+    }
+
+    disconnect() {
+        this.observer.disconnect();
+    }
+}
+
+// ==================== VIRTUAL SCROLL MANAGER ====================
+class VirtualScrollManager {
+    constructor(products, renderFunction) {
+        this.allProducts = products;
+        this.displayedProducts = [];
+        this.renderFunction = renderFunction;
+        this.currentIndex = 0;
+        this.isLoading = false;
+        this.container = null;
+        this.sentinel = null;
+    }
+
+    init(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+
+        // Créer le sentinel pour l'infinite scroll
+        this.sentinel = document.createElement('div');
+        this.sentinel.id = 'scroll-sentinel';
+        this.sentinel.style.cssText = 'height:1px;width:100%;';
+        this.container.appendChild(this.sentinel);
+
+        // Observer le sentinel
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !this.isLoading) {
+                this.loadMore();
+            }
+        }, {
+            rootMargin: '200px'
+        });
+
+        observer.observe(this.sentinel);
+
+        // Chargement initial
+        this.loadInitial();
+    }
+
+    loadInitial() {
+        const initial = this.allProducts.slice(0, CONFIG.INITIAL_LOAD);
+        this.displayedProducts = initial;
+        this.currentIndex = CONFIG.INITIAL_LOAD;
+        this.render();
+    }
+
+    loadMore() {
+        if (this.isLoading || this.currentIndex >= this.allProducts.length) return;
+
+        this.isLoading = true;
+        this.showLoadingIndicator();
+
+        // Simuler un petit délai pour effet visuel
+        setTimeout(() => {
+            const nextBatch = this.allProducts.slice(
+                this.currentIndex,
+                this.currentIndex + CONFIG.LOAD_MORE
+            );
+
+            this.displayedProducts = [...this.displayedProducts, ...nextBatch];
+            this.currentIndex += CONFIG.LOAD_MORE;
+            
+            this.render(true); // true = append mode
+            this.isLoading = false;
+            this.hideLoadingIndicator();
+
+            console.log(`📦 Chargés: ${this.displayedProducts.length}/${this.allProducts.length}`);
+        }, 300);
+    }
+
+    render(append = false) {
+        if (!append) {
+            // Rendu initial
+            this.container.innerHTML = '';
+        }
+
+        const startIndex = append ? this.displayedProducts.length - CONFIG.LOAD_MORE : 0;
+        const endIndex = this.displayedProducts.length;
+
+        for (let i = startIndex; i < endIndex; i++) {
+            const product = this.displayedProducts[i];
+            const element = this.renderFunction(product);
+            this.container.insertBefore(element, this.sentinel);
+        }
+    }
+
+    showLoadingIndicator() {
+        if (document.getElementById('load-more-spinner')) return;
+        
+        const spinner = document.createElement('div');
+        spinner.id = 'load-more-spinner';
+        spinner.style.cssText = `
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        `;
+        spinner.innerHTML = `
+            <div style="display:inline-block;width:30px;height:30px;border:3px solid var(--border-color);
+                        border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+            <p style="margin-top:10px;">Chargement...</p>
+        `;
+        this.container.insertBefore(spinner, this.sentinel);
+    }
+
+    hideLoadingIndicator() {
+        const spinner = document.getElementById('load-more-spinner');
+        if (spinner) spinner.remove();
+    }
+
+    updateProducts(products) {
+        this.allProducts = products;
+        this.displayedProducts = [];
+        this.currentIndex = 0;
+        this.loadInitial();
+    }
+}
+
+// ==================== SKELETON LOADER ====================
+function createSkeletonCard() {
+    const skeleton = document.createElement('div');
+    skeleton.className = 'product-card skeleton';
+    skeleton.style.cssText = `
+        background: var(--bg-primary);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    `;
+    skeleton.innerHTML = `
+        <div style="width:100%;height:200px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
+                    background-size:200% 100%;animation:shimmer 1.5s infinite;"></div>
+        <div style="padding:16px;">
+            <div style="width:60%;height:16px;background:#f0f0f0;border-radius:4px;margin-bottom:8px;"></div>
+            <div style="width:40%;height:14px;background:#f0f0f0;border-radius:4px;margin-bottom:12px;"></div>
+            <div style="width:80%;height:12px;background:#f0f0f0;border-radius:4px;"></div>
+        </div>
+    `;
+    return skeleton;
+}
+
+function showSkeletonLoading(containerId, count = 6) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        container.appendChild(createSkeletonCard());
+    }
+}
+
+// ==================== GESTIONNAIRE PRINCIPAL ====================
+class OdaMarketplace {
+    constructor(supabaseClient) {
+        this.supabase = supabaseClient;
+        this.dataLoader = new FastDataLoader(supabaseClient);
+        this.lazyLoader = new LazyImageLoader();
+        this.virtualScroll = null;
+        this.allProducts = [];
+        this.filteredProducts = [];
+        this.currentCategory = 'Tous';
+        this.searchTerm = '';
+    }
+
+    async init() {
+        console.log('🚀 Initialisation ODA Marketplace Optimisé');
+        
+        // Afficher les skeletons
+        showSkeletonLoading('productsGrid', 8);
+
+        try {
+            // Charger les données
+            const data = await this.dataLoader.load();
+            this.allProducts = data.products;
+            window.productLikes = data.likes;
+            window.productComments = data.comments;
+
+            console.log(`✅ ${this.allProducts.length} produits chargés`);
+
+            // Initialiser le virtual scroll
+            this.filteredProducts = this.allProducts;
+            this.virtualScroll = new VirtualScrollManager(
+                this.filteredProducts,
+                this.createProductCard.bind(this)
+            );
+            this.virtualScroll.init('productsGrid');
+
+            // Mettre à jour le carousel
+            this.updateCarousel();
+
+            // Mettre à jour le menu
+            if (window.improvedMenu) {
+                window.improvedMenu.update(this.allProducts);
+            }
+
+        } catch (error) {
+            console.error('❌ Erreur init:', error);
+            this.showError();
+        }
+    }
+
+    createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.style.cssText = `
+            background: var(--bg-primary);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        `;
+
+        const likes = window.productLikes[product.id] || [];
+        const comments = window.productComments[product.id] || [];
+        const isFavorited = window.favorites?.includes(product.id);
+
+        // Image lazy
+        const imgUrl = product.image_url || product.image || 'placeholder.jpg';
+        
+        card.innerHTML = `
+            <div style="position:relative;width:100%;padding-top:75%;background:#f0f0f0;">
+                <img data-src="${imgUrl}" 
+                     alt="${product.nom_produit}"
+                     style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"
+                     loading="lazy">
+                <button class="favorite-btn ${isFavorited ? 'active' : ''}" 
+                        onclick="toggleFavorite(${product.id}); event.stopPropagation();"
+                        style="position:absolute;top:12px;right:12px;width:40px;height:40px;
+                               background:white;border:none;border-radius:50%;cursor:pointer;
+                               box-shadow:0 2px 8px rgba(0,0,0,0.15);display:flex;align-items:center;
+                               justify-content:center;transition:all 0.3s;">
+                    ${isFavorited ? '❤️' : '🤍'}
+                </button>
+            </div>
+            <div style="padding:16px;">
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">
+                    ${product.nom_boutique || 'Boutique'}
+                </div>
+                <h3 style="font-size:1rem;font-weight:600;margin-bottom:8px;
+                           overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    ${product.nom_produit}
+                </h3>
+                <div style="font-size:1.4rem;font-weight:700;color:var(--primary-color);margin-bottom:12px;">
+                    ${product.prix} FCFA
+                </div>
+                <div style="display:flex;gap:16px;color:var(--text-secondary);font-size:0.9rem;">
+                    <span>❤️ ${likes.length}</span>
+                    <span>💬 ${comments.length}</span>
+                    <span>👁️ ${product.views || 0}</span>
+                </div>
+            </div>
+        `;
+
+        // Lazy load de l'image
+        const img = card.querySelector('img');
+        if (img) this.lazyLoader.observe(img);
+
+        // Click handler
+        card.addEventListener('click', () => {
+            window.location.href = `product.html?id=${product.id}`;
+        });
+
+        return card;
+    }
+
+    filterProducts(category, searchTerm = '') {
+        let filtered = this.allProducts;
+
+        // Filtre catégorie
+        if (category && category !== 'Tous') {
+            filtered = filtered.filter(p => p.categorie === category);
+        }
+
+        // Filtre recherche
+        if (searchTerm) {
+            const search = searchTerm.toLowerCase();
+            filtered = filtered.filter(p => 
+                p.nom_produit?.toLowerCase().includes(search) ||
+                p.nom_boutique?.toLowerCase().includes(search) ||
+                p.categorie?.toLowerCase().includes(search)
+            );
+        }
+
+        this.filteredProducts = filtered;
+        
+        if (this.virtualScroll) {
+            this.virtualScroll.updateProducts(filtered);
+        }
+
+        console.log(`🔍 Filtrés: ${filtered.length}/${this.allProducts.length}`);
+    }
+
+    updateCarousel() {
+        const carouselContainer = document.querySelector('.carousel-container');
+        if (!carouselContainer || this.allProducts.length === 0) return;
+
+        const topProducts = this.allProducts
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 5);
+
+        carouselContainer.innerHTML = topProducts.map(product => `
+            <div class="carousel-item">
+                <img src="${product.image_url || product.image}" 
+                     alt="${product.nom_produit}"
+                     class="carousel-image"
+                     loading="eager">
+                <div class="carousel-overlay">
+                    <div class="carousel-info">
+                        <div class="shop-name">${product.nom_boutique}</div>
+                        <h2>${product.nom_produit}</h2>
+                        <div class="product-price">${product.prix} FCFA</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    showError() {
+        const container = document.getElementById('productsGrid');
+        if (container) {
+            container.innerHTML = `
+                <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+                    <div style="font-size:4rem;margin-bottom:16px;">😕</div>
+                    <h3 style="font-size:1.3rem;margin-bottom:12px;">Erreur de chargement</h3>
+                    <p style="color:var(--text-secondary);margin-bottom:24px;">
+                        Impossible de charger les produits
+                    </p>
+                    <button onclick="location.reload()" 
+                            style="background:var(--primary-color);color:white;border:none;
+                                   padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;">
+                        Réessayer
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    async forceReload() {
+        showSkeletonLoading('productsGrid', 8);
+        const data = await this.dataLoader.forceReload();
+        this.allProducts = data.products;
+        this.filterProducts(this.currentCategory, this.searchTerm);
+        this.updateCarousel();
+    }
+}
+
+// ==================== ANIMATIONS CSS NÉCESSAIRES ====================
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .favorite-btn:hover {
+        transform: scale(1.1);
+    }
+`;
+document.head.appendChild(style);
+
+// ==================== INITIALISATION ====================
+window.odaMarketplace = null;
+
+// Remplacer la fonction loadAllProductsOptimized
+window.loadAllProductsOptimized = async function() {
+    if (!window.odaMarketplace) {
+        window.odaMarketplace = new OdaMarketplace(window.supabase);
+    }
+    await window.odaMarketplace.init();
+};
+
+// Remplacer la fonction displayProducts
+window.displayProducts = function() {
+    // Maintenant géré par VirtualScrollManager
+    console.log('✓ displayProducts appelé (géré par VirtualScrollManager)');
+};
+
+// Fonction de recherche optimisée
+window.initSearch = function() {
+    const searchInput = document.querySelector('.search-box input');
+    if (!searchInput) return;
+
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const term = e.target.value.trim();
+            if (window.odaMarketplace) {
+                window.odaMarketplace.searchTerm = term;
+                window.odaMarketplace.filterProducts(
+                    window.odaMarketplace.currentCategory,
+                    term
+                );
+            }
+        }, CONFIG.DEBOUNCE_DELAY);
+    });
+};
+
+// Fonction de filtre par catégorie
+window.setupCategoryFiltering = function() {
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const category = item.dataset.category;
+            
+            document.querySelectorAll('.category-item').forEach(i => 
+                i.classList.remove('active')
+            );
+            item.classList.add('active');
+
+            if (window.odaMarketplace) {
+                window.odaMarketplace.currentCategory = category;
+                window.odaMarketplace.filterProducts(
+                    category,
+                    window.odaMarketplace.searchTerm
+                );
+            }
+        });
+    });
+};
+
+// Fonction de rechargement forcé
+window.forceReloadData = async function() {
+    if (!window.odaMarketplace) return;
+    
+    if (confirm('Recharger les données depuis le serveur ?')) {
+        window.loadingProgress?.start();
+        try {
+            await window.odaMarketplace.forceReload();
+            showToast('✅ Données rechargées', 'success');
+        } catch (error) {
+            showToast('❌ Erreur', 'error');
+        }
+    }
+};
+
+console.log('🎯 Module optimisé chargé - Type Play Store');
+console.log(`📊 Config: ${CONFIG.INITIAL_LOAD} produits initiaux + ${CONFIG.LOAD_MORE} par scroll`);
+console.log(`💾 Cache: ${CONFIG.CACHE_DURATION}h`);
 </script>
 
 </body>

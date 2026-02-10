@@ -632,7 +632,819 @@ body {
     margin-bottom: 20px;
     opacity: 0.3;
 }
+/* ============================================ */
+/* STYLES CSS POUR LES MODALS ODA MARKET       */
+/* Ajoutez ce code à votre fichier CSS         */
+/* ============================================ */
 
+/* ==================== BOUTONS DÉCLENCHEURS ==================== */
+.modal-trigger-buttons {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 999;
+}
+
+.modal-trigger-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    color: white;
+}
+
+.modal-trigger-btn .btn-icon {
+    font-size: 1.2rem;
+}
+
+.modal-trigger-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.about-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.contact-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.help-btn {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* ==================== MODAL CONTAINER ==================== */
+.oda-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    animation: modalFadeIn 0.3s ease;
+}
+
+.oda-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    animation: overlayFadeIn 0.3s ease;
+}
+
+.modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Variantes de couleurs pour chaque modal */
+.modal-about {
+    border-top: 5px solid #667eea;
+}
+
+.modal-contact {
+    border-top: 5px solid #f5576c;
+}
+
+.modal-help {
+    border-top: 5px solid #00f2fe;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-close:hover {
+    background: #ff4757;
+    color: white;
+    transform: rotate(90deg) scale(1.1);
+}
+
+.modal-close svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ==================== MODAL HEADER ==================== */
+.modal-header {
+    text-align: center;
+    padding: 40px 30px 20px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.modal-contact .modal-header {
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+}
+
+.modal-help .modal-header {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+}
+
+.modal-icon-wrapper {
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.modal-main-icon {
+    font-size: 4rem;
+    display: inline-block;
+}
+
+.modal-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-contact .modal-title {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-help .modal-title {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ==================== MODAL BODY ==================== */
+.modal-body {
+    padding: 30px;
+    max-height: calc(85vh - 200px);
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+/* ==================== INFO CARDS ==================== */
+.info-card, .help-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+}
+
+.info-card:hover, .help-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.info-card {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.info-icon, .help-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.info-content h3, .help-content h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+}
+
+.info-content p, .help-content p {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.steps-list, .objectives-list, .benefits-list {
+    margin: 16px 0;
+    padding-left: 20px;
+}
+
+.steps-list li, .objectives-list li, .benefits-list li {
+    margin-bottom: 12px;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+/* ==================== COLOR BADGES ==================== */
+.color-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 0 4px;
+}
+
+.color-badge.red {
+    background: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+}
+
+.color-badge.blue {
+    background: rgba(59, 130, 246, 0.2);
+    color: #2563eb;
+}
+
+.color-badge.green {
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+}
+
+.color-badge.yellow {
+    background: rgba(245, 158, 11, 0.2);
+    color: #d97706;
+}
+
+/* ==================== FUN FACT BOX ==================== */
+.fun-fact {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    box-shadow: 0 4px 15px rgba(253, 203, 110, 0.3);
+}
+
+.fact-icon {
+    font-size: 2.5rem;
+}
+
+.fun-fact p {
+    margin: 0;
+    color: #2d3436;
+    font-size: 1rem;
+}
+
+/* ==================== CREATOR SECTION ==================== */
+.creator-story {
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border-left: 5px solid #f5576c;
+}
+
+.creator-story h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+}
+
+.creator-story p {
+    color: #4a5568;
+    line-height: 1.8;
+    margin-bottom: 16px;
+}
+
+.creator-info {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.creator-info h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+}
+
+/* ==================== IMAGE PLACEHOLDER ==================== */
+.creator-image-zone {
+    margin: 24px 0;
+}
+
+.image-placeholder {
+    background: linear-gradient(135deg, #e0e7ff 0%, #f3e7ff 100%);
+    border-radius: 16px;
+    padding: 60px 20px;
+    text-align: center;
+    border: 3px dashed #a78bfa;
+}
+
+.placeholder-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.image-placeholder p {
+    color: #6b7280;
+    font-weight: 600;
+    margin: 0;
+}
+
+.image-placeholder img {
+    max-width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== CONTACT DETAILS ==================== */
+.contact-details {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.contact-details h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+}
+
+.contact-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.contact-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateX(8px);
+}
+
+.contact-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.contact-item strong {
+    display: block;
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.contact-item p, .contact-item a {
+    color: #1a1a1a;
+    font-weight: 600;
+    margin: 0;
+    text-decoration: none;
+}
+
+.contact-item a:hover {
+    color: #f5576c;
+}
+
+/* ==================== ALERT & TIP BOXES ==================== */
+.alert-box {
+    background: rgba(16, 185, 129, 0.1);
+    border-left: 4px solid #10b981;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.alert-box p {
+    margin: 0;
+    color: #047857;
+    font-weight: 500;
+}
+
+.tip-box {
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.tip-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.tip-box p {
+    margin: 0;
+    color: #92400e;
+    font-weight: 500;
+}
+
+/* ==================== VENDOR SECTION ==================== */
+.vendor-section {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 24px;
+    text-align: center;
+}
+
+.vendor-section h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+}
+
+.vendor-section p {
+    color: #4a5568;
+    margin-bottom: 12px;
+}
+
+/* ==================== DOWNLOAD BUTTON ==================== */
+.download-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 18px 28px;
+    border-radius: 16px;
+    text-decoration: none;
+    margin: 24px auto;
+    max-width: 400px;
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.download-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(79, 172, 254, 0.5);
+}
+
+.btn-icon-left, .btn-icon-right {
+    font-size: 1.8rem;
+}
+
+.btn-text-main {
+    flex: 1;
+    text-align: left;
+}
+
+.btn-text-main strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.btn-text-main small {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* ==================== VENDOR BENEFITS ==================== */
+.vendor-benefits {
+    margin-top: 24px;
+    text-align: left;
+}
+
+.vendor-benefits h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+    text-align: center;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.benefit-item {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ==================== FAQ SECTION ==================== */
+.faq-section {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.faq-section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+}
+
+.faq-item {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.faq-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.faq-item strong {
+    display: block;
+    font-size: 1rem;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.faq-item p {
+    color: #4a5568;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.faq-item a {
+    color: #4facfe;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.faq-item a:hover {
+    text-decoration: underline;
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateX(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.slide-in {
+    animation: slide-in 0.6s ease forwards;
+}
+
+@keyframes pulse-animation {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.pulse-animation {
+    animation: pulse-animation 2s ease-in-out infinite;
+}
+
+@keyframes rotate-animation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.rotate-animation:hover {
+    animation: rotate-animation 1s ease-in-out;
+}
+
+@keyframes shake-animation {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-10px);
+    }
+    75% {
+        transform: translateX(10px);
+    }
+}
+
+.shake-animation:hover {
+    animation: shake-animation 0.5s ease;
+}
+
+@keyframes bounce-animation {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.bounce-animation {
+    animation: bounce-animation 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 35px rgba(79, 172, 254, 0.6);
+    }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 20px;
+    }
+    
+    .modal-header {
+        padding: 30px 20px 16px;
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .info-card, .help-card {
+        flex-direction: column;
+        padding: 20px;
+    }
+    
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-trigger-buttons {
+        bottom: 70px;
+        right: 16px;
+    }
+    
+    .modal-trigger-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .download-btn {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .btn-text-main {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-main-icon {
+        font-size: 3rem;
+    }
+    
+    .info-icon, .help-icon {
+        font-size: 2rem;
+    }
+    
+    .modal-trigger-btn .btn-text {
+        display: none;
+    }
+    
+    .modal-trigger-btn {
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        justify-content: center;
+    }
+    
+    .modal-trigger-btn .btn-icon {
+        font-size: 1.5rem;
+    }
+}
 /* ==================== TOAST NOTIFICATIONS ==================== */
 .toast-container {
     position: fixed;
@@ -1865,6 +2677,8 @@ body.dark-mode .section-header h3 {
     margin-left: 8px;
     font-weight: 700;
 }
+
+
 </style>
 <body>
     <!-- Loader -->
@@ -2012,7 +2826,283 @@ body.dark-mode .section-header h3 {
         </div>
     </div>
 </div>
+<!-- ============================================ -->
+<!-- CODE HTML À AJOUTER AVANT </body>           -->
+<!-- Placez ce code juste avant la ligne 5314    -->
+<!-- (avant la balise </body>)                   -->
+<!-- ============================================ -->
 
+<!-- Modal 1: À propos -->
+<div id="aboutModal" class="oda-modal">
+    <div class="modal-overlay" onclick="closeModal('aboutModal')"></div>
+    <div class="modal-content modal-about">
+        <button class="modal-close" onclick="closeModal('aboutModal')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        
+        <div class="modal-header">
+            <div class="modal-icon-wrapper pulse-animation">
+                <span class="modal-main-icon">🏪</span>
+            </div>
+            <h2 class="modal-title">À propos de ODA Market</h2>
+        </div>
+        
+        <div class="modal-body">
+            <div class="info-card slide-in">
+                <div class="info-icon">🌍</div>
+                <div class="info-content">
+                    <h3>D'où viennent nos produits ?</h3>
+                    <p>ODA Market collabore avec des <strong>vendeurs locaux</strong> passionnés du Cameroun 🇨🇲 
+                    et d'ailleurs ! Chaque produit provient de <strong>boutiques vérifiées</strong> qui s'engagent 
+                    à offrir qualité et authenticité ✨</p>
+                </div>
+            </div>
+            
+            <div class="info-card slide-in" style="animation-delay: 0.1s">
+                <div class="info-icon">⚙️</div>
+                <div class="info-content">
+                    <h3>Comment ça fonctionne ?</h3>
+                    <p>C'est simple comme bonjour ! 😊</p>
+                    <ol class="steps-list">
+                        <li>🔍 <strong>Explorez</strong> des milliers de produits</li>
+                        <li>❤️ <strong>Ajoutez</strong> vos favoris</li>
+                        <li>🛒 <strong>Contactez</strong> directement le vendeur</li>
+                        <li>💳 <strong>Payez</strong> en ligne ou en boutique</li>
+                        <li>📦 <strong>Recevez</strong> votre commande !</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="info-card slide-in" style="animation-delay: 0.2s">
+                <div class="info-icon">🎨</div>
+                <div class="info-content">
+                    <h3>Variations de couleurs</h3>
+                    <p>Certains produits sont disponibles en <span class="color-badge red">rouge</span>, 
+                    <span class="color-badge blue">bleu</span>, <span class="color-badge green">vert</span>, 
+                    <span class="color-badge yellow">jaune</span> et bien plus encore ! 🌈 
+                    Contactez le vendeur pour confirmer la disponibilité de votre couleur préférée 🎯</p>
+                </div>
+            </div>
+            
+            <div class="fun-fact bounce-animation">
+                <span class="fact-icon">💡</span>
+                <p><strong>Le saviez-vous ?</strong> Plus de <strong>1000+ produits</strong> disponibles sur ODA Market ! 🚀</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Contact -->
+<div id="contactModal" class="oda-modal">
+    <div class="modal-overlay" onclick="closeModal('contactModal')"></div>
+    <div class="modal-content modal-contact">
+        <button class="modal-close" onclick="closeModal('contactModal')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        
+        <div class="modal-header">
+            <div class="modal-icon-wrapper rotate-animation">
+                <span class="modal-main-icon">👨‍💻</span>
+            </div>
+            <h2 class="modal-title">Rencontrez le créateur</h2>
+        </div>
+        
+        <div class="modal-body">
+            <div class="creator-story slide-in">
+                <h3>🎭 L'histoire d'ODA (version amusante)</h3>
+                <p>Il était une fois, un développeur nommé <strong>Yann</strong> qui en avait marre de chercher 
+                des produits pendant des heures sur Internet... 😫</p>
+                
+                <p>Un jour, en buvant son café ☕, il se dit : <em>"Et si je créais une plateforme où TOUT 
+                le monde pourrait vendre et acheter facilement ?"</em></p>
+                
+                <p>Et BOUM 💥 ! ODA Market est né ! Aujourd'hui, des milliers de personnes trouvent leur bonheur 
+                en quelques clics. La morale ? <strong>Ne sous-estimez jamais le pouvoir d'un café !</strong> 🚀😄</p>
+            </div>
+            
+            <div class="creator-info slide-in" style="animation-delay: 0.1s">
+                <h3>🎯 Les objectifs d'ODA</h3>
+                <ul class="objectives-list">
+                    <li>🌟 <strong>Connecter</strong> acheteurs et vendeurs facilement</li>
+                    <li>💪 <strong>Soutenir</strong> l'économie locale camerounaise</li>
+                    <li>🔒 <strong>Garantir</strong> des transactions sécurisées</li>
+                    <li>🚀 <strong>Révolutionner</strong> le e-commerce au Cameroun</li>
+                    <li>❤️ <strong>Créer</strong> une communauté de confiance</li>
+                </ul>
+            </div>
+            
+            <!-- Zone pour image du créateur -->
+            <div class="creator-image-zone slide-in" style="animation-delay: 0.2s">
+                <!-- Ajoutez votre image ici en remplaçant le commentaire ci-dessous -->
+                <div class="image-container" style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                padding: 20px;
+            ">
+                <img src="p2.jpg" 
+                     alt="Photo du créateur" 
+                     class="creator-photo"
+                     style="
+                        width: 200px;
+                        height: 200px;
+                        object-fit: cover;
+                        border-radius: 50%;
+                        border: 3px solid #007bff;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                        transition: transform 0.3s ease;
+                     "
+                     onmouseover="this.style.transform='scale(1.05)'"
+                     onmouseout="this.style.transform='scale(1)'">
+                <p style="
+                    margin: 0;
+                    font-size: 16px;
+                    color: #333;
+                    font-weight: 500;
+                ">yann jordy</p>
+            </div>
+            </div>
+            
+            <div class="contact-details slide-in" style="animation-delay: 0.3s">
+                <h3>📬 Informations de contact</h3>
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <span class="contact-icon">👤</span>
+                        <div>
+                            <strong>Nom complet</strong>
+                            <p>Kitio Guemeve Yann Jordy</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <span class="contact-icon">📧</span>
+                        <div>
+                            <strong>Email</strong>
+                            <a href="mailto:jordyguemeveyann@gmail.com">jordyguemeveyann@gmail.com</a>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <span class="contact-icon">📱</span>
+                        <div>
+                            <strong>WhatsApp</strong>
+                            <a href="https://wa.me/237698111771" target="_blank">+237 698 111 771</a>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <span class="contact-icon">💼</span>
+                        <div>
+                            <strong>Portfolio</strong>
+                            <a href="https://kitio-yann-port-folio.vercel.app" target="_blank">kitio-yann-port-folio.vercel.app</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Aide -->
+<div id="helpModal" class="oda-modal">
+    <div class="modal-overlay" onclick="closeModal('helpModal')"></div>
+    <div class="modal-content modal-help">
+        <button class="modal-close" onclick="closeModal('helpModal')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        
+        <div class="modal-header">
+            <div class="modal-icon-wrapper shake-animation">
+                <span class="modal-main-icon">🆘</span>
+            </div>
+            <h2 class="modal-title">Centre d'aide</h2>
+        </div>
+        
+        <div class="modal-body">
+            <div class="help-card slide-in">
+                <div class="help-icon">⏳</div>
+                <div class="help-content">
+                    <h3>Paiement en ligne</h3>
+                    <p><strong>⚠️ Important :</strong> Lors d'un paiement direct en ligne, veuillez <strong>patienter</strong> 
+                    quelques instants ⏱️ pendant le traitement de votre transaction. Ne fermez pas la page ! 🚫</p>
+                    <div class="alert-box">
+                        <span class="alert-icon">✅</span>
+                        <p>Vous recevrez une confirmation par email et SMS une fois le paiement validé 📧📱</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-card slide-in" style="animation-delay: 0.1s">
+                <div class="help-icon">🔐</div>
+                <div class="help-content">
+                    <h3>Cache Boutique - Identifiant Unique</h3>
+                    <p>Chaque boutique possède un <strong>identifiant unique</strong> 🎯 qui garantit :</p>
+                    <ul class="benefits-list">
+                        <li>✨ L'authenticité du vendeur</li>
+                        <li>🔒 La sécurité de vos achats</li>
+                        <li>📊 Le suivi de vos commandes</li>
+                        <li>⭐ Les avis vérifiés</li>
+                    </ul>
+                    <div class="tip-box">
+                        <span class="tip-icon">💡</span>
+                        <p><strong>Astuce :</strong> Vérifiez toujours l'identifiant de la boutique avant d'acheter !</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vendor-section slide-in" style="animation-delay: 0.2s">
+                <h3>🏪 Vous êtes vendeur ?</h3>
+                <p>Rejoignez ODA Market et développez votre business ! 📈</p>
+                <p>Téléchargez <strong>ODA Seller</strong> - l'application dédiée aux vendeurs 🚀</p>
+                
+                <a href="https://oda-seller.vercel.app" target="_blank" class="download-btn">
+                    <span class="btn-icon-left">📲</span>
+                    <span class="btn-text-main">
+                        <strong>Télécharger ODA Seller</strong>
+                        <small>Gérez votre boutique facilement</small>
+                    </span>
+                    <span class="btn-icon-right">→</span>
+                </a>
+                
+                <div class="vendor-benefits">
+                    <h4>Pourquoi ODA Seller ?</h4>
+                    <div class="benefits-grid">
+                        <div class="benefit-item">📊 Gestion simple</div>
+                        <div class="benefit-item">💰 Paiements rapides</div>
+                        <div class="benefit-item">📱 Application mobile</div>
+                        <div class="benefit-item">🎯 Plus de clients</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="faq-section slide-in" style="animation-delay: 0.3s">
+                <h3>❓ Questions fréquentes</h3>
+                <div class="faq-item">
+                    <strong>Comment suivre ma commande ?</strong>
+                    <p>Connectez-vous à votre compte et consultez l'onglet "Mes commandes" 📦</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Puis-je retourner un produit ?</strong>
+                    <p>Contactez le vendeur dans les 48h pour discuter d'un éventuel retour 🔄</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Besoin d'aide supplémentaire ?</strong>
+                    <p>Contactez notre support via WhatsApp : <a href="https://wa.me/237698111771">+237 698 111 771</a> 💬</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Overlay -->
 <div class="overlay" id="overlay"></div>
 
@@ -5209,7 +6299,241 @@ class OdaMarketplace {
         this.updateCarousel();
     }
 }
+/* ============================================ */
+/* CODE JAVASCRIPT À AJOUTER À LA FIN          */
+/* Ajoutez ce code dans une balise <script>    */
+/* juste après le HTML des modals              */
+/* ============================================ */
 
+// ==================== GESTION DES MODALS ====================
+
+/**
+ * Ouvre un modal avec animation
+ */
+ function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal ${modalId} introuvable`);
+        return;
+    }
+    
+    // Ajouter la classe active
+    modal.classList.add('active');
+    
+    // Empêcher le scroll du body
+    document.body.style.overflow = 'hidden';
+    
+    // Animation d'entrée
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.animation = 'modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    }
+    
+    // Event listener pour fermer avec Échap
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    console.log(`✅ Modal ${modalId} ouverte`);
+}
+
+/**
+ * Ferme un modal avec animation
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal ${modalId} introuvable`);
+        return;
+    }
+    
+    // Animation de sortie
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.animation = 'modalSlideDown 0.3s ease';
+    }
+    
+    // Retirer la classe active après l'animation
+    setTimeout(() => {
+        modal.classList.remove('active');
+        // Réactiver le scroll du body
+        document.body.style.overflow = '';
+    }, 300);
+    
+    // Retirer l'event listener de la touche Échap
+    document.removeEventListener('keydown', handleEscapeKey);
+    
+    console.log(`✅ Modal ${modalId} fermée`);
+}
+
+/**
+ * Ferme tous les modals ouverts
+ */
+function closeAllModals() {
+    const activeModals = document.querySelectorAll('.oda-modal.active');
+    activeModals.forEach(modal => {
+        closeModal(modal.id);
+    });
+}
+
+/**
+ * Gère la fermeture des modals avec la touche Échap
+ */
+function handleEscapeKey(event) {
+    if (event.key === 'Escape' || event.key === 'Esc') {
+        closeAllModals();
+    }
+}
+
+/**
+ * Empêche la propagation des clics à l'intérieur du modal
+ */
+function preventModalClosePropagation() {
+    const modalContents = document.querySelectorAll('.modal-content');
+    modalContents.forEach(content => {
+        content.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
+}
+
+// ==================== INITIALISATION DES LIENS DU MENU ====================
+
+/**
+ * Connecte les liens du menu hamburger aux modals
+ */
+function initMenuLinks() {
+    // Lien "À propos"
+    const aboutLink = document.getElementById('aboutLink');
+    if (aboutLink) {
+        aboutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Fermer le menu hamburger
+            closeMenu();
+            // Ouvrir le modal
+            setTimeout(() => {
+                openModal('aboutModal');
+            }, 300);
+        });
+    }
+    
+    // Lien "Contact"
+    const contactLink = document.getElementById('contactLink');
+    if (contactLink) {
+        contactLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Fermer le menu hamburger
+            closeMenu();
+            // Ouvrir le modal
+            setTimeout(() => {
+                openModal('contactModal');
+            }, 300);
+        });
+    }
+    
+    // Lien "Aide"
+    const helpLink = document.getElementById('helpLink');
+    if (helpLink) {
+        helpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Fermer le menu hamburger
+            closeMenu();
+            // Ouvrir le modal
+            setTimeout(() => {
+                openModal('helpModal');
+            }, 300);
+        });
+    }
+    
+    console.log('✅ Liens du menu initialisés');
+}
+
+/**
+ * Ferme le menu hamburger
+ */
+function closeMenu() {
+    const sideMenu = document.querySelector('.side-menu');
+    const overlay = document.getElementById('overlay');
+    
+    if (sideMenu) {
+        sideMenu.classList.remove('active');
+    }
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
+// ==================== EFFETS VISUELS ====================
+
+/**
+ * Ajoute un effet de parallaxe au défilement du modal
+ */
+function initModalParallax() {
+    const modalBodies = document.querySelectorAll('.modal-body');
+    
+    modalBodies.forEach(body => {
+        body.addEventListener('scroll', function() {
+            const scrolled = this.scrollTop;
+            const header = this.closest('.modal-content').querySelector('.modal-header');
+            
+            if (header) {
+                header.style.transform = `translateY(${scrolled * 0.3}px)`;
+                header.style.opacity = Math.max(0.5, 1 - (scrolled / 300));
+            }
+        });
+    });
+}
+
+/**
+ * Ajoute des effets de hover aux cartes
+ */
+function initCardHoverEffects() {
+    const cards = document.querySelectorAll('.info-card, .help-card, .contact-item');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+    });
+}
+
+// ==================== INITIALISATION ====================
+
+/**
+ * Initialise tous les composants des modals
+ */
+function initOdaModals() {
+    console.log('🚀 Initialisation des modals ODA...');
+    
+    // Empêcher la propagation des clics
+    preventModalClosePropagation();
+    
+    // Initialiser les liens du menu
+    initMenuLinks();
+    
+    // Initialiser les effets
+    initModalParallax();
+    initCardHoverEffects();
+    
+    console.log('✅ Modals ODA initialisés avec succès !');
+}
+
+// ==================== AUTO-INITIALISATION ====================
+
+// Initialiser au chargement du DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOdaModals);
+} else {
+    // DOM déjà chargé
+    initOdaModals();
+}
+
+// ==================== EXPORT DES FONCTIONS ====================
+
+// Rendre les fonctions disponibles globalement
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.closeAllModals = closeAllModals;
+
+console.log('📦 Module modals ODA chargé pour menu hamburger');
 // ==================== ANIMATIONS CSS NÉCESSAIRES ====================
 const style = document.createElement('style');
 style.textContent = `
@@ -5309,6 +6633,5 @@ console.log('🎯 Module optimisé chargé - Type Play Store');
 console.log(`📊 Config: ${CONFIG.INITIAL_LOAD} produits initiaux + ${CONFIG.LOAD_MORE} par scroll`);
 console.log(`💾 Cache: ${CONFIG.CACHE_DURATION}h`);
 </script>
-
 </body>
 </html>

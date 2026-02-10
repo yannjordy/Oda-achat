@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2266,6 +2267,7 @@ let popularProducts = [];
 let currentUserId = getUserId();
 
 // ==================== 1. CACHE MANAGER ====================
+
 class CacheManager {
     constructor() {
         this.CACHE_KEYS = {
@@ -2275,21 +2277,44 @@ class CacheManager {
             SHOPS: 'oda_shops_v2',
             TIMESTAMP: 'oda_cache_timestamp'
         };
-        this.CACHE_DURATION = 60 * 60 * 1000; // 1 heure
+        
+        // MODIFICATION IMPORTANTE: Cache de 7 jours au lieu de 1 heure
+        this.CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
+        
+        console.log(`📦 CacheManager initialisé - Durée: ${this.CACHE_DURATION / (24 * 60 * 60 * 1000)} jours`);
     }
 
     saveToCache(key, data) {
         try {
-            const cacheData = { data, timestamp: Date.now() };
+            const cacheData = { 
+                data, 
+                timestamp: Date.now(),
+                expiresAt: Date.now() + this.CACHE_DURATION
+            };
+            
             localStorage.setItem(key, JSON.stringify(cacheData));
+            
+            // Calculer la date d'expiration
+            const expirationDate = new Date(cacheData.expiresAt);
             console.log(`💾 Cache sauvegardé: ${key}`);
+            console.log(`   📅 Expire le: ${expirationDate.toLocaleDateString('fr-FR')} à ${expirationDate.toLocaleTimeString('fr-FR')}`);
+            
             return true;
         } catch (e) {
             console.error(`❌ Erreur cache ${key}:`, e);
+            
+            // Si quota dépassé, nettoyer les anciens caches
             if (e.name === 'QuotaExceededError') {
+                console.warn('⚠️ Quota localStorage dépassé - Nettoyage en cours...');
                 this.clearOldCaches();
+                
                 try {
-                    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+                    localStorage.setItem(key, JSON.stringify({ 
+                        data, 
+                        timestamp: Date.now(),
+                        expiresAt: Date.now() + this.CACHE_DURATION
+                    }));
+                    console.log('✅ Cache sauvegardé après nettoyage');
                     return true;
                 } catch (e2) {
                     console.error('❌ Échec après nettoyage:', e2);
@@ -2302,32 +2327,71 @@ class CacheManager {
     loadFromCache(key) {
         try {
             const cached = localStorage.getItem(key);
-            if (!cached) return null;
-            const { data, timestamp } = JSON.parse(cached);
-            const age = Date.now() - timestamp;
-            if (age < this.CACHE_DURATION) {
-                console.log(`📦 Cache chargé: ${key} (âge: ${Math.round(age/1000)}s)`);
-                return data;
+            if (!cached) {
+                console.log(`📦 Cache non trouvé: ${key}`);
+                return null;
             }
-            localStorage.removeItem(key);
-            return null;
+            
+            const { data, timestamp, expiresAt } = JSON.parse(cached);
+            const now = Date.now();
+            const age = now - timestamp;
+            const remainingTime = expiresAt - now;
+            
+            // Vérifier si le cache n'est pas expiré
+            if (remainingTime > 0) {
+                const ageInDays = Math.floor(age / (24 * 60 * 60 * 1000));
+                const ageInHours = Math.floor((age % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const remainingDays = Math.floor(remainingTime / (24 * 60 * 60 * 1000));
+                
+                console.log(`📦 Cache chargé: ${key}`);
+                console.log(`   ⏱️ Âge: ${ageInDays}j ${ageInHours}h`);
+                console.log(`   ⏳ Reste: ${remainingDays} jours`);
+                
+                return data;
+            } else {
+                console.log(`⏰ Cache expiré: ${key} - Suppression`);
+                localStorage.removeItem(key);
+                return null;
+            }
         } catch (e) {
+            console.error(`❌ Erreur lecture cache ${key}:`, e);
+            // Supprimer le cache corrompu
+            localStorage.removeItem(key);
             return null;
         }
     }
 
     saveAll(products, likes, comments, shops) {
+        console.log('💾 Sauvegarde complète en cache...');
+        
         const results = {
             products: this.saveToCache(this.CACHE_KEYS.PRODUCTS, products),
             likes: this.saveToCache(this.CACHE_KEYS.LIKES, likes),
             comments: this.saveToCache(this.CACHE_KEYS.COMMENTS, comments),
             shops: this.saveToCache(this.CACHE_KEYS.SHOPS, shops)
         };
+        
+        // Enregistrer le timestamp global
         localStorage.setItem(this.CACHE_KEYS.TIMESTAMP, Date.now().toString());
-        return Object.values(results).every(r => r);
+        
+        const allSaved = Object.values(results).every(r => r);
+        
+        if (allSaved) {
+            console.log('✅ Toutes les données mises en cache');
+            console.log(`   📦 Produits: ${products.length}`);
+            console.log(`   👍 Likes: ${Object.keys(likes).length} produits`);
+            console.log(`   💬 Commentaires: ${Object.keys(comments).length} produits`);
+            console.log(`   🏪 Boutiques: ${Object.keys(shops).length}`);
+        } else {
+            console.warn('⚠️ Certaines données n\'ont pas pu être mises en cache');
+        }
+        
+        return allSaved;
     }
 
     loadAll() {
+        console.log('📦 Chargement complet depuis le cache...');
+        
         return {
             products: this.loadFromCache(this.CACHE_KEYS.PRODUCTS),
             likes: this.loadFromCache(this.CACHE_KEYS.LIKES),
@@ -2337,89 +2401,312 @@ class CacheManager {
     }
 
     hasCompleteCache() {
-        return Object.values(this.CACHE_KEYS).slice(0, 4).every(key => {
+        const hasAll = Object.values(this.CACHE_KEYS).slice(0, 4).every(key => {
             const item = localStorage.getItem(key);
             if (!item) return false;
+            
             try {
-                const { timestamp } = JSON.parse(item);
-                return (Date.now() - timestamp) < this.CACHE_DURATION;
-            } catch { return false; }
+                const { timestamp, expiresAt } = JSON.parse(item);
+                const isValid = Date.now() < expiresAt;
+                
+                if (!isValid) {
+                    console.log(`⏰ Cache expiré détecté: ${key}`);
+                }
+                
+                return isValid;
+            } catch { 
+                console.error(`❌ Cache corrompu: ${key}`);
+                return false; 
+            }
         });
-    }
-
-    clearAll() {
-        Object.values(this.CACHE_KEYS).forEach(key => localStorage.removeItem(key));
-        console.log('🗑️ Cache vidé');
+        
+        if (hasAll) {
+            console.log('✅ Cache complet et valide disponible');
+        } else {
+            console.log('❌ Cache incomplet ou expiré');
+        }
+        
+        return hasAll;
     }
 
     clearOldCaches() {
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('oda_') && !Object.values(this.CACHE_KEYS).includes(key)) {
-                localStorage.removeItem(key);
+        console.log('🧹 Nettoyage des anciens caches...');
+        
+        let clearedCount = 0;
+        const keysToKeep = Object.values(this.CACHE_KEYS);
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            
+            // Ne pas supprimer les clés importantes
+            if (!keysToKeep.includes(key)) {
+                // Supprimer les anciennes clés ODA
+                if (key.startsWith('oda_')) {
+                    localStorage.removeItem(key);
+                    clearedCount++;
+                    console.log(`   🗑️ Supprimé: ${key}`);
+                }
             }
+        }
+        
+        console.log(`✅ ${clearedCount} ancien(s) cache(s) supprimé(s)`);
+    }
+
+    clearAll() {
+        console.log('🗑️ Suppression complète du cache...');
+        
+        Object.values(this.CACHE_KEYS).forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`   🗑️ Supprimé: ${key}`);
         });
+        
+        console.log('✅ Cache vidé complètement');
     }
 
     getStats() {
-        const timestamp = localStorage.getItem(this.CACHE_KEYS.TIMESTAMP);
-        const age = timestamp ? Date.now() - parseInt(timestamp) : 0;
-        const minutes = Math.floor(age / 60000);
-        const ageStr = minutes > 0 ? `${minutes}m` : `${Math.floor(age/1000)}s`;
-        
-        return {
+        const stats = {
             valid: this.hasCompleteCache(),
-            age: ageStr,
-            size: this.getCacheSize()
+            size: 0,
+            items: {},
+            totalAge: 0,
+            oldestItem: null,
+            newestItem: null
         };
+        
+        Object.entries(this.CACHE_KEYS).slice(0, 4).forEach(([name, key]) => {
+            const item = localStorage.getItem(key);
+            if (item) {
+                try {
+                    const { timestamp, data, expiresAt } = JSON.parse(item);
+                    const age = Date.now() - timestamp;
+                    const size = new Blob([item]).size;
+                    const remainingTime = expiresAt - Date.now();
+                    
+                    stats.items[name] = {
+                        size,
+                        age,
+                        timestamp,
+                        expiresAt,
+                        remainingDays: Math.floor(remainingTime / (24 * 60 * 60 * 1000)),
+                        count: Array.isArray(data) ? data.length : Object.keys(data).length
+                    };
+                    
+                    stats.size += size;
+                    stats.totalAge += age;
+                    
+                    if (!stats.oldestItem || timestamp < stats.oldestItem.timestamp) {
+                        stats.oldestItem = { name, timestamp, age };
+                    }
+                    
+                    if (!stats.newestItem || timestamp > stats.newestItem.timestamp) {
+                        stats.newestItem = { name, timestamp, age };
+                    }
+                } catch (e) {
+                    console.error(`❌ Erreur stats pour ${key}:`, e);
+                }
+            }
+        });
+        
+        return stats;
     }
 
-    getCacheSize() {
-        let total = 0;
-        Object.values(this.CACHE_KEYS).forEach(key => {
-            const item = localStorage.getItem(key);
-            if (item) total += item.length;
+    displayStats() {
+        const stats = this.getStats();
+        
+        console.log('📊 STATISTIQUES DU CACHE');
+        console.log('═'.repeat(50));
+        console.log(`Status: ${stats.valid ? '✅ Valide' : '❌ Invalide/Expiré'}`);
+        console.log(`Taille totale: ${(stats.size / 1024).toFixed(2)} KB`);
+        
+        if (stats.oldestItem) {
+            const ageInDays = Math.floor(stats.oldestItem.age / (24 * 60 * 60 * 1000));
+            console.log(`Plus ancien: ${stats.oldestItem.name} (${ageInDays} jours)`);
+        }
+        
+        console.log('─'.repeat(50));
+        Object.entries(stats.items).forEach(([name, info]) => {
+            console.log(`${name}:`);
+            console.log(`  - Éléments: ${info.count}`);
+            console.log(`  - Taille: ${(info.size / 1024).toFixed(2)} KB`);
+            console.log(`  - Reste: ${info.remainingDays} jours`);
         });
-        if (total < 1024) return `${total} B`;
-        if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
-        return `${(total / (1024 * 1024)).toFixed(2)} MB`;
+        console.log('═'.repeat(50));
     }
 }
 
+// Initialiser le gestionnaire de cache global
 window.cacheManager = new CacheManager();
+console.log('✅ CacheManager initialisé avec durée de 7 jours');
 
 // ==================== 2. LOADING PROGRESS ====================
+
 class LoadingProgress {
     constructor() {
         this.currentProgress = 0;
         this.targetProgress = 0;
         this.isLoading = false;
+        this.animationFrameId = null;
         this.init();
     }
 
     init() {
         const styles = `<style>
-            .loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; z-index: 99999; opacity: 1; transition: opacity 0.5s; }
-            .loader-overlay.fade-out { opacity: 0; pointer-events: none; }
-            .loader-content { text-align: center; max-width: 400px; width: 90%; }
-            .loader-logo { margin-bottom: 40px; animation: fadeInDown 0.6s; }
-            .logo-icon { font-size: 4rem; margin-bottom: 16px; animation: bounce 2s infinite; }
-            .logo-text { font-size: 1.8rem; font-weight: 800; color: white; text-shadow: 0 2px 20px rgba(0,0,0,0.3); }
-            .progress-container { margin-bottom: 24px; animation: fadeInUp 0.6s 0.2s both; }
-            .progress-bar-bg { position: relative; width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-            .progress-bar { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, #FF6B00, #FFA500); border-radius: 10px; width: 0%; transition: width 0.3s; box-shadow: 0 0 20px rgba(255,107,0,0.5); }
-            .progress-shine { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shine 2s infinite; }
-            @keyframes shine { 0% { left: -100%; } 50%, 100% { left: 100%; } }
-            .progress-text { display: flex; justify-content: space-between; color: white; font-size: 0.9rem; }
-            .progress-percentage { font-size: 1.5rem; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-            .progress-step { font-size: 0.85rem; opacity: 0.9; }
-            .loading-dots { display: flex; justify-content: center; gap: 8px; animation: fadeInUp 0.6s 0.4s both; }
-            .loading-dots span { width: 8px; height: 8px; background: rgba(255,255,255,0.6); border-radius: 50%; animation: dotPulse 1.4s infinite both; }
-            .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-            .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-            @keyframes dotPulse { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; } 40% { transform: scale(1.2); opacity: 1; } }
-            @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-            @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-            @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+            .loader-overlay { 
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                right: 0; 
+                bottom: 0; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                z-index: 99999; 
+                opacity: 1; 
+                transition: opacity 0.5s; 
+            }
+            .loader-overlay.fade-out { 
+                opacity: 0; 
+                pointer-events: none; 
+            }
+            .loader-content { 
+                text-align: center; 
+                max-width: 400px; 
+                width: 90%; 
+            }
+            .loader-logo { 
+                margin-bottom: 40px; 
+                animation: fadeInDown 0.6s; 
+            }
+            .logo-icon { 
+                font-size: 4rem; 
+                margin-bottom: 16px; 
+                animation: bounce 2s infinite; 
+            }
+            .logo-text { 
+                font-size: 1.8rem; 
+                font-weight: 800; 
+                color: white; 
+                text-shadow: 0 2px 20px rgba(0,0,0,0.3); 
+            }
+            .progress-container { 
+                margin-bottom: 24px; 
+                animation: fadeInUp 0.6s 0.2s both; 
+            }
+            .progress-bar-bg { 
+                position: relative; 
+                width: 100%; 
+                height: 8px; 
+                background: rgba(255,255,255,0.2); 
+                border-radius: 10px; 
+                overflow: hidden; 
+                margin-bottom: 12px; 
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            }
+            .progress-bar { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                height: 100%; 
+                background: linear-gradient(90deg, #FF6B00, #FFA500); 
+                border-radius: 10px; 
+                width: 0%; 
+                transition: width 0.3s ease; 
+                box-shadow: 0 0 20px rgba(255,107,0,0.5); 
+            }
+            .progress-shine { 
+                position: absolute; 
+                top: 0; 
+                left: -100%; 
+                width: 100%; 
+                height: 100%; 
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); 
+                animation: shine 2s infinite; 
+            }
+            @keyframes shine { 
+                0% { left: -100%; } 
+                50%, 100% { left: 100%; } 
+            }
+            .progress-text { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                color: white; 
+                font-size: 0.9rem; 
+            }
+            .progress-percentage { 
+                font-size: 2.5rem; 
+                font-weight: 800; 
+                text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                font-family: 'Inter', -apple-system, sans-serif;
+                letter-spacing: -1px;
+                background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+            .progress-step { 
+                font-size: 0.85rem; 
+                opacity: 0.9;
+                font-weight: 500;
+            }
+            .loading-dots { 
+                display: flex; 
+                justify-content: center; 
+                gap: 8px; 
+                animation: fadeInUp 0.6s 0.4s both; 
+            }
+            .loading-dots span { 
+                width: 8px; 
+                height: 8px; 
+                background: rgba(255,255,255,0.6); 
+                border-radius: 50%; 
+                animation: dotPulse 1.4s infinite both; 
+            }
+            .loading-dots span:nth-child(1) { 
+                animation-delay: -0.32s; 
+            }
+            .loading-dots span:nth-child(2) { 
+                animation-delay: -0.16s; 
+            }
+            @keyframes dotPulse { 
+                0%, 80%, 100% { 
+                    transform: scale(0.8); 
+                    opacity: 0.5; 
+                } 
+                40% { 
+                    transform: scale(1.2); 
+                    opacity: 1; 
+                } 
+            }
+            @keyframes fadeInDown { 
+                from { 
+                    opacity: 0; 
+                    transform: translateY(-30px); 
+                } 
+                to { 
+                    opacity: 1; 
+                    transform: translateY(0); 
+                } 
+            }
+            @keyframes fadeInUp { 
+                from { 
+                    opacity: 0; 
+                    transform: translateY(30px); 
+                } 
+                to { 
+                    opacity: 1; 
+                    transform: translateY(0); 
+                } 
+            }
+            @keyframes bounce { 
+                0%, 100% { 
+                    transform: translateY(0); 
+                } 
+                50% { 
+                    transform: translateY(-10px); 
+                } 
+            }
         </style>`;
         document.head.insertAdjacentHTML('beforeend', styles);
     }
@@ -2455,47 +2742,127 @@ class LoadingProgress {
         this.progressPercentage = document.getElementById('progressPercentage');
         this.progressStep = document.getElementById('progressStep');
         
+        // Démarrer l'animation
         this.animate();
+        
+        console.log('📊 Loader démarré - Affichage: 0%');
     }
 
     updateProgress(percentage, step) {
+        // Assurer que le pourcentage est entre 0 et 100
         this.targetProgress = Math.min(100, Math.max(0, percentage));
-        if (step) this.progressStep.textContent = step;
+        
+        // Mettre à jour le texte de l'étape si fourni
+        if (step && this.progressStep) {
+            this.progressStep.textContent = step;
+        }
+        
+        console.log(`📊 Progression: ${this.targetProgress}% ${step ? `- ${step}` : ''}`);
     }
 
     animate() {
         if (!this.isLoading) return;
+        
+        // Animation fluide avec interpolation
         const diff = this.targetProgress - this.currentProgress;
-        this.currentProgress += diff * 0.1;
-        const display = Math.round(this.currentProgress);
-        this.progressBar.style.width = `${display}%`;
-        this.progressPercentage.textContent = `${display}%`;
-        if (Math.abs(diff) > 0.5) requestAnimationFrame(() => this.animate());
+        
+        if (Math.abs(diff) > 0.1) {
+            // Augmenter progressivement
+            this.currentProgress += diff * 0.15;
+            
+            // Arrondir pour l'affichage
+            const displayProgress = Math.round(this.currentProgress);
+            
+            // Mettre à jour la barre de progression
+            if (this.progressBar) {
+                this.progressBar.style.width = `${displayProgress}%`;
+            }
+            
+            // Mettre à jour le pourcentage affiché
+            if (this.progressPercentage) {
+                this.progressPercentage.textContent = `${displayProgress}%`;
+            }
+            
+            // Continuer l'animation
+            this.animationFrameId = requestAnimationFrame(() => this.animate());
+        } else {
+            // Fixer à la valeur exacte quand très proche
+            this.currentProgress = this.targetProgress;
+            const displayProgress = Math.round(this.currentProgress);
+            
+            if (this.progressBar) {
+                this.progressBar.style.width = `${displayProgress}%`;
+            }
+            
+            if (this.progressPercentage) {
+                this.progressPercentage.textContent = `${displayProgress}%`;
+            }
+            
+            // Continuer d'écouter les changements
+            this.animationFrameId = requestAnimationFrame(() => this.animate());
+        }
     }
 
     complete() {
+        console.log('✅ Loader - Chargement terminé à 100%');
         this.updateProgress(100, 'Chargement terminé !');
-        setTimeout(() => this.hide(), 500);
+        
+        // Attendre un peu avant de masquer pour montrer 100%
+        setTimeout(() => this.hide(), 800);
     }
 
     hide() {
+        console.log('👋 Loader - Masquage du loader');
         this.isLoading = false;
+        
+        // Annuler l'animation
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
         if (this.overlay) {
             this.overlay.classList.add('fade-out');
-            setTimeout(() => this.overlay.remove(), 500);
+            setTimeout(() => {
+                if (this.overlay && this.overlay.parentNode) {
+                    this.overlay.remove();
+                }
+            }, 500);
         }
     }
 
     showError(msg) {
-        this.progressStep.textContent = `❌ ${msg}`;
-        this.progressBar.style.background = 'linear-gradient(90deg, #EF4444, #DC2626)';
+        console.error(`❌ Loader - Erreur: ${msg}`);
+        
+        if (this.progressStep) {
+            this.progressStep.textContent = `❌ ${msg}`;
+        }
+        
+        if (this.progressBar) {
+            this.progressBar.style.background = 'linear-gradient(90deg, #EF4444, #DC2626)';
+        }
+        
         setTimeout(() => this.hide(), 2000);
+    }
+    
+    // Méthode pour réinitialiser complètement
+    reset() {
+        this.hide();
+        this.currentProgress = 0;
+        this.targetProgress = 0;
+        this.isLoading = false;
     }
 }
 
+// Initialiser globalement
 window.loadingProgress = new LoadingProgress();
+console.log('✅ LoadingProgress initialisé avec animation 0% → 100%');
 
 // ==================== 3. OPTIMIZED DATA LOADER ====================
+// ==================== ARTEFACT 3: OPTIMIZEDDATALOADER AMÉLIORÉ ====================
+// Chargeur de données optimisé avec progression fluide de 0% à 100%
+// À remplacer dans oda-achats.html à partir de la ligne 2500
+
 class OptimizedDataLoader {
     constructor(supabase) {
         this.supabase = supabase;
@@ -2505,117 +2872,230 @@ class OptimizedDataLoader {
     }
 
     async load() {
+        // Démarrer le loader à 0%
         this.loader.start();
         this.loader.updateProgress(0, 'Vérification du cache...');
+        
+        console.log('🚀 Démarrage du chargement des données');
 
         try {
+            // Vérifier le cache
             if (this.cache.hasCompleteCache()) {
-                console.log('📦 Chargement depuis le cache...');
+                console.log('📦 Cache valide trouvé - Chargement rapide');
                 await this.loadFromCache();
                 this.loader.complete();
                 return this.data;
             }
 
-            console.log('🌐 Chargement depuis le serveur...');
+            console.log('🌐 Cache manquant ou expiré - Chargement depuis le serveur');
             await this.loadFromServer();
             this.loader.complete();
             return this.data;
         } catch (error) {
-            console.error('❌ Erreur:', error);
+            console.error('❌ Erreur lors du chargement:', error);
             this.loader.showError('Échec du chargement');
             throw error;
         }
     }
 
     async loadFromCache() {
+        console.log('📦 Chargement depuis le cache local...');
+        
+        // Progression 0-10%
+        this.loader.updateProgress(5, 'Lecture du cache...');
+        
         const cached = this.cache.loadAll();
+        
+        // Progression 10-30%
+        this.loader.updateProgress(15, 'Chargement des produits...');
         this.data.products = cached.products || [];
+        await this.delay(100);
+        
+        // Progression 30-50%
+        this.loader.updateProgress(35, 'Chargement des likes...');
         this.data.likes = cached.likes || {};
+        await this.delay(100);
+        
+        // Progression 50-70%
+        this.loader.updateProgress(55, 'Chargement des commentaires...');
         this.data.comments = cached.comments || {};
+        await this.delay(100);
+        
+        // Progression 70-90%
+        this.loader.updateProgress(75, 'Chargement des boutiques...');
         this.data.shops = cached.shops || {};
-        await this.simulateProgress(10, 100, 500);
-        console.log(`✅ ${this.data.products.length} produits depuis le cache`);
+        await this.delay(100);
+        
+        // Animation finale jusqu'à 100%
+        await this.simulateProgress(85, 100, 300);
+        
+        console.log(`✅ ${this.data.products.length} produits chargés depuis le cache`);
+        console.log('📊 Statistiques du cache:');
+        console.log(`   - Produits: ${this.data.products.length}`);
+        console.log(`   - Likes: ${Object.keys(this.data.likes).length} produits`);
+        console.log(`   - Commentaires: ${Object.keys(this.data.comments).length} produits`);
+        console.log(`   - Boutiques: ${Object.keys(this.data.shops).length}`);
+        
+        // Mise à jour en arrière-plan après un délai
         setTimeout(() => this.updateInBackground(), 2000);
     }
 
     async loadFromServer() {
-        this.loader.updateProgress(10, 'Chargement des boutiques...');
-        await this.loadShops();
-        this.loader.updateProgress(30, 'Chargement des produits...');
-        await this.loadProducts();
-        this.loader.updateProgress(50, 'Chargement des likes...');
-        await this.loadLikes();
-        this.loader.updateProgress(70, 'Chargement des commentaires...');
-        await this.loadComments();
-        this.loader.updateProgress(85, 'Traitement des données...');
-        this.processData();
-        this.loader.updateProgress(95, 'Sauvegarde en cache...');
-        this.saveToCache();
-        this.loader.updateProgress(100);
+        console.log('🌐 Chargement depuis le serveur Supabase...');
+        
+        try {
+            // Étape 1: Boutiques (0-20%)
+            this.loader.updateProgress(0, 'Connexion au serveur...');
+            await this.delay(200);
+            
+            this.loader.updateProgress(5, 'Chargement des boutiques...');
+            await this.loadShops();
+            this.loader.updateProgress(20, 'Boutiques chargées ✓');
+            await this.delay(150);
+            
+            // Étape 2: Produits (20-50%)
+            this.loader.updateProgress(25, 'Chargement des produits...');
+            await this.loadProducts();
+            this.loader.updateProgress(50, 'Produits chargés ✓');
+            await this.delay(150);
+            
+            // Étape 3: Likes (50-70%)
+            this.loader.updateProgress(55, 'Chargement des likes...');
+            await this.loadLikes();
+            this.loader.updateProgress(70, 'Likes chargés ✓');
+            await this.delay(150);
+            
+            // Étape 4: Commentaires (70-85%)
+            this.loader.updateProgress(73, 'Chargement des commentaires...');
+            await this.loadComments();
+            this.loader.updateProgress(85, 'Commentaires chargés ✓');
+            await this.delay(150);
+            
+            // Étape 5: Traitement (85-93%)
+            this.loader.updateProgress(87, 'Traitement des données...');
+            this.processData();
+            this.loader.updateProgress(93, 'Données traitées ✓');
+            await this.delay(150);
+            
+            // Étape 6: Mise en cache (93-98%)
+            this.loader.updateProgress(94, 'Sauvegarde en cache...');
+            this.saveToCache();
+            this.loader.updateProgress(98, 'Cache enregistré ✓');
+            await this.delay(150);
+            
+            // Finalisation (98-100%)
+            this.loader.updateProgress(99, 'Finalisation...');
+            await this.delay(100);
+            this.loader.updateProgress(100, 'Chargement terminé !');
+            
+        } catch (error) {
+            console.error('❌ Erreur chargement serveur:', error);
+            throw error;
+        }
     }
 
     async loadShops() {
-        const { data, error } = await this.supabase
-            .from('parametres_boutique')
-            .select('user_id, config');
-        if (error) throw error;
-        data.forEach(shop => {
-            const slug = shop.config?.identifiant?.slug || shop.config?.slug || null;
-            this.data.shops[shop.user_id] = {
-                nom: shop.config?.general?.nom || 'Boutique',
-                identifiant: slug,
-                couleurPrimaire: shop.config?.apparence?.couleurPrimaire || '#FF6B00'
-            };
-        });
-        console.log(`🏪 ${Object.keys(this.data.shops).length} boutiques`);
+        try {
+            const { data, error } = await this.supabase
+                .from('parametres_boutique')
+                .select('user_id, config');
+                
+            if (error) throw error;
+            
+            data.forEach(shop => {
+                const slug = shop.config?.identifiant?.slug || shop.config?.slug || null;
+                this.data.shops[shop.user_id] = {
+                    nom: shop.config?.general?.nom || 'Boutique',
+                    identifiant: slug,
+                    couleurPrimaire: shop.config?.apparence?.couleurPrimaire || '#FF6B00'
+                };
+            });
+            
+            console.log(`🏪 ${Object.keys(this.data.shops).length} boutiques chargées`);
+        } catch (error) {
+            console.error('❌ Erreur chargement boutiques:', error);
+            throw error;
+        }
     }
 
     async loadProducts() {
-        const { data, error } = await this.supabase
-            .from('produits')
-            .select('*')
-            .eq('statut', 'published')
-            .gt('stock', 0);
-        if (error) throw error;
-        this.data.products = data.map(p => ({
-            id: p.id, nom: p.nom, description: p.description,
-            prix: p.prix, stock: p.stock, mainImage: p.main_image,
-            categorie: p.categorie, userId: p.user_id, created_at: p.created_at
-        }));
-        console.log(`📦 ${this.data.products.length} produits`);
+        try {
+            const { data, error } = await this.supabase
+                .from('produits')
+                .select('*')
+                .eq('statut', 'published')
+                .gt('stock', 0);
+                
+            if (error) throw error;
+            
+            this.data.products = data.map(p => ({
+                id: p.id,
+                nom: p.nom,
+                description: p.description,
+                prix: p.prix,
+                stock: p.stock,
+                mainImage: p.main_image,
+                categorie: p.categorie,
+                userId: p.user_id,
+                created_at: p.created_at
+            }));
+            
+            console.log(`📦 ${this.data.products.length} produits chargés`);
+        } catch (error) {
+            console.error('❌ Erreur chargement produits:', error);
+            throw error;
+        }
     }
 
     async loadLikes() {
-        const { data, error } = await this.supabase
-            .from('product_likes')
-            .select('product_id, user_id');
-        if (error) throw error;
-        data.forEach(like => {
-            if (!this.data.likes[like.product_id]) {
-                this.data.likes[like.product_id] = { count: 0, users: [] };
-            }
-            this.data.likes[like.product_id].count++;
-            this.data.likes[like.product_id].users.push(like.user_id);
-        });
-        console.log(`👍 ${Object.keys(this.data.likes).length} produits likés`);
+        try {
+            const { data, error } = await this.supabase
+                .from('product_likes')
+                .select('product_id, user_id');
+                
+            if (error) throw error;
+            
+            data.forEach(like => {
+                if (!this.data.likes[like.product_id]) {
+                    this.data.likes[like.product_id] = { count: 0, users: [] };
+                }
+                this.data.likes[like.product_id].count++;
+                this.data.likes[like.product_id].users.push(like.user_id);
+            });
+            
+            console.log(`👍 ${Object.keys(this.data.likes).length} produits avec likes`);
+        } catch (error) {
+            console.error('❌ Erreur chargement likes:', error);
+            throw error;
+        }
     }
 
     async loadComments() {
-        const { data, error } = await this.supabase
-            .from('product_comments')
-            .select('*')
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        data.forEach(comment => {
-            if (!this.data.comments[comment.product_id]) {
-                this.data.comments[comment.product_id] = [];
-            }
-            this.data.comments[comment.product_id].push(comment);
-        });
-        console.log(`💬 ${Object.keys(this.data.comments).length} produits commentés`);
+        try {
+            const { data, error } = await this.supabase
+                .from('product_comments')
+                .select('*')
+                .order('created_at', { ascending: false });
+                
+            if (error) throw error;
+            
+            data.forEach(comment => {
+                if (!this.data.comments[comment.product_id]) {
+                    this.data.comments[comment.product_id] = [];
+                }
+                this.data.comments[comment.product_id].push(comment);
+            });
+            
+            console.log(`💬 ${Object.keys(this.data.comments).length} produits avec commentaires`);
+        } catch (error) {
+            console.error('❌ Erreur chargement commentaires:', error);
+            throw error;
+        }
     }
 
     processData() {
+        console.log('⚙️ Traitement des données...');
+        
         this.data.products = this.data.products.map(p => ({
             ...p,
             shopName: this.data.shops[p.userId]?.nom || 'Boutique',
@@ -2625,44 +3105,83 @@ class OptimizedDataLoader {
             commentsCount: (this.data.comments[p.id] || []).length,
             rating: this.calculateAverageRating(this.data.comments[p.id] || [])
         }));
+        
+        console.log('✅ Données enrichies avec succès');
     }
 
     calculateAverageRating(comments) {
         if (!comments || comments.length === 0) return '0.0';
-        return (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1);
+        const average = comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length;
+        return average.toFixed(1);
     }
 
     saveToCache() {
-        this.cache.saveAll(this.data.products, this.data.likes, this.data.comments, this.data.shops);
+        console.log('💾 Sauvegarde des données en cache...');
+        
+        const saved = this.cache.saveAll(
+            this.data.products, 
+            this.data.likes, 
+            this.data.comments, 
+            this.data.shops
+        );
+        
+        if (saved) {
+            console.log('✅ Toutes les données sauvegardées en cache (valide 7 jours)');
+        } else {
+            console.warn('⚠️ Certaines données n\'ont pas pu être sauvegardées');
+        }
     }
 
     async updateInBackground() {
-        console.log('🔄 Mise à jour en arrière-plan...');
+        console.log('🔄 Mise à jour en arrière-plan programmée...');
+        
         setTimeout(async () => {
             try {
+                console.log('🔄 Démarrage de la mise à jour en arrière-plan...');
+                
+                // Charger discrètement sans afficher le loader
+                const tempLoader = this.loader;
+                this.loader = { 
+                    updateProgress: () => {}, 
+                    complete: () => {} 
+                };
+                
                 await this.loadFromServer();
-                console.log('✅ Cache mis à jour');
+                
+                // Restaurer le loader
+                this.loader = tempLoader;
+                
+                console.log('✅ Mise à jour en arrière-plan terminée');
+                console.log('📊 Cache rafraîchi et valide pour 7 jours');
             } catch (error) {
-                console.error('❌ Erreur arrière-plan:', error);
+                console.error('❌ Erreur mise à jour arrière-plan:', error);
             }
         }, 2000);
     }
 
     async simulateProgress(from, to, duration) {
-        const steps = 20;
+        const steps = 10;
         const increment = (to - from) / steps;
         const delay = duration / steps;
+        
         for (let i = 0; i < steps; i++) {
-            await new Promise(resolve => setTimeout(resolve, delay));
+            await this.delay(delay);
             this.loader.updateProgress(from + increment * (i + 1));
         }
     }
 
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     async forceReload() {
+        console.log('🔄 Rechargement forcé demandé...');
         this.cache.clearAll();
         return this.load();
     }
 }
+
+console.log('✅ OptimizedDataLoader défini avec progression améliorée 0% → 100%');
 
 // ==================== 4. IMPROVED MENU ====================
 class ImprovedMenu {

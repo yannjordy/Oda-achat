@@ -1,14 +1,16 @@
-// ==================== SERVICE WORKER ODA MARKETPLACE ====================
-const CACHE_NAME = 'oda-marketplace-v1.0.3';
-const RUNTIME_CACHE = 'oda-runtime-v1';
-const IMAGE_CACHE = 'oda-images-v1';
+// ==================== SERVICE WORKER OPTIMISÉ ====================
+// Pour ODA Marketplace PWA avec support notifications avancées
 
-// Ressources à mettre en cache immédiatement
-const PRECACHE_URLS = [
-    '/',
+const CACHE_NAME = 'oda-marketplace-v2.0';
+const RUNTIME_CACHE = 'oda-runtime-v2.0';
+
+// Fichiers à mettre en cache lors de l'installation
+const STATIC_ASSETS = [
+     '/',
     '/oda-achats.html',
     '/favorie.html',
     '/boutique.html',
+     '/manifest.json',
     '/boutiques.html',
     '/produit.html',
     '/oda.png',
@@ -18,256 +20,214 @@ const PRECACHE_URLS = [
 ];
 
 // ==================== INSTALLATION ====================
-self.addEventListener('install', event => {
-    console.log('🔧 [SW] Installation du Service Worker');
+self.addEventListener('install', (event) => {
+    console.log('🔧 Service Worker: Installation');
     
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('📦 [SW] Mise en cache des ressources');
-                return cache.addAll(PRECACHE_URLS).catch(err => {
-                    console.warn('⚠️ [SW] Erreur cache précache:', err);
-                    // Ne pas bloquer l'installation si certaines ressources échouent
-                });
+            .then((cache) => {
+                console.log('📦 Mise en cache des ressources statiques');
+                return cache.addAll(STATIC_ASSETS);
             })
-            .then(() => self.skipWaiting())
+            .then(() => {
+                console.log('✅ Service Worker: Installé');
+                return self.skipWaiting();
+            })
+            .catch((error) => {
+                console.error('❌ Erreur installation SW:', error);
+            })
     );
 });
 
 // ==================== ACTIVATION ====================
-self.addEventListener('activate', event => {
-    console.log('✅ [SW] Activation du Service Worker');
+self.addEventListener('activate', (event) => {
+    console.log('🔄 Service Worker: Activation');
     
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME && 
-                        cacheName !== RUNTIME_CACHE && 
-                        cacheName !== IMAGE_CACHE) {
-                        console.log('🗑️ [SW] Suppression ancien cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-        .then(() => self.clients.claim())
+        caches.keys()
+            .then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((cacheName) => {
+                        if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+                            console.log('🗑️ Suppression ancien cache:', cacheName);
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            })
+            .then(() => {
+                console.log('✅ Service Worker: Activé');
+                return self.clients.claim();
+            })
     );
 });
 
-// ==================== FETCH - STRATÉGIE DE CACHE ====================
-self.addEventListener('fetch', event => {
+// ==================== STRATÉGIE DE CACHE ====================
+self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
-    // Ignorer les requêtes non-GET
-    if (request.method !== 'GET') {
+    // Ne pas mettre en cache les requêtes externes (API, etc.)
+    if (url.origin !== location.origin) {
         return;
     }
     
-    // Ignorer les requêtes vers Supabase (toujours en ligne)
-    if (url.hostname.includes('supabase.co')) {
+    // Stratégie Cache First pour les ressources statiques
+    if (STATIC_ASSETS.some(asset => url.pathname === asset)) {
+        event.respondWith(
+            caches.match(request)
+                .then((cachedResponse) => {
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    return fetch(request).then((response) => {
+                        return caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(request, response.clone());
+                            return response;
+                        });
+                    });
+                })
+        );
         return;
     }
     
-    // Images: Cache First
-    if (request.destination === 'image') {
-        event.respondWith(cacheFirstStrategy(request, IMAGE_CACHE));
-        return;
-    }
-    
-    // Scripts et styles: Network First avec fallback cache
-    if (request.destination === 'script' || 
-        request.destination === 'style' ||
-        url.hostname === 'fonts.googleapis.com' ||
-        url.hostname === 'cdnjs.cloudflare.com') {
-        event.respondWith(networkFirstStrategy(request, RUNTIME_CACHE));
-        return;
-    }
-    
-    // HTML et autres: Network First
-    event.respondWith(networkFirstStrategy(request, CACHE_NAME));
+    // Stratégie Network First pour le reste
+    event.respondWith(
+        fetch(request)
+            .then((response) => {
+                return caches.open(RUNTIME_CACHE).then((cache) => {
+                    cache.put(request, response.clone());
+                    return response;
+                });
+            })
+            .catch(() => {
+                return caches.match(request);
+            })
+    );
 });
 
-// Stratégie Cache First (pour images)
-async function cacheFirstStrategy(request, cacheName) {
-    const cache = await caches.open(cacheName);
-    const cached = await cache.match(request);
+// ==================== NOTIFICATIONS PUSH ====================
+self.addEventListener('push', (event) => {
+    console.log('📬 Notification Push reçue');
     
-    if (cached) {
-        return cached;
-    }
+    let notificationData = {
+        title: '🔔 Nouvelle notification',
+        body: 'Vous avez une nouvelle notification',
+        icon: '/icon.png',
+        badge: '/badge.png',
+        vibrate: [200, 100, 200, 100, 200],
+        tag: 'default',
+        requireInteraction: false,
+        renotify: true
+    };
     
-    try {
-        const response = await fetch(request);
-        if (response.ok) {
-            cache.put(request, response.clone());
+    // Si les données sont fournies dans le push
+    if (event.data) {
+        try {
+            const data = event.data.json();
+            notificationData = {
+                ...notificationData,
+                ...data
+            };
+        } catch (error) {
+            console.error('Erreur parsing push data:', error);
         }
-        return response;
-    } catch (error) {
-        console.warn('⚠️ [SW] Erreur fetch image:', error);
-        // Retourner une image placeholder si disponible
-        return cache.match('/oda.png') || new Response('Image non disponible', { status: 404 });
     }
-}
+    
+    event.waitUntil(
+        self.registration.showNotification(notificationData.title, notificationData)
+    );
+});
 
-// Stratégie Network First (pour HTML, scripts, styles)
-async function networkFirstStrategy(request, cacheName) {
-    const cache = await caches.open(cacheName);
-    
-    try {
-        const response = await fetch(request);
-        if (response.ok) {
-            cache.put(request, response.clone());
-        }
-        return response;
-    } catch (error) {
-        console.warn('⚠️ [SW] Erreur réseau, utilisation du cache:', error);
-        const cached = await cache.match(request);
-        
-        if (cached) {
-            return cached;
-        }
-        
-        // Fallback pour les pages HTML
-        if (request.destination === 'document') {
-            return cache.match('/oda-achats.html') || 
-                   new Response('Application hors ligne', {
-                       status: 503,
-                       statusText: 'Service Unavailable',
-                       headers: new Headers({
-                           'Content-Type': 'text/html'
-                       })
-                   });
-        }
-        
-        throw error;
-    }
-}
-
-// ==================== NOTIFICATIONS ====================
-self.addEventListener('notificationclick', event => {
-    console.log('🔔 [SW] Notification cliquée:', event.notification.tag);
+// ==================== CLIC SUR NOTIFICATION ====================
+self.addEventListener('notificationclick', (event) => {
+    console.log('👆 Clic sur notification:', event.notification.tag);
     
     event.notification.close();
     
+    // URL de destination selon le tag
+    const urlMap = {
+        'new-products': '/oda-achats.html#nouveautes',
+        'flash-sale': '/oda-achats.html#promotions',
+        'popular': '/oda-achats.html#populaires',
+        'special-offer': '/oda-achats.html#offres',
+        'recommended': '/oda-achats.html#recommandations',
+        'default': '/oda-achats.html'
+    };
+    
+    const urlToOpen = urlMap[event.notification.tag] || urlMap['default'];
+    
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(clientList => {
-                // Si une fenêtre est déjà ouverte, la focus
-                for (let client of clientList) {
-                    if (client.url.includes('oda-achats.html') && 'focus' in client) {
+            .then((clientList) => {
+                // Si une fenêtre est déjà ouverte, la focaliser
+                for (const client of clientList) {
+                    if (client.url === urlToOpen && 'focus' in client) {
                         return client.focus();
                     }
                 }
                 
                 // Sinon, ouvrir une nouvelle fenêtre
                 if (clients.openWindow) {
-                    return clients.openWindow('/oda-achats.html');
+                    return clients.openWindow(urlToOpen);
                 }
             })
     );
 });
 
-self.addEventListener('notificationclose', event => {
-    console.log('🔕 [SW] Notification fermée');
-});
-
-// ==================== PUSH NOTIFICATIONS ====================
-self.addEventListener('push', event => {
-    console.log('📨 [SW] Réception d\'un message push');
+// ==================== FERMETURE DE NOTIFICATION ====================
+self.addEventListener('notificationclose', (event) => {
+    console.log('❌ Notification fermée:', event.notification.tag);
     
-    let data = {
-        title: 'ODA Marketplace',
-        body: 'Nouvelle notification',
-        icon: '/oda-icon-192.png',
-        badge: '/oda-icon-96.png'
-    };
-    
-    if (event.data) {
-        try {
-            data = { ...data, ...event.data.json() };
-        } catch (e) {
-            data.body = event.data.text();
-        }
-    }
-    
-    event.waitUntil(
-        self.registration.showNotification(data.title, {
-            body: data.body,
-            icon: data.icon,
-            badge: data.badge,
-            vibrate: [200, 100, 200],
-            tag: 'oda-push',
-            requireInteraction: false,
-            actions: [
-                {
-                    action: 'open',
-                    title: 'Ouvrir',
-                    icon: '/icon-open.png'
-                },
-                {
-                    action: 'close',
-                    title: 'Fermer',
-                    icon: '/icon-close.png'
-                }
-            ]
-        })
-    );
+    // Analytics ou tracking ici si besoin
 });
 
 // ==================== SYNCHRONISATION EN ARRIÈRE-PLAN ====================
-self.addEventListener('sync', event => {
-    console.log('🔄 [SW] Synchronisation en arrière-plan:', event.tag);
+self.addEventListener('sync', (event) => {
+    console.log('🔄 Background Sync:', event.tag);
     
-    if (event.tag === 'sync-favorites') {
-        event.waitUntil(syncFavorites());
+    if (event.tag === 'sync-notifications') {
+        event.waitUntil(
+            // Synchroniser les données ou récupérer de nouvelles notifications
+            fetch('/api/check-notifications')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hasNew) {
+                        return self.registration.showNotification('🆕 Nouveautés', {
+                            body: data.message,
+                            icon: '/icon.png',
+                            badge: '/badge.png'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur sync:', error);
+                })
+        );
     }
 });
 
-async function syncFavorites() {
-    try {
-        console.log('🔄 [SW] Synchronisation des favoris...');
-        // Logique de synchronisation ici
-        return Promise.resolve();
-    } catch (error) {
-        console.error('❌ [SW] Erreur sync favoris:', error);
-        throw error;
-    }
-}
-
-// ==================== MESSAGES ====================
-self.addEventListener('message', event => {
-    console.log('💬 [SW] Message reçu:', event.data);
+// ==================== MESSAGES DU CLIENT ====================
+self.addEventListener('message', (event) => {
+    console.log('💬 Message reçu:', event.data);
     
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
     
-    if (event.data && event.data.type === 'CLEAR_CACHE') {
-        event.waitUntil(
-            caches.keys().then(cacheNames => {
-                return Promise.all(
-                    cacheNames.map(cacheName => caches.delete(cacheName))
-                );
-            })
-        );
-    }
-    
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({
-            version: CACHE_NAME
-        });
+    if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+        const { title, options } = event.data;
+        self.registration.showNotification(title, options);
     }
 });
 
 // ==================== GESTION DES ERREURS ====================
-self.addEventListener('error', event => {
-    console.error('❌ [SW] Erreur globale:', event.error);
+self.addEventListener('error', (event) => {
+    console.error('❌ Erreur Service Worker:', event.error);
 });
 
-self.addEventListener('unhandledrejection', event => {
-    console.error('❌ [SW] Promise rejetée:', event.reason);
+self.addEventListener('unhandledrejection', (event) => {
+    console.error('❌ Promise rejetée:', event.reason);
 });
 
-console.log('✅ [SW] Service Worker chargé - Version:', CACHE_NAME);
+console.log('✅ Service Worker chargé et prêt');

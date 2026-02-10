@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
     <title>ODA Market | Next Gen Shopping</title>
-    <link rel="icon" type="image/png" href="oda.png">
     
     <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
     
@@ -204,254 +203,214 @@
             min-height: 90vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-            padding-top: 80px;
-        }
-
-        h1 {
-            font-family: var(--font-head);
-            font-size: clamp(3rem, 12vw, 5rem);
-            line-height: 0.95;
-            margin-bottom: 20px;
-            letter-spacing: -0.02em;
-        }
-
-        .tag-pill {
-            display: inline-flex;
             align-items: center;
-            padding: 6px 16px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 100px;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
+            justify-content: center;
+            text-align: center;
+            padding: 100px 20px 40px;
+            position: relative;
         }
-
+        .hero h1 {
+            font-family: var(--font-head);
+            font-weight: 700;
+            font-size: clamp(2.5rem, 10vw, 4rem);
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
         .hero-img-container {
             width: 100%;
-            height: 350px;
-            position: relative;
+            max-width: 400px;
             margin: 30px 0;
-            perspective: 1000px;
+            position: relative;
         }
-
         .hero-card {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(160deg, #1e1e2e, #0f0f16);
+            background: var(--surface);
             border-radius: var(--radius-lg);
-            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
             position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: float 6s ease-in-out infinite;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: transform 0.3s;
         }
-
-        /* IMAGE PRINCIPALE DU HERO */
+        .hero-card:hover { transform: translateY(-8px); }
         .hero-product-img {
-            width: 80%;
-            height: 80%;
-            object-fit: contain;
-            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
-            animation: float-inverse 6s ease-in-out infinite;
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
         }
 
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(1deg); } }
-        @keyframes float-inverse { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(10px) scale(1.05); } }
+        .btn-main {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .btn-main:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4); }
 
-        /* MARQUEE (Texte défilant) */
+        /* MARQUEE */
         .marquee-container {
-            width: 100%;
             overflow: hidden;
-            background: var(--primary);
-            padding: 15px 0;
-            transform: rotate(-2deg) scale(1.1);
+            background: var(--surface);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
             margin: 40px 0;
+            padding: 15px 0;
         }
         .marquee-content {
             display: flex;
-            white-space: nowrap;
-            animation: scroll 20s linear infinite;
+            animation: scroll-marquee 20s linear infinite;
         }
         .marquee-item {
-            font-family: var(--font-head);
-            font-size: 1.5rem;
-            font-weight: 700;
-            padding: 0 30px;
-            text-transform: uppercase;
-            color: white;
+            white-space: nowrap;
+            padding: 0 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
         }
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        @keyframes scroll-marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
 
-        /* BENTO GRID (WIDGETS) */
+        /* SECTION TITLE */
         .section-title {
             font-family: var(--font-head);
-            font-size: 2rem;
-            padding: 0 20px;
-            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 1.8rem;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
-            align-items: end;
+            align-items: center;
         }
-        
+
+        /* BENTO GRID */
+        #features { padding: 20px; }
         .bento-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            padding: 0 20px;
-            margin-bottom: 60px;
+            gap: 12px;
         }
-
         .bento-item {
             background: var(--surface);
             border-radius: var(--radius-md);
-            padding: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            height: 180px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: transform 0.2s;
+            gap: 16px;
+            transition: all 0.3s;
         }
-        
-        .bento-item:active { transform: scale(0.96); }
-        .bento-full { grid-column: span 2; height: 140px; flex-direction: row; align-items: center; }
-        
-        /* IMAGES DANS LES BENTO */
+        .bento-item:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.15); }
+        .bento-full { grid-column: 1 / -1; }
         .bento-icon {
             width: 60px;
             height: 60px;
-            margin-bottom: 10px;
-            object-fit: contain;
+            border-radius: 14px;
+            object-fit: cover;
         }
-        .bento-full .bento-icon {
-            margin-right: 20px;
-            margin-bottom: 0;
-        }
-        
-        .bento-text h3 { font-size: 1.1rem; margin-bottom: 5px; font-weight: 600; }
-        .bento-text p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+        .bento-text h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+        .bento-text p { color: var(--text-muted); font-size: 0.95rem; }
 
-        /* HORIZONTAL SCROLL (SHOPS) */
+        /* SHOPS */
         .scroll-wrapper {
             display: flex;
-            gap: 20px;
+            gap: 16px;
             overflow-x: auto;
-            padding: 10px 20px 40px 20px;
+            padding: 0 20px 20px;
             scroll-snap-type: x mandatory;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
         }
         .scroll-wrapper::-webkit-scrollbar { display: none; }
-
         .shop-card {
             min-width: 280px;
-            height: 380px;
+            height: 320px;
             background: var(--surface);
-            border-radius: var(--radius-lg);
-            scroll-snap-align: center;
-            position: relative;
+            border-radius: var(--radius-md);
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
+            scroll-snap-align: start;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
         }
-
-        /* IMAGE DE BOUTIQUE */
+        .shop-card:hover { transform: translateY(-8px); }
         .shop-img {
             width: 100%;
             height: 65%;
             object-fit: cover;
-            opacity: 0.8;
         }
-        
         .shop-content {
             padding: 20px;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0));
         }
+        .shop-content h3 { font-weight: 700; font-size: 1.2rem; margin-bottom: 4px; }
 
-        /* BOTTOM DOCK (NAVIGATION) */
+        /* DOCK NAVIGATION */
         .dock-container {
             position: fixed;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            z-index: 100;
-        }
-
-        .dock {
+            left: 0;
+            right: 0;
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background: rgba(20, 20, 20, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 15px;
-            border-radius: 100px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            justify-content: center;
+            z-index: 100;
+            pointer-events: none;
         }
-
+        .dock {
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 12px 20px;
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
         .dock-item {
-            color: var(--text-muted);
-            text-decoration: none;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            transition: color 0.3s;
+            justify-content: center;
+            padding: 12px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--text-muted);
+            transition: all 0.3s;
             position: relative;
         }
-
-        .dock-item svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 2; fill: none; }
-        
-        .dock-item.active { color: white; }
-        .dock-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            width: 4px;
-            height: 4px;
-            background: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--primary);
+        .dock-item svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 4px;
         }
-
-        /* BUTTONS */
-        .btn-main {
-            width: 100%;
-            padding: 18px;
-            background: white;
-            color: black;
-            border: none;
-            border-radius: 100px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            transition: transform 0.1s;
+        .dock-item span {
+            font-size: 0.75rem;
+            font-weight: 500;
         }
-        .btn-main:active { transform: scale(0.98); }
+        .dock-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary);
+        }
+        .dock-item:hover {
+            color: white;
+            transform: translateY(-4px);
+        }
 
         /* LOADER */
         #loader {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: black;
+            inset: 0;
+            background: var(--bg);
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -459,39 +418,320 @@
             transition: opacity 0.5s;
         }
         .spinner {
-            width: 50px; height: 50px;
-            border: 3px solid rgba(255,255,255,0.1);
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
             border-top-color: var(--primary);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ============================================ */
+        /* MODAL D'INSTALLATION PWA POUR iPHONE */
+        /* ============================================ */
+        
+        .pwa-install-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            animation: modalFadeIn 0.4s ease;
+        }
+        
+        .pwa-install-modal.show {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .pwa-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .pwa-modal-content {
+            position: relative;
+            background: linear-gradient(135deg, rgba(18, 18, 18, 0.98) 0%, rgba(30, 30, 30, 0.98) 100%);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px 32px 0 0;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 -10px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .pwa-modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .pwa-modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+        
+        .pwa-modal-title {
+            font-family: var(--font-head);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .pwa-modal-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .pwa-install-steps {
+            margin: 24px 0;
+        }
+        
+        .pwa-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .pwa-step:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .pwa-step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .pwa-step-content {
+            flex: 1;
+        }
+        
+        .pwa-step-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pwa-step-icon {
+            font-size: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .pwa-step-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .pwa-modal-benefits {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .pwa-benefits-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pwa-benefits-list {
+            list-style: none;
+        }
+        
+        .pwa-benefits-list li {
+            padding: 8px 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pwa-benefits-list li::before {
+            content: '✓';
+            color: #4ade80;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .pwa-modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .pwa-btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            color: white;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        
+        .pwa-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+        }
+        
+        .pwa-btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .pwa-btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 14px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pwa-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .pwa-modal-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .pwa-modal-footer-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        /* Animations spéciales pour iOS */
+        @supports (-webkit-touch-callout: none) {
+            .pwa-step-icon {
+                animation: bounce 2s ease-in-out infinite;
+            }
+            
+            @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-4px); }
+            }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2.2rem; }
+            .bento-grid { grid-template-columns: 1fr; }
+            .dock { padding: 10px 16px; gap: 4px; }
+            .dock-item { padding: 10px 12px; }
+            .pwa-modal-content { padding: 24px 20px; }
+            .pwa-modal-title { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
-
-    <!-- IMAGE D'ARRIÈRE-PLAN FLOUE -->
-    <div class="bg-image"></div>
-
     <div id="loader">
         <div class="spinner"></div>
     </div>
 
+    <div class="bg-image"></div>
     <div class="bg-glow glow-1"></div>
     <div class="bg-glow glow-2"></div>
 
     <header>
-        <div class="logo">ODA <span>MARKET</span></div>
+        <div class="logo">
+            ODA <span>BETA</span>
+        </div>
         <div class="profile-avatar">
-            <!-- REMPLACER PAR VOTRE IMAGE DE PROFIL -->
-            <img src="oda.png" alt="Profile" onerror="this.parentElement.innerHTML='👤'">
+            <img src="avatar.jpg" alt="Profile" onerror="this.outerHTML='<div style=color:#818cf8;font-size:1.2rem>👤</div>'">
         </div>
     </header>
 
     <main>
-        <section class="hero scroll-reveal">
-            <div class="tag-pill">✨ Marketplace v2.0</div>
+        <section class="hero">
             <h1>Le Futur <br><span class="gradient-text">à portée de main.</span></h1>
             <p style="color:var(--text-muted); font-size:1.1rem; max-width:90%;">Achetez et vendez instantanément sur la plateforme la plus moderne d'Afrique.</p>
             
@@ -615,7 +855,155 @@
         </nav>
     </div>
 
+    <!-- ============================================ -->
+    <!-- MODAL D'INSTALLATION PWA POUR iPHONE -->
+    <!-- ============================================ -->
+    <div class="pwa-install-modal" id="pwaInstallModal">
+        <div class="pwa-modal-backdrop" onclick="closePWAModal()"></div>
+        <div class="pwa-modal-content">
+            <div class="pwa-modal-header">
+                <div class="pwa-modal-icon">🛍️</div>
+                <h2 class="pwa-modal-title">Installez ODA</h2>
+                <p class="pwa-modal-subtitle">Profitez d'une expérience optimale sur votre iPhone</p>
+            </div>
+
+            <div class="pwa-install-steps">
+                <div class="pwa-step">
+                    <div class="pwa-step-number">1</div>
+                    <div class="pwa-step-content">
+                        <div class="pwa-step-title">
+                            <span class="pwa-step-icon">📤</span>
+                            Touchez le bouton Partager
+                        </div>
+                        <p class="pwa-step-description">Appuyez sur l'icône de partage en bas de Safari (carré avec une flèche vers le haut)</p>
+                    </div>
+                </div>
+
+                <div class="pwa-step">
+                    <div class="pwa-step-number">2</div>
+                    <div class="pwa-step-content">
+                        <div class="pwa-step-title">
+                            <span class="pwa-step-icon">➕</span>
+                            Sur l'écran d'accueil
+                        </div>
+                        <p class="pwa-step-description">Faites défiler vers le bas et sélectionnez "Sur l'écran d'accueil"</p>
+                    </div>
+                </div>
+
+                <div class="pwa-step">
+                    <div class="pwa-step-number">3</div>
+                    <div class="pwa-step-content">
+                        <div class="pwa-step-title">
+                            <span class="pwa-step-icon">✅</span>
+                            Confirmer l'ajout
+                        </div>
+                        <p class="pwa-step-description">Appuyez sur "Ajouter" en haut à droite pour installer ODA comme une vraie app</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pwa-modal-benefits">
+                <div class="pwa-benefits-title">
+                    ⭐ Avantages de l'installation
+                </div>
+                <ul class="pwa-benefits-list">
+                    <li>Accès rapide depuis votre écran d'accueil</li>
+                    <li>Expérience plein écran sans les barres du navigateur</li>
+                    <li>Notifications push pour les offres exclusives</li>
+                    <li>Fonctionne même hors connexion</li>
+                    <li>Plus rapide et plus fluide</li>
+                </ul>
+            </div>
+
+            <div class="pwa-modal-buttons">
+                <button class="pwa-btn-primary" onclick="closePWAModal()">
+                    J'ai compris !
+                </button>
+                <button class="pwa-btn-secondary" onclick="dontShowAgain()">
+                    Ne plus afficher
+                </button>
+            </div>
+
+            <div class="pwa-modal-footer">
+                <p class="pwa-modal-footer-text">
+                    💡 Vous pouvez toujours installer ODA plus tard via le menu Partager de Safari
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="pwa-manager.js"></script>
     <script>
+        // ============================================
+        // GESTION DU MODAL PWA POUR iPHONE
+        // ============================================
+        
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+        
+        function isInStandaloneMode() {
+            return ('standalone' in window.navigator) && (window.navigator.standalone);
+        }
+        
+        function hasSeenPWAModal() {
+            return localStorage.getItem('pwa-modal-seen') === 'true';
+        }
+        
+        function showPWAModal() {
+            const modal = document.getElementById('pwaInstallModal');
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closePWAModal() {
+            const modal = document.getElementById('pwaInstallModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+                // Marquer comme vu pour cette session
+                localStorage.setItem('pwa-modal-seen-session', 'true');
+            }
+        }
+        
+        function dontShowAgain() {
+            localStorage.setItem('pwa-modal-seen', 'true');
+            closePWAModal();
+        }
+        
+        // Vérifier et afficher le modal au chargement
+        window.addEventListener('load', () => {
+            // Attendre que le loader disparaisse
+            setTimeout(() => {
+                // Vérifier si c'est un iPhone
+                if (isIOS() && !isInStandaloneMode()) {
+                    // Ne pas afficher si déjà vu dans cette session
+                    if (!localStorage.getItem('pwa-modal-seen-session')) {
+                        // Ne pas afficher si l'utilisateur a choisi "Ne plus afficher"
+                        if (!hasSeenPWAModal()) {
+                            // Afficher le modal après 3 secondes
+                            setTimeout(() => {
+                                showPWAModal();
+                            }, 3000);
+                        }
+                    }
+                }
+            }, 1000);
+        });
+        
+        // Réafficher le modal si l'utilisateur revient après 24h
+        setInterval(() => {
+            if (isIOS() && !isInStandaloneMode() && !hasSeenPWAModal()) {
+                localStorage.removeItem('pwa-modal-seen-session');
+            }
+        }, 24 * 60 * 60 * 1000); // 24 heures
+        
+        // ============================================
+        // SCRIPTS ORIGINAUX
+        // ============================================
+        
         // LOADER
         window.addEventListener('load', () => {
             const loader = document.getElementById('loader');

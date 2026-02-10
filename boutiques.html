@@ -922,20 +922,7 @@ body {
                 </button>
         </div>
 
-        <!-- Barre de recherche (cachée par défaut) -->
-        <div class="search-container" id="searchContainer" style="display: none;">
-            <div class="search-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input type="text" placeholder="Rechercher une boutique..." id="searchInput">
-                <button class="search-close" id="searchClose">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
+      
         </div>
     </header>
 
@@ -964,9 +951,23 @@ body {
             <span class="tab-badge" id="badgeActive">0</span>
         </button>
     </nav>
-
     <!-- Content Container -->
     <main class="content-container">
+          <!-- Barre de recherche (cachée par défaut) -->
+          <div class="search-container" id="searchContainer" style="display: none;">
+            <div class="search-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="Rechercher une boutique..." id="searchInput">
+                <button class="search-close" id="searchClose">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+          </div>
         <!-- Slider 1: Toutes les boutiques -->
         <section class="boutiques-section active" id="sectionAll">
             <div class="section-header">

@@ -13,49 +13,49 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/oda.png",
+      "src": "/oda-icons-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/oda-icon-96.png",
+      "src": "/oda-icons-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/oda-icon-128.png",
+      "src": "/oda-icons-128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/oda-icon-144.png",
+      "src": "/oda-icons-144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/oda-icon-152.png",
+      "src": "/oda-icons-152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/oda-icon-192.png",
+      "src": "/oda-icons-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/oda-icon-384.png",
+      "src": "/oda-icons-384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/oda-icon-512.png",
+      "src": "/oda-icons-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -69,7 +69,7 @@
       "url": "/oda-achats.html?filter=recent",
       "icons": [
         {
-          "src": "/icon-new.png",
+          "src": "/icon.png",
           "sizes": "96x96"
         }
       ]
@@ -81,7 +81,7 @@
       "url": "/favorie.html",
       "icons": [
         {
-          "src": "/icon-heart.png",
+          "src": "/icon.png",
           "sizes": "96x96"
         }
       ]
@@ -93,7 +93,7 @@
       "url": "/boutique.html",
       "icons": [
         {
-          "src": "/icon-shop.png",
+          "src": "/icon.png",
           "sizes": "96x96"
         }
       ]

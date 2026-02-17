@@ -372,9 +372,7 @@ body {
     border-radius: 5px;
 }
 
-
-
-/* ==================== GRID PRODUITS (DÉFILEMENT GAUCHE-DROITE & HAUT-BAS) ==================== */
+/* ==================== GRID PRODUITS - VERSION COMPACTE ==================== */
 .products-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -399,67 +397,40 @@ body {
     font-size: 0.9rem;
 }
 
+/* ==================== PRODUCTS GRID - COMPACT VERSION ==================== */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(2, 1fr);  /* MODIFIÉ: Grille fixe 2 colonnes */
+    gap: 12px;  /* MODIFIÉ: Réduit de 16px à 12px */
     animation: fadeIn 0.5s ease;
 }
 
+/* ==================== PRODUCT CARD - COMPACT DESIGN ==================== */
 .product-card {
     background: var(--bg-primary);
-    border-radius: 8px;
+    border-radius: 12px;  /* MODIFIÉ: Augmenté de 8px à 12px */
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);  /* MODIFIÉ: Transition plus fluide */
     cursor: pointer;
     position: relative;
     display: flex;
     flex-direction: column;
     border: 1px solid var(--border-color);
-    opacity: 1;
-}
-
-/* Animation de gauche à droite */
-@keyframes slideInFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-
-/* Animation de haut en bas (alternée) */
-.product-card:nth-child(even) {
-    animation: slideInFromTop 0.5s ease backwards;
-}
-
-@keyframes slideInFromTop {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .product-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    transform: translateY(-2px);  /* MODIFIÉ: Réduit le mouvement */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
     border-color: var(--primary-color);
 }
 
+/* Image Container - COMPACT */
 .product-image-wrapper {
     position: relative;
     width: 100%;
-    padding-top: 100%;
-    background: #f8f8f8;
+    padding-top: 65%;  /* MODIFIÉ: Réduit de 100% à 65% */
+    background: #f5f5f5;  /* MODIFIÉ: Couleur de fond */
     overflow: hidden;
 }
 
@@ -477,78 +448,164 @@ body {
     transform: scale(1.05);
 }
 
+/* NOUVEAU: Time Badge (badge de temps sur l'image) */
+.time-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Favorite Button - COMPACT */
 .btn-favorite {
     position: absolute;
     top: 8px;
     right: 8px;
-    width: 36px;
-    height: 36px;
+    width: 32px;  /* MODIFIÉ: Réduit de 36px à 32px */
+    height: 32px;  /* MODIFIÉ: Réduit de 36px à 32px */
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);  /* AJOUTÉ: Effet de flou */
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.1rem;
+    font-size: 1rem;  /* MODIFIÉ: Réduit de 1.1rem à 1rem */
     z-index: 5;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-favorite:hover {
-    transform: scale(1.15);
+    transform: scale(1.1);  /* MODIFIÉ: Réduit de 1.15 à 1.1 */
+    background: white;  /* AJOUTÉ: Fond blanc au hover */
 }
 
 .btn-favorite.active {
     background: var(--error-color);
+    color: white;  /* AJOUTÉ: Texte blanc quand actif */
 }
 
+/* Product Info Section - COMPACT */
 .product-info {
-    padding: 12px;
+    padding: 10px;  /* MODIFIÉ: Réduit de 12px à 10px */
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;  /* MODIFIÉ: Réduit de 8px à 6px */
     flex: 1;
 }
 
+/* Product Name - COMPACT */
+.product-name {
+    font-size: 0.85rem;  /* MODIFIÉ: Réduit de 0.9rem à 0.85rem */
+    font-weight: 700;  /* MODIFIÉ: Augmenté de 600 à 700 */
+    color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;  /* MODIFIÉ: Réduit de 2 à 1 ligne */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;  /* MODIFIÉ: Réduit de 1.4 à 1.3 */
+    margin-bottom: 2px;  /* AJOUTÉ: Espacement en bas */
+}
+
+/* Shop Badge - SIMPLIFIÉE */
 .shop-badge {
     display: inline-flex;
     align-items: center;
+    gap: 3px;  /* MODIFIÉ: Réduit de 4px à 3px */
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 500;  /* MODIFIÉ: Réduit de 600 à 500 */
+    width: fit-content;
+    /* SUPPRIMÉ: padding et background pour style plus épuré */
+}
+
+.shop-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* NOUVEAU: Rating (étoiles et nombre) */
+.product-rating {
+    display: flex;
+    align-items: center;
     gap: 4px;
-    padding: 4px 8px;
-    background: var(--bg-secondary);
-    border-radius: 4px;
     font-size: 0.7rem;
     color: var(--text-secondary);
     font-weight: 600;
-    width: fit-content;
 }
 
-.product-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.4;
-    min-height: 2.8em;
+.product-rating .star {
+    color: #FFC107;
+    font-size: 0.75rem;
 }
 
+/* NOUVEAU: Price and Action Row */
+.product-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+/* Product Price - COMPACT */
 .product-price {
-    font-size: 1.2rem;
+    font-size: 1.1rem;  /* MODIFIÉ: Réduit de 1.2rem à 1.1rem */
     font-weight: 800;
     color: var(--primary-color);
-    margin-top: auto;
 }
 
-.product-stock {
-    font-size: 0.75rem;
-    color: var(--success-color);
-    font-weight: 500;
+/* NOUVEAU: Add Button (bouton +) */
+.btn-add {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--secondary-color);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    font-weight: 300;
 }
+
+.btn-add:hover {
+    background: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.btn-add:active {
+    transform: scale(0.95);
+}
+
+/* Product Stock - MODIFIÉ */
+.product-stock {
+    font-size: 0.7rem;  /* MODIFIÉ: Réduit de 0.75rem à 0.7rem */
+    color: var(--success-color);
+    font-weight: 600;  /* MODIFIÉ: Augmenté de 500 à 600 */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.product-stock.out-of-stock {
+    color: var(--error-color);
+}
+
 /* ==================== SCROLL HORIZONTAL CATEGORIES ==================== */
 .horizontal-scroll::-webkit-scrollbar {
     height: 8px;
@@ -584,6 +641,18 @@ body {
         transform: translateY(0);
     }
 }
+
+/* Staggered animation for cards */
+.product-card {
+    animation: slideInUp 0.4s ease backwards;
+}
+
+.product-card:nth-child(1) { animation-delay: 0.05s; }
+.product-card:nth-child(2) { animation-delay: 0.1s; }
+.product-card:nth-child(3) { animation-delay: 0.15s; }
+.product-card:nth-child(4) { animation-delay: 0.2s; }
+.product-card:nth-child(5) { animation-delay: 0.25s; }
+.product-card:nth-child(6) { animation-delay: 0.3s; }
 
 /* ==================== LOADER ==================== */
 .loader {
@@ -632,10 +701,7 @@ body {
     margin-bottom: 20px;
     opacity: 0.3;
 }
-/* ============================================ */
-/* STYLES CSS POUR LES MODALS ODA MARKET       */
-/* Ajoutez ce code à votre fichier CSS         */
-/* ============================================ */
+
 
 /* ==================== BOUTONS DÉCLENCHEURS ==================== */
 .modal-trigger-buttons {
@@ -1367,84 +1433,6 @@ body {
     }
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 768px) {
-    .modal-content {
-        width: 95%;
-        max-height: 90vh;
-        border-radius: 20px;
-    }
-    
-    .modal-header {
-        padding: 30px 20px 16px;
-    }
-    
-    .modal-title {
-        font-size: 1.5rem;
-    }
-    
-    .modal-body {
-        padding: 20px;
-    }
-    
-    .info-card, .help-card {
-        flex-direction: column;
-        padding: 20px;
-    }
-    
-    .contact-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .benefits-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .modal-trigger-buttons {
-        bottom: 70px;
-        right: 16px;
-    }
-    
-    .modal-trigger-btn {
-        padding: 10px 16px;
-        font-size: 0.9rem;
-    }
-    
-    .download-btn {
-        flex-direction: column;
-        text-align: center;
-        padding: 20px;
-    }
-    
-    .btn-text-main {
-        text-align: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .modal-main-icon {
-        font-size: 3rem;
-    }
-    
-    .info-icon, .help-icon {
-        font-size: 2rem;
-    }
-    
-    .modal-trigger-btn .btn-text {
-        display: none;
-    }
-    
-    .modal-trigger-btn {
-        width: 50px;
-        height: 50px;
-        padding: 0;
-        justify-content: center;
-    }
-    
-    .modal-trigger-btn .btn-icon {
-        font-size: 1.5rem;
-    }
-}
 /* ==================== TOAST NOTIFICATIONS ==================== */
 .toast-container {
     position: fixed;
@@ -1587,6 +1575,57 @@ body {
         font-size: 0.85rem;
         white-space: nowrap;
     }
+    
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 20px;
+    }
+    
+    .modal-header {
+        padding: 30px 20px 16px;
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .info-card, .help-card {
+        flex-direction: column;
+        padding: 20px;
+    }
+    
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-trigger-buttons {
+        bottom: 70px;
+        right: 16px;
+    }
+    
+    .modal-trigger-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .download-btn {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .btn-text-main {
+        text-align: center;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1612,7 +1651,64 @@ body {
         align-items: flex-start;
         gap: 8px;
     }
+    
+    .modal-main-icon {
+        font-size: 3rem;
+    }
+    
+    .info-icon, .help-icon {
+        font-size: 2rem;
+    }
+    
+    .modal-trigger-btn .btn-text {
+        display: none;
+    }
+    
+    .modal-trigger-btn {
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        justify-content: center;
+    }
+    
+    .modal-trigger-btn .btn-icon {
+        font-size: 1.5rem;
+    }
 }
+
+/* ==================== RESPONSIVE DESIGN FOR PRODUCTS ==================== */
+
+/* Tablets */
+@media (min-width: 640px) {
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+}
+
+/* Desktop Small */
+@media (min-width: 1024px) {
+    .products-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    
+    .product-name {
+        font-size: 0.9rem;
+    }
+    
+    .product-price {
+        font-size: 1.2rem;
+    }
+}
+
+/* Desktop Large */
+@media (min-width: 1280px) {
+    .products-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
 /* ==================== LIKES ET COMMENTAIRES ==================== */
 
 /* Engagement buttons sur les cartes produits */
@@ -1654,12 +1750,6 @@ body {
     font-size: 1rem;
 }
 
-.product-rating {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-left: auto;
-}
-
 /* ==================== MODAL COMMENTAIRES ==================== */
 .comments-modal {
     position: fixed;
@@ -1684,18 +1774,6 @@ body {
     backdrop-filter: blur(4px);
 }
 
-.modal-content {
-    position: relative;
-    background: white;
-    border-radius: 16px;
-    max-width: 600px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    animation: modalSlideIn 0.3s ease;
-}
-
 @keyframes modalSlideIn {
     from {
         opacity: 0;
@@ -1705,39 +1783,6 @@ body {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-}
-
-.btn-close {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background: var(--bg-secondary);
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.btn-close:hover {
-    background: var(--border-color);
-    transform: rotate(90deg);
 }
 
 /* Stats du produit */
@@ -1932,6 +1977,7 @@ body {
     font-size: 0.8rem;
     color: var(--text-secondary);
 }
+
 /* ==================== MODAL PARAMÈTRES ==================== */
 .settings-modal {
     position: fixed;
@@ -1950,15 +1996,6 @@ body {
 
 .settings-modal.active {
     display: flex;
-}
-
-.modal-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: transparent;
 }
 
 .settings-modal-content {
@@ -2028,22 +2065,8 @@ body {
     margin-bottom: 0;
 }
 
-.section-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
 .section-icon {
     font-size: 1.5rem;
-}
-
-.section-header h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
 }
 
 .form-group {
@@ -2355,6 +2378,7 @@ body.dark-mode .toggle-desc {
 body.dark-mode .section-header h3 {
     color: white;
 }
+
 /* Structure du menu - 3 sections */
 .side-menu {
     position: fixed;
@@ -2369,7 +2393,7 @@ body.dark-mode .section-header h3 {
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Empêche le scroll global */
+    overflow: hidden;
 }
 
 .side-menu.active {
@@ -2378,7 +2402,7 @@ body.dark-mode .section-header h3 {
 
 /* Header - FIXE */
 .menu-header {
-    flex-shrink: 0; /* Ne rétrécit pas */
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2397,32 +2421,13 @@ body.dark-mode .section-header h3 {
     gap: 8px;
 }
 
-.btn-close {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: rotate(90deg);
-}
-
 .btn-close:active {
     transform: rotate(90deg) scale(0.9);
 }
 
-/* Contenu du menu - Flex pour séparer les sections */
+/* Contenu du menu */
 .menu-content {
-    flex: 1; /* Prend l'espace restant */
+    flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -2430,8 +2435,8 @@ body.dark-mode .section-header h3 {
 
 /* Section Catégories - SCROLLABLE */
 .menu-section.categories-section {
-    flex: 1; /* Prend tout l'espace disponible */
-    overflow-y: auto; /* Scroll uniquement pour les catégories */
+    flex: 1;
+    overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 20px;
@@ -2439,7 +2444,7 @@ body.dark-mode .section-header h3 {
     position: relative;
 }
 
-/* Personnalisation de la scrollbar pour les catégories */
+/* Personnalisation de la scrollbar */
 .menu-section.categories-section::-webkit-scrollbar {
     width: 6px;
 }
@@ -2460,7 +2465,7 @@ body.dark-mode .section-header h3 {
 
 /* Sections Navigation et Informations - FIXES */
 .menu-section.fixed-section {
-    flex-shrink: 0; /* Ne rétrécit jamais */
+    flex-shrink: 0;
     padding: 16px 20px;
     background: var(--bg-primary);
 }
@@ -2629,7 +2634,7 @@ body.dark-mode .section-header h3 {
     }
 }
 
-/* Indicateur de scroll pour les catégories */
+/* Indicateur de scroll */
 .scroll-indicator {
     position: absolute;
     bottom: 0;
@@ -2662,12 +2667,10 @@ body.dark-mode .section-header h3 {
     opacity: 1;
 }
 
-/* Animation smooth pour le scroll */
 .category-list {
     scroll-behavior: smooth;
 }
 
-/* Badge "NEW" pour nouvelles catégories (optionnel) */
 .category-new {
     background: var(--success-color);
     color: white;
@@ -2677,7 +2680,6 @@ body.dark-mode .section-header h3 {
     margin-left: 8px;
     font-weight: 700;
 }
-
 
 </style>
 <body>
@@ -2826,6 +2828,12 @@ body.dark-mode .section-header h3 {
         </div>
     </div>
 </div>
+<!-- ============================================ -->
+<!-- CODE HTML À AJOUTER AVANT </body>           -->
+<!-- Placez ce code juste avant la ligne 5314    -->
+<!-- (avant la balise </body>)                   -->
+<!-- ============================================ -->
+
 <!-- Modal 1: À propos -->
 <div id="aboutModal" class="oda-modal">
     <div class="modal-overlay" onclick="closeModal('aboutModal')"></div>

@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODA Studio — Espace Vendeur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="sandbox.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<style>
+    /* =====================================================
+   ODA STUDIO — CSS PRINCIPAL
+   YouTube Studio inspired · Fully Responsive
+   ===================================================== */
+
+:root {
+    --primary:        #FF6B00;
+    --primary-dark:   #d95a00;
+    --primary-glow:   rgba(255, 107, 0, 0.18);
+    --sidebar-bg:     #0d0d14;
+    --sidebar-width:  248px;
+    --topbar-h:       60px;
+    --bg:             #f4f5f7;
+    --card:           #ffffff;
+    --text:           #111827;
+    --muted:          #6b7280;
+    --border:         #e5e7eb;
+    --success:        #10b981;
+    --danger:         #ef4444;
+    --info:           #3b82f6;
+    --purple:         #8b5cf6;
+    --telegram-color: #2CA5E0;
+    --whatsapp-color: #25D366;
+    --facebook-color: #1877F2;
+    --shadow-sm:      0 1px 4px rgba(0,0,0,0.06);
+    --shadow-md:      0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg:      0 8px 40px rgba(0,0,0,0.12);
+    --radius-sm:      10px;
+    --radius-md:      14px;
+    --radius-lg:      20px;
+    --transition:     all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===================== RESET ===================== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
+}
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    position: relative;
+}
+
+/* ===================== SIDEBAR ===================== */
+.sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    z-index: 900;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid rgba(255,255,255,0.04);
+}
+
+/* === Logo === */
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+.sidebar-logo-img {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+.sidebar-logo-fallback {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    display: none;
+    flex-shrink: 0;
+}
+.sidebar-logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+.logo-brand {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: white;
+    letter-spacing: -0.02em;
+}
+.logo-sub {
+    font-size: 0.62rem;
+    color: var(--primary);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+.sidebar-close-btn {
+    display: none;
+    margin-left: auto;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: rgba(255,255,255,0.6);
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+.sidebar-close-btn:hover { background: rgba(255,255,255,0.14); color: white; }
+
+/* === Shop Card === */
+.sidebar-shop-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 14px;
+    padding: 12px 14px;
+    background: rgba(255,107,0,0.1);
+    border: 1px solid rgba(255,107,0,0.2);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+.shop-avatar {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(255,107,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.shop-name {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.shop-badge {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 0.7rem;
+    color: var(--success);
+    font-weight: 600;
+    margin-top: 2px;
+}
+.badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* === Nav === */
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    scrollbar-width: none;
+}
+.sidebar-nav::-webkit-scrollbar { display: none; }
+
+.nav-section-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.1em;
+    padding: 6px 10px 4px;
+    text-transform: uppercase;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.55);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+    position: relative;
+    margin-bottom: 2px;
+}
+.nav-item:hover {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.9);
+}
+.nav-item.active {
+    background: rgba(255, 107, 0, 0.15);
+    color: var(--primary);
+}
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 0 3px 3px 0;
+}
+.nav-icon {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.nav-label { flex: 1; }
+.nav-badge {
+    background: var(--danger);
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 700;
+    min-width: 18px; height: 18px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 5px;
+}
+.nav-external {
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+/* Social items */
+.nav-social.telegram:hover { color: var(--telegram-color); background: rgba(44, 165, 224, 0.12); }
+.nav-social.whatsapp:hover { color: var(--whatsapp-color); background: rgba(37, 211, 102, 0.12); }
+.nav-social.facebook:hover { color: var(--facebook-color); background: rgba(24, 119, 242, 0.12); }
+
+/* Download item */
+.nav-download {
+    background: rgba(255,107,0,0.08);
+    border: 1px solid rgba(255,107,0,0.2);
+    color: var(--primary) !important;
+    font-weight: 600;
+}
+.nav-download:hover {
+    background: rgba(255,107,0,0.16) !important;
+    color: var(--primary) !important;
+}
+
+/* === Footer === */
+.sidebar-footer {
+    padding: 12px 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.footer-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.78rem;
+    text-decoration: none;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+.footer-link:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.05); }
+.footer-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    color: #fca5a5;
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+}
+.footer-logout-btn:hover { background: rgba(239,68,68,0.2); }
+
+/* ===================== OVERLAY MOBILE ===================== */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(2px);
+    z-index: 850;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.sidebar-overlay.active { opacity: 1; }
+
+/* ===================== MAIN WRAPPER ===================== */
+.main-wrapper {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 0;
+    width: calc(100% - var(--sidebar-width));
+    max-width: calc(100% - var(--sidebar-width));
+    overflow-x: hidden;
+    transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1),
+                width 0.3s cubic-bezier(0.4,0,0.2,1),
+                max-width 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ===================== TOPBAR ===================== */
+.topbar {
+    position: sticky;
+    top: 0;
+    height: var(--topbar-h);
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 800;
+    flex-shrink: 0;
+    width: 100%;
+    overflow: hidden;
+}
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+.hamburger-btn:hover { background: var(--border); }
+.hamburger-btn span {
+    display: block;
+    width: 20px; height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: var(--transition);
+}
+.topbar-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.topbar-notif-btn {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+}
+.topbar-notif-btn:hover { background: var(--border); color: var(--text); }
+.topbar-notif-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: var(--danger);
+    color: white;
+    font-size: 0.58rem;
+    font-weight: 700;
+    min-width: 16px; height: 16px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 2px solid white;
+}
+.topbar-download-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 10px;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.topbar-download-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,0,0.35); }
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.topbar-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #ff8c40);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(255,107,0,0.3);
+}
+.topbar-username {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===================== CONTENT AREA ===================== */
+.content-area {
+    flex: 1;
+    padding: 28px 28px 40px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* ===================== PANELS ===================== */
+.sb-panel { display: none; animation: fadeUp 0.3s ease; }
+.sb-panel.active { display: block; }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================== SHOP HERO ===================== */
+.shop-hero {
+    position: relative;
+    background: linear-gradient(135deg, #0d0d14 0%, #1a1428 50%, #0d0d14 100%);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    border: 1px solid rgba(255,107,0,0.15);
+}
+.shop-hero-glow {
+    position: absolute;
+    top: -40%; left: -10%;
+    width: 400px; height: 300px;
+    background: radial-gradient(circle, rgba(255,107,0,0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+.shop-hero-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    position: relative;
+}
+.shop-hero-icon {
+    font-size: 2.8rem;
+    width: 68px; height: 68px;
+    background: rgba(255,107,0,0.12);
+    border: 1px solid rgba(255,107,0,0.25);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.shop-hero-name {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: white;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+.shop-hero-sub {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.5);
+}
+.shop-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: relative;
+}
+.hero-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.hero-download-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,0,0.4); }
+.hero-socials {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.social-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.social-pill.telegram {
+    background: rgba(44, 165, 224, 0.15);
+    color: var(--telegram-color);
+    border: 1px solid rgba(44, 165, 224, 0.25);
+}
+.social-pill.whatsapp {
+    background: rgba(37, 211, 102, 0.15);
+    color: var(--whatsapp-color);
+    border: 1px solid rgba(37, 211, 102, 0.25);
+}
+.social-pill.facebook {
+    background: rgba(24, 119, 242, 0.15);
+    color: var(--facebook-color);
+    border: 1px solid rgba(24, 119, 242, 0.25);
+}
+.social-pill:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+/* ===================== KPI GRID ===================== */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+    width: 100%;
+}
+.kpi-card {
+    background: var(--card);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    background: var(--kpi-color, var(--primary));
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.kpi-card:hover::before { opacity: 1; }
+.kpi-icon {
+    width: 50px; height: 50px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.kpi-icon.orange { background: rgba(255,107,0,0.1); --kpi-color: var(--primary); }
+.kpi-icon.green  { background: rgba(16,185,129,0.1); --kpi-color: var(--success); }
+.kpi-icon.blue   { background: rgba(59,130,246,0.1); --kpi-color: var(--info); }
+.kpi-icon.purple { background: rgba(139,92,246,0.1); --kpi-color: var(--purple); }
+.kpi-card.orange-card { --kpi-color: var(--primary); }
+.kpi-card.green-card  { --kpi-color: var(--success); }
+.kpi-card.blue-card   { --kpi-color: var(--info); }
+.kpi-card.purple-card { --kpi-color: var(--purple); }
+.kpi-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.kpi-value {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+/* ===================== SECTION HEADER ===================== */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.section-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+/* ===================== FILTER PILLS ===================== */
+.filter-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.filter-pill {
+    padding: 5px 14px;
+    border: 1.5px solid var(--border);
+    background: white;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.filter-pill:hover { border-color: var(--primary); color: var(--primary); }
+.filter-pill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 3px 10px rgba(255,107,0,0.3);
+}
+
+/* ===================== PRODUCTS GRID ===================== */
+.products-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.product-row {
+    background: var(--card);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+.product-row:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(255,107,0,0.08);
+    transform: translateX(3px);
+}
+.product-thumb {
+    width: 56px; height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--bg);
+    flex-shrink: 0;
+}
+.product-thumb-placeholder {
+    width: 56px; height: 56px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f0f2f5, #e5e7eb);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.product-info { flex: 1; min-width: 0; }
+.product-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.product-cat {
+    font-size: 0.73rem;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+.product-status {
+    flex-shrink: 0;
+}
+.status-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.status-badge.published { background: rgba(16,185,129,0.1); color: var(--success); }
+.status-badge.draft     { background: rgba(107,114,128,0.1); color: var(--muted); }
+.product-stats {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 40px;
+}
+.stat-item.likes    { color: #ef4444; }
+.stat-item.comments { color: var(--info); }
+.stat-item.clicks   { color: var(--success); }
+.product-price {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--primary);
+    flex-shrink: 0;
+    min-width: 100px;
+    text-align: right;
+}
+.arrow-icon {
+    color: var(--muted);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+.product-row:hover .arrow-icon { color: var(--primary); transform: translateX(3px); }
+
+/* ===================== PANEL HEADER ===================== */
+.panel-header { margin-bottom: 24px; }
+.panel-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+}
+.panel-sub { font-size: 0.85rem; color: var(--muted); }
+
+/* ===================== CHARTS ===================== */
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+.chart-card {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    min-width: 0;
+    overflow: hidden;
+    width: 100%;
+}
+.chart-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.chart-title {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 3px;
+}
+.chart-subtitle {
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.chart-badge {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.chart-badge.orange { background: rgba(255,107,0,0.1); }
+.chart-badge.blue   { background: rgba(59,130,246,0.1); }
+.chart-badge.purple { background: rgba(139,92,246,0.1); }
+.chart-badge.green  { background: rgba(16,185,129,0.1); }
+.chart-container { position: relative; height: 280px; }
+
+/* ===================== NOTIFICATIONS ===================== */
+.notif-list { display: flex; flex-direction: column; gap: 10px; }
+.notif-item {
+    background: var(--card);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    animation: slideIn 0.35s ease;
+    transition: var(--transition);
+}
+.notif-item:hover { border-color: var(--info); transform: translateX(3px); }
+.notif-item.unread {
+    border-left: 4px solid var(--info);
+    background: #f0f6ff;
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.notif-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(59,130,246,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.notif-content { flex: 1; }
+.notif-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 3px; }
+.notif-body  { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+.notif-time  { font-size: 0.73rem; color: var(--muted); margin-top: 6px; }
+.no-notifs {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+}
+.no-notifs-icon { font-size: 3rem; margin-bottom: 14px; display: block; }
+
+/* ===================== MODAL COMMENTAIRES ===================== */
+.comments-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+    z-index: 99999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+.comments-overlay.active { opacity: 1; visibility: visible; }
+.comments-sheet {
+    background: white;
+    border-radius: 24px 24px 0 0;
+    width: 100%;
+    max-width: 680px;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.34, 1.15, 0.64, 1);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.2);
+}
+.comments-overlay.active .comments-sheet { transform: translateY(0); }
+.comments-handle {
+    width: 40px; height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    margin: 14px auto 0;
+}
+.comments-header {
+    padding: 16px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.comments-header h3 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+.close-btn {
+    background: var(--bg);
+    border: none;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    transition: var(--transition);
+}
+.close-btn:hover { background: var(--border); color: var(--text); }
+.comments-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.comment-item {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+}
+.comment-author {
+    font-weight: 700;
+    font-size: 0.83rem;
+    margin-bottom: 5px;
+    color: var(--text);
+}
+.comment-text { font-size: 0.88rem; color: var(--text); line-height: 1.55; }
+.comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+.comment-date { font-size: 0.73rem; color: var(--muted); }
+.comment-rating { font-size: 0.78rem; color: #f59e0b; font-weight: 600; }
+.no-comments {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--muted);
+}
+.no-comments-icon { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+/* ===================== LOADER ===================== */
+.sb-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    color: var(--muted);
+    gap: 14px;
+    font-size: 0.88rem;
+    grid-column: 1 / -1;
+}
+.sb-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===================== EMPTY STATE ===================== */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+}
+.empty-icon  { font-size: 3rem; display: block; margin-bottom: 14px; }
+.empty-title { font-family: 'Sora', sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.empty-text  { font-size: 0.85rem; line-height: 1.6; }
+
+/* ===================== SEARCH BAR ===================== */
+.search-bar-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+    width: 100%;
+}
+.search-bar-wrapper svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+.search-input {
+    width: 100%;
+    padding: 11px 14px 11px 42px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    outline: none;
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+.search-input::placeholder { color: var(--muted); }
+.search-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255,107,0,0.1);
+}
+.search-count {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+/* ===================== TOAST ===================== */
+.sb-toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: #111827;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 999999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sb-toast.show  { transform: translateY(0); opacity: 1; }
+.sb-toast.success { background: var(--success); }
+.sb-toast.info    { background: var(--info); }
+.sb-toast.error   { background: var(--danger); }
+
+/* ===================== RESPONSIVE ===================== */
+
+/* Large (≤1280px) */
+@media (max-width: 1280px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar-username { display: none; }
+}
+
+/* Medium (≤1024px) */
+@media (max-width: 1024px) {
+    .charts-row { grid-template-columns: 1fr; }
+    .topbar-download-btn span { display: none; }
+    .topbar-download-btn { padding: 7px 10px; }
+}
+
+/* Tablet & Mobile (≤768px) — Core fix */
+@media (max-width: 768px) {
+    /* Sidebar devient un drawer */
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+        width: 260px;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+    }
+    .sidebar-overlay.active { display: block; }
+    .sidebar-close-btn { display: flex; }
+    .hamburger-btn { display: flex; }
+
+    /* Main wrapper occupe tout l'écran */
+    .main-wrapper {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Topbar */
+    .topbar { padding: 0 14px; }
+    .topbar-download-btn { display: none; }
+
+    /* Content */
+    .content-area { padding: 16px 14px 32px; }
+
+    /* KPIs */
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+    /* Hero boutique */
+    .shop-hero { padding: 20px 18px; }
+    .shop-hero-name { font-size: 1.15rem; }
+    .shop-hero-actions { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+    /* Produits : masquer colonnes secondaires */
+    .product-stats { gap: 10px; }
+    .product-price { display: none; }
+    .product-status { display: none; }
+
+    /* Charts */
+    .charts-row { gap: 14px; }
+    .chart-container { height: 240px; }
+}
+
+/* Mobile (≤480px) */
+@media (max-width: 480px) {
+    /* KPIs */
+    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .kpi-value { font-size: 1.4rem; }
+    .kpi-card { padding: 13px 12px; gap: 10px; }
+    .kpi-icon { width: 40px; height: 40px; font-size: 1rem; border-radius: 10px; }
+    .kpi-label { font-size: 0.7rem; }
+
+    /* Hero */
+    .shop-hero { padding: 16px 14px; border-radius: var(--radius-md); }
+    .shop-hero-icon { width: 52px; height: 52px; font-size: 2rem; border-radius: 14px; }
+    .shop-hero-name { font-size: 1.05rem; }
+    .shop-hero-sub { font-size: 0.75rem; }
+    .hero-download-btn { font-size: 0.78rem; padding: 8px 12px; width: 100%; justify-content: center; }
+    .hero-socials { width: 100%; }
+    .social-pill { padding: 6px 10px; font-size: 0.73rem; flex: 1; justify-content: center; }
+
+    /* Produits */
+    .product-row { padding: 11px 12px; gap: 10px; }
+    .product-thumb, .product-thumb-placeholder { width: 44px; height: 44px; border-radius: 8px; }
+    .product-name { font-size: 0.83rem; }
+    .product-cat { font-size: 0.68rem; }
+    .stat-item { font-size: 0.75rem; gap: 3px; min-width: 28px; }
+    .arrow-icon { display: none; }
+
+    /* Section headers */
+    .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .filter-pills { width: 100%; }
+    .filter-pill { flex: 1; text-align: center; font-size: 0.73rem; padding: 5px 8px; }
+
+    /* Search */
+    .search-input { font-size: 0.84rem; }
+
+    /* Charts */
+    .chart-card { padding: 14px; }
+    .chart-container { height: 200px; }
+    .chart-title { font-size: 0.85rem; }
+    .chart-subtitle { font-size: 0.72rem; }
+    .chart-badge { width: 32px; height: 32px; font-size: 0.9rem; }
+
+    /* Notifications */
+    .notif-item { padding: 12px 14px; gap: 10px; }
+    .notif-icon { width: 34px; height: 34px; font-size: 0.95rem; }
+    .notif-title { font-size: 0.82rem; }
+    .notif-body  { font-size: 0.76rem; }
+
+    /* Panel */
+    .panel-title { font-size: 1.05rem; }
+    .panel-sub { font-size: 0.8rem; }
+
+    /* Topbar */
+    .topbar { padding: 0 12px; height: 54px; }
+    .topbar-title { font-size: 0.88rem; }
+    .topbar-avatar { width: 32px; height: 32px; font-size: 0.82rem; }
+
+    /* Toast */
+    .sb-toast { bottom: 14px; right: 10px; left: 10px; max-width: none; font-size: 0.8rem; }
+
+    /* Comments */
+    .comments-header { padding: 14px 16px 12px; }
+    .comments-body { padding: 12px 14px; }
+}
+
+/* Très petit (≤360px) */
+@media (max-width: 360px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .kpi-card { flex-direction: row; }
+    .product-stats { gap: 6px; }
+    .stat-item { min-width: 24px; font-size: 0.72rem; }
+}
+</style>
+<body>
+
+<!-- ===================== OVERLAY MOBILE ===================== -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar" id="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+        <img src="logo-oda.png" alt="ODA" class="sidebar-logo-img" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
+        <div class="sidebar-logo-fallback" id="logoFallback">
+            <span class="logo-icon">🏪</span>
+        </div>
+        <div class="sidebar-logo-text">
+            <span class="logo-brand">ODA</span>
+            <span class="logo-sub">Studio</span>
+        </div>
+        <button class="sidebar-close-btn" onclick="toggleSidebar()" title="Fermer">✕</button>
+    </div>
+
+    <!-- Boutique card -->
+    <div class="sidebar-shop-card" id="sidebarShopCard" style="display:none;">
+        <div class="shop-avatar" id="sidebarShopAvatar">🏪</div>
+        <div class="shop-meta">
+            <div class="shop-name" id="sidebarShopName">Ma Boutique</div>
+            <div class="shop-badge">
+                <span class="badge-dot"></span> En ligne
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">TABLEAU DE BORD</div>
+        <button class="nav-item active" data-panel="produits" onclick="changerOnglet('produits', this)">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </span>
+            <span class="nav-label">Mes Produits</span>
+        </button>
+        <button class="nav-item" data-panel="stats-produits" onclick="changerOnglet('stats-produits', this)">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </span>
+            <span class="nav-label">Clics & Vues</span>
+        </button>
+        <button class="nav-item" data-panel="stats-categories" onclick="changerOnglet('stats-categories', this)">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            </span>
+            <span class="nav-label">Catégories</span>
+        </button>
+        <button class="nav-item notif-nav" data-panel="notifications" onclick="changerOnglet('notifications', this)">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </span>
+            <span class="nav-label">Notifications</span>
+            <span class="nav-badge" id="navNotifBadge" style="display:none;">0</span>
+        </button>
+
+        <div class="nav-section-label" style="margin-top:20px;">COMMUNAUTÉ</div>
+        <a class="nav-item nav-social telegram" href="https://t.me/odacommunaute" target="_blank">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.94 8.19l-2.02 9.52c-.15.69-.54.86-1.09.53l-3-2.21-1.45 1.39c-.16.16-.3.3-.61.3l.21-3.06 5.53-4.99c.24-.21-.05-.33-.37-.12L6.81 14.4l-2.96-.92c-.64-.2-.65-.64.14-.95l11.55-4.45c.54-.19 1.01.13.4 1.11z"/></svg>
+            </span>
+            <span class="nav-label">Telegram</span>
+            <span class="nav-external">↗</span>
+        </a>
+        <a class="nav-item nav-social whatsapp" href="https://whatsapp.com/channel/odachannel" target="_blank">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </span>
+            <span class="nav-label">WhatsApp</span>
+            <span class="nav-external">↗</span>
+        </a>
+        <a class="nav-item nav-social facebook" href="https://facebook.com/odamarketplace" target="_blank">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </span>
+            <span class="nav-label">Facebook</span>
+            <span class="nav-external">↗</span>
+        </a>
+
+        <div class="nav-section-label" style="margin-top:20px;">APPLICATION</div>
+        <!-- Download ODA Seller -->
+        <a class="nav-item nav-download" href="https://oda-seller.vercel.app" target="_blank">
+            <span class="nav-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
+            <span class="nav-label">Télécharger ODA</span>
+        </a>
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar-footer">
+        <a href="oda-achats.html" class="footer-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour au marché
+        </a>
+        <button class="footer-logout-btn" onclick="deconnexion()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Déconnexion
+        </button>
+    </div>
+</aside>
+
+<!-- ===================== ZONE PRINCIPALE ===================== -->
+<div class="main-wrapper">
+
+    <!-- ===== TOPBAR ===== -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="topbar-title" id="topbarTitle">Mes Produits</div>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-notif-btn" id="topbarNotifBtn" onclick="changerOnglet('notifications', null)" title="Notifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="topbar-notif-badge" id="topbarNotifBadge" style="display:none;">0</span>
+            </button>
+            <a href="https://oda-seller.vercel.app" target="_blank" class="topbar-download-btn" title="Télécharger ODA Vendeur">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>ODA App</span>
+            </a>
+            <div class="topbar-user">
+                <div class="topbar-avatar" id="sbAvatar">?</div>
+                <span class="topbar-username" id="sbUserName"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== CONTENU ===== -->
+    <main class="content-area">
+
+        <!-- ===== PANEL : MES PRODUITS ===== -->
+        <div class="sb-panel active" id="panel-produits">
+
+            <!-- Shop banner -->
+            <div class="shop-hero" id="shopBanner" style="display:none;">
+                <div class="shop-hero-glow"></div>
+                <div class="shop-hero-content">
+                    <div class="shop-hero-icon" id="shopBannerIcon">🏪</div>
+                    <div>
+                        <div class="shop-hero-name" id="shopBannerName">Ma Boutique</div>
+                        <div class="shop-hero-sub" id="shopBannerSub">Bienvenue dans votre espace vendeur · ODA Studio</div>
+                    </div>
+                </div>
+                <div class="shop-hero-actions">
+                    <a href="https://oda-seller.vercel.app" target="_blank" class="hero-download-btn">
+                        <img src="logo-oda.png" alt="ODA" style="width:18px;height:18px;border-radius:4px;object-fit:cover;" onerror="this.style.display='none'">
+                        Télécharger l'app ODA
+                    </a>
+                    <div class="hero-socials">
+                        <a href="https://t.me/odacommunaute" target="_blank" class="social-pill telegram">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.94 8.19l-2.02 9.52c-.15.69-.54.86-1.09.53l-3-2.21-1.45 1.39c-.16.16-.3.3-.61.3l.21-3.06 5.53-4.99c.24-.21-.05-.33-.37-.12L6.81 14.4l-2.96-.92c-.64-.2-.65-.64.14-.95l11.55-4.45c.54-.19 1.01.13.4 1.11z"/></svg>
+                            Telegram
+                        </a>
+                        <a href="https://whatsapp.com/channel/odachannel" target="_blank" class="social-pill whatsapp">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            WhatsApp
+                        </a>
+                        <a href="https://facebook.com/odamarketplace" target="_blank" class="social-pill facebook">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                            Facebook
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-grid" id="kpiGrid">
+                <div class="sb-loader"><div class="sb-spinner"></div><span>Chargement...</span></div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="section-header">
+                <h2 class="section-title">Catalogue produits</h2>
+                <div class="filter-pills" id="filterBar" style="display:none;">
+                    <button class="filter-pill active" onclick="filtrerProduits('tous', this)">Tous</button>
+                    <button class="filter-pill" onclick="filtrerProduits('published', this)">✅ Publiés</button>
+                    <button class="filter-pill" onclick="filtrerProduits('draft', this)">📝 Brouillons</button>
+                </div>
+            </div>
+
+            <!-- Barre de recherche -->
+            <div class="search-bar-wrapper" id="searchBarWrapper" style="display:none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input
+                    class="search-input"
+                    type="text"
+                    id="searchInput"
+                    placeholder="Rechercher un produit par nom ou catégorie…"
+                    oninput="rechercherProduits(this.value)"
+                    autocomplete="off"
+                >
+            </div>
+            <div class="search-count" id="searchCount" style="display:none;"></div>
+
+            <!-- Liste produits -->
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+
+        <!-- ===== PANEL : STATS CLICS ===== -->
+        <div class="sb-panel" id="panel-stats-produits">
+            <div class="panel-header">
+                <h2 class="panel-title">Clics & Engagement</h2>
+                <p class="panel-sub">Performance détaillée par produit</p>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">Clics par produit</div>
+                            <div class="chart-subtitle">Top 10 produits les plus consultés</div>
+                        </div>
+                        <div class="chart-badge orange">👁️</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartClics"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">Likes vs Commentaires</div>
+                            <div class="chart-subtitle">Engagement comparé par produit</div>
+                        </div>
+                        <div class="chart-badge blue">💬</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartEngagement"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL : STATS CATÉGORIES ===== -->
+        <div class="sb-panel" id="panel-stats-categories">
+            <div class="panel-header">
+                <h2 class="panel-title">Analyse par catégorie</h2>
+                <p class="panel-sub">Distribution et valeur de votre catalogue</p>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">Répartition des produits</div>
+                            <div class="chart-subtitle">Distribution par catégorie</div>
+                        </div>
+                        <div class="chart-badge purple">🏷️</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartCategories"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-title">Valeur du stock</div>
+                            <div class="chart-subtitle">Revenus potentiels par catégorie</div>
+                        </div>
+                        <div class="chart-badge green">💰</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartRevenuCategories"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL : NOTIFICATIONS ===== -->
+        <div class="sb-panel" id="panel-notifications">
+            <div class="panel-header">
+                <h2 class="panel-title">Notifications</h2>
+                <p class="panel-sub">Commentaires et interactions en temps réel</p>
+            </div>
+            <div id="notifList" class="notif-list">
+                <div class="sb-loader">
+                    <div class="sb-spinner"></div>
+                    <span>Chargement des notifications...</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===================== MODAL COMMENTAIRES ===================== -->
+<div class="comments-overlay" id="commentsOverlay">
+    <div class="comments-sheet">
+        <div class="comments-handle"></div>
+        <div class="comments-header">
+            <h3 id="commentsTitle">Commentaires</h3>
+            <button class="close-btn" onclick="fermerCommentaires()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="comments-body" id="commentsBody"></div>
+    </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="sb-toast" id="sbToast"></div>
+
+<script>
+    // =====================================================
+//   ODA STUDIO — JAVASCRIPT PRINCIPAL
+// =====================================================
+
+// ==================== CONFIG SUPABASE ====================
+const SUPABASE_URL      = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ==================== ÉTAT GLOBAL ====================
+let currentUser       = null;
+let boutique          = null;
+let mesProduits       = [];
+let mesLikes          = {};
+let mesCommentaires   = {};
+let mesClics          = {};
+let notifications     = [];
+let filtreActuel      = 'tous';
+let chartsInitialises = false;
+let realtimeChannel   = null;
+let sidebarOuvert     = false;
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    await verifierAuth();
+
+    // Fermer la modal commentaires en cliquant dehors
+    document.getElementById('commentsOverlay').addEventListener('click', function (e) {
+        if (e.target === this) fermerCommentaires();
+    });
+
+    // Gestion du resize pour fermer le sidebar sur desktop
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && sidebarOuvert) {
+            fermerSidebar();
+        }
+    });
+});
+
+// ==================== SIDEBAR MOBILE ====================
+function toggleSidebar() {
+    sidebarOuvert ? fermerSidebar() : ouvrirSidebar();
+}
+
+function ouvrirSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    sidebarOuvert = true;
+}
+
+function fermerSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+    sidebarOuvert = false;
+}
+
+// ==================== AUTH ====================
+async function verifierAuth() {
+    try {
+        const { data: { session }, error } = await sb.auth.getSession();
+        if (error || !session) {
+            window.location.href = 'oda-achats.html';
+            return;
+        }
+        currentUser = session.user;
+
+        // Avatar & nom
+        const email    = currentUser.email || '';
+        const nomMeta  = currentUser.user_metadata?.name || '';
+        const initiale = (nomMeta || email).charAt(0).toUpperCase();
+        document.getElementById('sbAvatar').textContent   = initiale;
+        document.getElementById('sbUserName').textContent = nomMeta || email.split('@')[0];
+
+        // Vérifier boutique
+        const { data: boutiqueCheck } = await sb
+            .from('parametres_boutique')
+            .select('user_id')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        if (!boutiqueCheck) {
+            await sb.auth.signOut();
+            window.location.href = 'oda-achats.html';
+            return;
+        }
+
+        await chargerBoutique();
+        await chargerToutesLesDonnees();
+        demarrerRealtime();
+
+    } catch (e) {
+        console.error('Auth error:', e);
+        window.location.href = 'oda-achats.html';
+    }
+}
+
+// ==================== BOUTIQUE ====================
+async function chargerBoutique() {
+    try {
+        const { data, error } = await sb
+            .from('parametres_boutique')
+            .select('user_id, config')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        if (error) return;
+        boutique = data;
+
+        const nom = data.config?.general?.nom || data.config?.nom || 'Ma Boutique';
+
+        // Shop banner (panel produits)
+        document.getElementById('shopBanner').style.display = 'block';
+        document.getElementById('shopBannerName').textContent = nom;
+        document.getElementById('shopBannerSub').textContent  = 'Bienvenue dans votre espace vendeur · ODA Studio';
+
+        // Sidebar shop card
+        document.getElementById('sidebarShopCard').style.display = 'flex';
+        document.getElementById('sidebarShopName').textContent = nom;
+
+    } catch (e) { console.warn('Pas de boutique:', e); }
+}
+
+// ==================== CHARGEMENT DONNÉES ====================
+async function chargerToutesLesDonnees() {
+    afficherLoaderProduits();
+
+    try {
+        // Produits
+        const { data: produits } = await sb
+            .from('produits')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+
+        mesProduits = produits || [];
+
+        if (mesProduits.length > 0) {
+            const ids = mesProduits.map(p => p.id);
+
+            // Likes
+            const { data: likes } = await sb
+                .from('product_likes')
+                .select('product_id, user_id')
+                .in('product_id', ids);
+
+            (likes || []).forEach(l => {
+                mesLikes[l.product_id] = (mesLikes[l.product_id] || 0) + 1;
+            });
+
+            // Commentaires
+            const { data: comments } = await sb
+                .from('product_comments')
+                .select('*')
+                .in('product_id', ids)
+                .order('created_at', { ascending: false });
+
+            (comments || []).forEach(c => {
+                if (!mesCommentaires[c.product_id]) mesCommentaires[c.product_id] = [];
+                mesCommentaires[c.product_id].push(c);
+            });
+
+            // Clics
+            try {
+                const { data: clics } = await sb
+                    .from('product_clicks')
+                    .select('product_id')
+                    .in('product_id', ids);
+
+                (clics || []).forEach(c => {
+                    mesClics[c.product_id] = (mesClics[c.product_id] || 0) + 1;
+                });
+            } catch (e) {
+                console.warn('Table product_clicks non trouvée.');
+            }
+        }
+
+        afficherKPIs();
+        afficherProduits();
+        afficherNotifications([]);
+
+    } catch (e) {
+        console.error('Erreur chargement données:', e);
+        afficherToast('❌ Erreur de chargement', 'error');
+    }
+}
+
+// ==================== KPIs ====================
+function afficherKPIs() {
+    const totalLikes    = Object.values(mesLikes).reduce((a, b) => a + b, 0);
+    const totalComments = Object.values(mesCommentaires).reduce((a, arr) => a + arr.length, 0);
+    const totalClics    = Object.values(mesClics).reduce((a, b) => a + b, 0);
+    const totalProduits = mesProduits.filter(p => p.statut === 'published').length;
+
+    document.getElementById('kpiGrid').innerHTML = `
+        <div class="kpi-card orange-card" style="--kpi-color:var(--primary)">
+            <div class="kpi-icon orange">📦</div>
+            <div>
+                <div class="kpi-label">Produits publiés</div>
+                <div class="kpi-value">${totalProduits}</div>
+            </div>
+        </div>
+        <div class="kpi-card green-card" style="--kpi-color:var(--success)">
+            <div class="kpi-icon green">❤️</div>
+            <div>
+                <div class="kpi-label">Total likes</div>
+                <div class="kpi-value">${totalLikes.toLocaleString()}</div>
+            </div>
+        </div>
+        <div class="kpi-card blue-card" style="--kpi-color:var(--info)">
+            <div class="kpi-icon blue">💬</div>
+            <div>
+                <div class="kpi-label">Commentaires</div>
+                <div class="kpi-value">${totalComments.toLocaleString()}</div>
+            </div>
+        </div>
+        <div class="kpi-card purple-card" style="--kpi-color:var(--purple)">
+            <div class="kpi-icon purple">👁️</div>
+            <div>
+                <div class="kpi-label">Total clics</div>
+                <div class="kpi-value">${totalClics.toLocaleString()}</div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== PRODUITS ====================
+function afficherLoaderProduits() {
+    document.getElementById('kpiGrid').innerHTML = `
+        <div class="sb-loader" style="grid-column:1/-1;">
+            <div class="sb-spinner"></div>
+            <span>Chargement...</span>
+        </div>`;
+    document.getElementById('productsGrid').innerHTML = '';
+}
+
+function filtrerProduits(filtre, btn) {
+    filtreActuel = filtre;
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    // Remettre la recherche à zéro quand on change de filtre
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    afficherProduits();
+}
+
+function rechercherProduits(terme) {
+    afficherProduits(terme.trim().toLowerCase());
+}
+
+function afficherProduits(recherche = '') {
+    const grid      = document.getElementById('productsGrid');
+    const filterBar = document.getElementById('filterBar');
+    const searchWrapper = document.getElementById('searchBarWrapper');
+    const searchCount   = document.getElementById('searchCount');
+
+    if (mesProduits.length === 0) {
+        filterBar.style.display = 'none';
+        if (searchWrapper) searchWrapper.style.display = 'none';
+        if (searchCount)   searchCount.style.display   = 'none';
+        grid.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">📦</span>
+                <div class="empty-title">Aucun produit pour l'instant</div>
+                <div class="empty-text">Créez votre premier produit depuis l'app ODA Vendeur</div>
+            </div>`;
+        return;
+    }
+
+    filterBar.style.display = 'flex';
+    if (searchWrapper) searchWrapper.style.display = 'block';
+
+    // Appliquer filtre statut
+    let produitsFiltres = mesProduits;
+    if (filtreActuel === 'published') produitsFiltres = mesProduits.filter(p => p.statut === 'published');
+    if (filtreActuel === 'draft')     produitsFiltres = mesProduits.filter(p => p.statut !== 'published');
+
+    // Appliquer recherche
+    if (recherche) {
+        produitsFiltres = produitsFiltres.filter(p =>
+            (p.nom || '').toLowerCase().includes(recherche) ||
+            (p.categorie || '').toLowerCase().includes(recherche)
+        );
+    }
+
+    // Compteur résultats
+    if (searchCount) {
+        if (recherche) {
+            searchCount.style.display = 'block';
+            searchCount.textContent   = `${produitsFiltres.length} résultat${produitsFiltres.length !== 1 ? 's' : ''} pour "${recherche}"`;
+        } else {
+            searchCount.style.display = 'none';
+        }
+    }
+
+    if (produitsFiltres.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">${recherche ? '🔍' : '📭'}</span>
+                <div class="empty-title">${recherche ? 'Aucun résultat' : 'Aucun produit ici'}</div>
+                <div class="empty-text">${recherche ? `Aucun produit ne correspond à "${recherche}".` : 'Aucun produit ne correspond à ce filtre.'}</div>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = produitsFiltres.map(p => {
+        const likes    = mesLikes[p.id] || 0;
+        const comments = (mesCommentaires[p.id] || []).length;
+        const clics    = mesClics[p.id] || 0;
+        const isPublished = p.statut === 'published';
+
+        const imgHtml = p.main_image
+            ? `<img class="product-thumb" src="${p.main_image}" alt="${p.nom}" 
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+               <div class="product-thumb-placeholder" style="display:none">📷</div>`
+            : `<div class="product-thumb-placeholder">📷</div>`;
+
+        // Surligner le terme recherché dans le nom
+        let nomAffiche = p.nom || 'Produit sans nom';
+        if (recherche) {
+            const regex = new RegExp(`(${recherche.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            nomAffiche = nomAffiche.replace(regex, '<mark style="background:rgba(255,107,0,0.2);color:var(--primary);border-radius:3px;padding:0 2px;">$1</mark>');
+        }
+
+        return `
+            <div class="product-row" onclick="ouvrirCommentaires('${p.id}', '${(p.nom || '').replace(/'/g, "\\'")}')">
+                ${imgHtml}
+                <div class="product-info">
+                    <div class="product-name">${nomAffiche}</div>
+                    <div class="product-cat">${p.categorie || 'Non catégorisé'}</div>
+                </div>
+                <div class="product-status">
+                    <span class="status-badge ${isPublished ? 'published' : 'draft'}">
+                        ${isPublished ? 'Publié' : 'Brouillon'}
+                    </span>
+                </div>
+                <div class="product-stats">
+                    <div class="stat-item likes">❤️ ${likes}</div>
+                    <div class="stat-item comments">💬 ${comments}</div>
+                    <div class="stat-item clicks">👁️ ${clics}</div>
+                </div>
+                <div class="product-price">${(p.prix || 0).toLocaleString()} FCFA</div>
+                <div class="arrow-icon">›</div>
+            </div>`;
+    }).join('');
+}
+
+// ==================== COMMENTAIRES ====================
+function ouvrirCommentaires(productId, productName) {
+    const overlay  = document.getElementById('commentsOverlay');
+    const body     = document.getElementById('commentsBody');
+    const comments = mesCommentaires[productId] || [];
+
+    document.getElementById('commentsTitle').textContent = `💬 ${productName}`;
+
+    if (comments.length === 0) {
+        body.innerHTML = `
+            <div class="no-comments">
+                <span class="no-comments-icon">💬</span>
+                <div style="font-weight:700;margin-bottom:6px;">Aucun commentaire</div>
+                <div style="font-size:0.84rem;">Ce produit n'a pas encore reçu de commentaires.</div>
+            </div>`;
+    } else {
+        body.innerHTML = comments.map(c => {
+            const date   = new Date(c.created_at).toLocaleDateString('fr-FR', {
+                day: 'numeric', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            const stars  = c.rating ? '⭐'.repeat(Math.round(c.rating)) : '';
+            const auteur = c.user_name || c.nom_utilisateur || c.user_email?.split('@')[0] || 'Anonyme';
+
+            return `
+                <div class="comment-item">
+                    <div class="comment-author">👤 ${auteur}</div>
+                    <div class="comment-text">${c.contenu || c.comment || c.text || ''}</div>
+                    <div class="comment-meta">
+                        <span class="comment-date">📅 ${date}</span>
+                        ${stars ? `<span class="comment-rating">${stars} (${c.rating}/5)</span>` : ''}
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    overlay.classList.add('active');
+}
+
+function fermerCommentaires() {
+    document.getElementById('commentsOverlay').classList.remove('active');
+}
+
+// ==================== ONGLETS ====================
+const panelTitles = {
+    'produits':          'Mes Produits',
+    'stats-produits':    'Clics & Vues',
+    'stats-categories':  'Catégories',
+    'notifications':     'Notifications'
+};
+
+function changerOnglet(onglet, navBtn) {
+    // Panels
+    document.querySelectorAll('.sb-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + onglet).classList.add('active');
+
+    // Nav items actifs
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navBtn) navBtn.classList.add('active');
+
+    // Titre topbar
+    document.getElementById('topbarTitle').textContent = panelTitles[onglet] || '';
+
+    // Graphiques (lazy init)
+    if ((onglet === 'stats-produits' || onglet === 'stats-categories') && !chartsInitialises) {
+        chartsInitialises = true;
+        setTimeout(initialiserGraphiques, 80);
+    }
+
+    // Notifications : marquer lues
+    if (onglet === 'notifications') {
+        marquerNotificationsLues();
+    }
+
+    // Fermer sidebar sur mobile
+    if (window.innerWidth <= 768 && sidebarOuvert) {
+        fermerSidebar();
+    }
+}
+
+function marquerNotificationsLues() {
+    notifications.forEach(n => n.unread = false);
+    document.getElementById('navNotifBadge').style.display = 'none';
+    document.getElementById('topbarNotifBadge').style.display = 'none';
+}
+
+// ==================== GRAPHIQUES ====================
+function initialiserGraphiques() {
+    initialiserChartClics();
+    initialiserChartEngagement();
+    initialiserChartCategories();
+    initialiserChartRevenuCategories();
+}
+
+const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { display: false },
+    },
+    scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans' } } },
+        x: { grid: { display: false }, ticks: { font: { family: 'DM Sans' }, maxRotation: 40 } }
+    }
+};
+
+function initialiserChartClics() {
+    const ctx = document.getElementById('chartClics');
+    if (!ctx) return;
+
+    const top10 = [...mesProduits]
+        .map(p => ({ nom: (p.nom || 'Produit').substring(0, 18), clics: mesClics[p.id] || 0 }))
+        .sort((a, b) => b.clics - a.clics)
+        .slice(0, 10);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: top10.map(p => p.nom),
+            datasets: [{
+                label: 'Clics',
+                data: top10.map(p => p.clics),
+                backgroundColor: 'rgba(255, 107, 0, 0.85)',
+                borderColor: '#FF6B00',
+                borderWidth: 0,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            ...chartDefaults,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} clics` } }
+            }
+        }
+    });
+}
+
+function initialiserChartEngagement() {
+    const ctx = document.getElementById('chartEngagement');
+    if (!ctx) return;
+
+    const top8 = [...mesProduits]
+        .map(p => ({
+            nom:      (p.nom || 'Produit').substring(0, 14),
+            likes:    mesLikes[p.id] || 0,
+            comments: (mesCommentaires[p.id] || []).length
+        }))
+        .sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
+        .slice(0, 8);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: top8.map(p => p.nom),
+            datasets: [
+                {
+                    label: 'Likes',
+                    data: top8.map(p => p.likes),
+                    backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                },
+                {
+                    label: 'Commentaires',
+                    data: top8.map(p => p.comments),
+                    backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }
+            ]
+        },
+        options: {
+            ...chartDefaults,
+            plugins: {
+                legend: { position: 'top', labels: { font: { family: 'DM Sans' } } }
+            }
+        }
+    });
+}
+
+function initialiserChartCategories() {
+    const ctx = document.getElementById('chartCategories');
+    if (!ctx) return;
+
+    const cats = {};
+    mesProduits.forEach(p => {
+        const c = p.categorie || 'Autre';
+        cats[c] = (cats[c] || 0) + 1;
+    });
+
+    const labels = Object.keys(cats);
+    const data   = Object.values(cats);
+    const colors = ['#FF6B00','#3B82F6','#10B981','#8B5CF6','#F59E0B','#EF4444','#06B6D4','#84CC16','#EC4899','#6366F1'];
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 3,
+                borderColor: 'white'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { font: { family: 'DM Sans', size: 12 }, padding: 16 }
+                }
+            },
+            cutout: '66%'
+        }
+    });
+}
+
+function initialiserChartRevenuCategories() {
+    const ctx = document.getElementById('chartRevenuCategories');
+    if (!ctx) return;
+
+    const cats = {};
+    mesProduits.forEach(p => {
+        const c = p.categorie || 'Autre';
+        cats[c] = (cats[c] || 0) + ((p.prix || 0) * (p.stock || 0));
+    });
+
+    const sorted = Object.entries(cats)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sorted.map(([k]) => k),
+            datasets: [{
+                label: 'Valeur stock (FCFA)',
+                data: sorted.map(([, v]) => v),
+                backgroundColor: 'rgba(139, 92, 246, 0.85)',
+                borderColor: '#8B5CF6',
+                borderWidth: 0,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.parsed.x.toLocaleString()} FCFA` } }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans' } } },
+                y: { grid: { display: false }, ticks: { font: { family: 'DM Sans' } } }
+            }
+        }
+    });
+}
+
+// ==================== REALTIME ====================
+function demarrerRealtime() {
+    if (!currentUser || !mesProduits.length) return;
+
+    const productIds = mesProduits.map(p => p.id);
+
+    realtimeChannel = sb
+        .channel('sandbox-comments-' + currentUser.id)
+        .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'product_comments'
+        }, (payload) => {
+            const newComment = payload.new;
+            if (!productIds.includes(newComment.product_id)) return;
+
+            const produit    = mesProduits.find(p => p.id === newComment.product_id);
+            const nomProduit = produit?.nom || 'votre produit';
+            const auteur     = newComment.user_name || newComment.nom_utilisateur || 'Quelqu\'un';
+            const message    = newComment.contenu || newComment.comment || newComment.text || '';
+
+            if (!mesCommentaires[newComment.product_id]) mesCommentaires[newComment.product_id] = [];
+            mesCommentaires[newComment.product_id].unshift(newComment);
+
+            const notif = {
+                id: newComment.id || Date.now(),
+                productId:   newComment.product_id,
+                productName: nomProduit,
+                auteur, message,
+                created_at: newComment.created_at || new Date().toISOString(),
+                unread: true
+            };
+            notifications.unshift(notif);
+
+            // Badges
+            const unreadCount = notifications.filter(n => n.unread).length;
+
+            const navBadge = document.getElementById('navNotifBadge');
+            navBadge.textContent = unreadCount;
+            navBadge.style.display = 'flex';
+
+            const topBadge = document.getElementById('topbarNotifBadge');
+            topBadge.textContent = unreadCount;
+            topBadge.style.display = 'flex';
+
+            afficherToast(`💬 ${auteur} a commenté "${nomProduit}"`, 'info');
+
+            // Refresh si panel visible
+            if (document.getElementById('panel-produits').classList.contains('active')) {
+                afficherKPIs();
+                afficherProduits();
+            }
+            if (document.getElementById('panel-notifications').classList.contains('active')) {
+                afficherNotifications(notifications);
+            }
+        })
+        .subscribe();
+}
+
+// ==================== NOTIFICATIONS ====================
+function afficherNotifications(notifs) {
+    const list = document.getElementById('notifList');
+
+    if (notifs.length === 0) {
+        list.innerHTML = `
+            <div class="no-notifs">
+                <span class="no-notifs-icon">🔔</span>
+                <div style="font-weight:700;font-size:1rem;margin-bottom:8px;">Aucune notification</div>
+                <div style="font-size:0.85rem;">Les nouveaux commentaires sur vos produits apparaîtront ici en temps réel.</div>
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = notifs.map(n => {
+        const date = new Date(n.created_at).toLocaleDateString('fr-FR', {
+            day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+        });
+        return `
+            <div class="notif-item ${n.unread ? 'unread' : ''}">
+                <div class="notif-icon">💬</div>
+                <div class="notif-content">
+                    <div class="notif-title">Nouveau commentaire sur "${n.productName}"</div>
+                    <div class="notif-body">
+                        <strong>${n.auteur}</strong> : "${n.message.substring(0, 120)}${n.message.length > 120 ? '...' : ''}"
+                    </div>
+                    <div class="notif-time">📅 ${date}</div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// ==================== TOAST ====================
+function afficherToast(msg, type = '') {
+    const toast = document.getElementById('sbToast');
+    toast.textContent = msg;
+    toast.className   = 'sb-toast ' + type;
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// ==================== DÉCONNEXION ====================
+async function deconnexion() {
+    if (!confirm('Voulez-vous vous déconnecter ?')) return;
+    try {
+        if (realtimeChannel) await sb.removeChannel(realtimeChannel);
+        await sb.auth.signOut();
+        window.location.href = 'oda-achats.html';
+    } catch (e) {
+        window.location.href = 'oda-achats.html';
+    }
+}
+</script>
+</body>
+</html>

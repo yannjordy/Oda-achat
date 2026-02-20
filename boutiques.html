@@ -3,1874 +3,2357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
-    <title>ODA - Toutes les Boutiques</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#FF6B00">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="/oda1.png">
+    <title>ODA Market — Boutiques</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="icon" type="image/png" href="oda.png">
-    <link rel="stylesheet" href="boutiques-styles.css">
-    <style>
-        /* ==================== VARIABLES ==================== */
+    <link rel="icon" type="image/png" href="oda1.png">
+    <link rel="stylesheet" href="boutiques.css">
+</head>
+<style>
+    /* ================================================================
+   ODA BOUTIQUES — SNAPCHAT STYLE — CSS3
+   Fonts: Syne (display) + DM Sans (body)
+   ================================================================ */
+
+/* ══ VARIABLES ══ */
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --primary-color: #667eea;
-    --primary-dark: #5568d3;
-    --secondary-color: #764ba2;
-    --success-color: #10B981;
-    --error-color: #EF4444;
-    --warning-color: #F59E0B;
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #F8F9FA;
-    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --text-primary: #1A1A1A;
-    --text-secondary: #6B7280;
-    --border-color: #E5E7EB;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
-    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.2);
+    --primary:        #FF6B00;
+    --primary-dark:   #D45B00;
+    --primary-glow:   rgba(255, 107, 0, 0.4);
+    --primary-soft:   rgba(255, 107, 0, 0.12);
+    --bg:             #0C0E14;
+    --bg-2:           #13161F;
+    --bg-card:        #181C28;
+    --surface:        #1E2235;
+    --surface-2:      #252A3E;
+    --border:         rgba(255,255,255,0.07);
+    --border-accent:  rgba(255, 107, 0, 0.35);
+    --text-1:         #F0F4FF;
+    --text-2:         #8896B3;
+    --text-3:         #4A556B;
+    --gold:           #F5A623;
+    --silver:         #9BB3CC;
+    --bronze:         #C47D4A;
+    --success:        #00D68F;
+    --error:          #FF4D6D;
+    --snap-yellow:    #FFFC00;
+    --snap-black:     #000000;
+    --story-ring-1:   #FF6B00;
+    --story-ring-2:   #FF9500;
+    --radius-s:       10px;
+    --radius-m:       16px;
+    --radius-l:       22px;
+    --radius-xl:      30px;
+    --radius-full:    9999px;
+    --hdr-h:          112px;
+    --font-display:   'Syne', sans-serif;
+    --font-body:      'DM Sans', sans-serif;
+    --ease-bounce:    cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-out:       cubic-bezier(0.4, 0, 0.2, 1);
+    --t-fast:         0.18s var(--ease-out);
+    --t-norm:         0.28s var(--ease-out);
+    --t-bounce:       0.38s var(--ease-bounce);
+    --shadow-card:    0 8px 32px rgba(0,0,0,0.5);
+    --shadow-glow:    0 0 30px var(--primary-glow);
 }
 
-* {
+/* ══ RESET ══ */
+*, *::before, *::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+}
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    overflow-x: hidden;
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text-1);
     min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
-/* ==================== LOADER ==================== */
-.loader {
+a { text-decoration: none; color: inherit; }
+
+/* ══ PAGE LOADER ══ */
+.page-loader {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-gradient);
+    inset: 0;
+    background: var(--bg);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    transition: opacity 0.55s var(--ease-out), visibility 0.55s;
+}
+
+.page-loader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    gap: 20px;
+    gap: 18px;
+    width: 200px;
 }
 
-.spinner {
-    width: 60px;
-    height: 60px;
-    border: 5px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.loader p {
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-/* ==================== HEADER ==================== */
-.main-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    box-shadow: var(--shadow-md);
-    z-index: 1000;
-    transition: transform 0.3s ease;
-}
-
-.header-content {
+.loader-ring {
+    position: relative;
+    width: 80px;
+    height: 80px;
     display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loader-emoji {
+    font-size: 2rem;
+    position: absolute;
+    z-index: 2;
+    animation: emojiBounce 1.6s ease-in-out infinite;
+}
+
+@keyframes emojiBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.loader-svg {
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    top: 0; left: 0;
+    transform: rotate(-90deg);
+}
+
+.loader-track {
+    fill: none;
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 5;
+}
+
+.loader-fill {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 226;
+    stroke-dashoffset: 226;
+    animation: loaderSpin 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px var(--primary));
+}
+
+@keyframes loaderSpin {
+    0%   { stroke-dashoffset: 226; }
+    50%  { stroke-dashoffset: 56; }
+    100% { stroke-dashoffset: 226; }
+}
+
+.loader-label {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: var(--text-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.loader-bar-wrap {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.07);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.loader-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), #FF9500);
+    border-radius: var(--radius-full);
+    transition: width 0.3s var(--ease-out);
+    box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* ══ OVERLAY ══ */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--t-norm);
+}
+
+.overlay.active { opacity: 1; visibility: visible; }
+
+/* ══ SIDE MENU ══ */
+.side-menu {
+    position: fixed;
+    top: 0; left: 0;
+    width: 270px;
+    height: 100vh;
+    height: 100dvh;
+    background: #0F121A;
+    border-right: 1px solid var(--border);
+    z-index: 2000;
+    transform: translateX(-100%);
+    transition: transform 0.32s var(--ease-out);
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top, 0) 0 0;
+    box-shadow: 6px 0 40px rgba(0,0,0,0.6);
+}
+
+.side-menu.active { transform: translateX(0); }
+
+.side-menu-header {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 20px 18px 18px;
+    border-bottom: 1px solid var(--border);
 }
 
-.menu-btn {
-    width: 44px;
-    height: 44px;
-    background: var(--bg-gradient);
-    border: none;
-    color: white;
+.side-menu-logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-1);
+    letter-spacing: -0.02em;
+}
+
+.side-menu-close {
+    width: 34px; height: 34px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    color: var(--text-2);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
+    transition: all var(--t-fast);
 }
 
-.menu-btn:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-md);
+.side-menu-close:hover { background: var(--error); color: white; border-color: var(--error); }
+
+.side-menu-nav {
+    padding: 16px 12px;
+    flex: 1;
+    overflow-y: auto;
 }
 
-.logo {
+.side-nav-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+    padding: 0 8px;
+    margin-bottom: 10px;
+}
+
+.side-nav-link {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 12px 12px;
+    border-radius: var(--radius-s);
+    color: var(--text-2);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--t-fast);
+    margin-bottom: 4px;
 }
 
-.logo-icon {
-    width: 48px;
-    height: 48px;
-    background: var(--bg-gradient);
-    border-radius: 12px;
+.side-nav-link:hover,
+.side-nav-link.active {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+/* ══ HEADER ══ */
+.app-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(12, 14, 20, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding-top: env(safe-area-inset-top, 0);
+    transition: box-shadow var(--t-norm);
+}
+
+.app-header.scrolled {
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+
+.app-header-inner {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: var(--shadow-sm);
+    justify-content: space-between;
+    padding: 10px 14px 6px;
 }
 
-.logo-text h1 {
-    font-size: 1.3rem;
-    font-weight: 800;
-    background: var(--bg-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin: 0;
-}
-
-.logo-subtitle {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.header-icons {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.icon-btn {
-    width: 44px;
-    height: 44px;
-    background: var(--bg-secondary);
+.hdr-btn {
+    width: 38px; height: 38px;
     border: none;
-    color: var(--text-primary);
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius-s);
+    color: var(--text-1);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    transition: background var(--t-fast);
 }
 
-.icon-btn:hover {
-    background: var(--bg-gradient);
-    color: white;
-    transform: scale(1.05);
-}
+.hdr-btn:hover { background: rgba(255,255,255,0.1); }
 
-.boutique-count {
-    background: var(--bg-gradient);
-    padding: 8px 16px;
-    border-radius: 20px;
+.hdr-center {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    box-shadow: var(--shadow-sm);
+    gap: 7px;
 }
 
-.count-number {
-    font-size: 1.2rem;
+.hdr-logo-icon { font-size: 1.4rem; }
+
+.hdr-logo-text {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
     font-weight: 800;
-    color: white;
-    line-height: 1;
+    color: var(--text-1);
+    letter-spacing: -0.03em;
 }
 
-.count-label {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.9);
-}
+.hdr-right { display: flex; gap: 6px; align-items: center; }
 
-/* ==================== SEARCH CONTAINER ==================== */
-.search-container {
-    padding: 12px 20px;
-    background: white;
-    border-top: 1px solid var(--border-color);
-    animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Search */
+.hdr-search {
+    padding: 0 14px 10px;
 }
 
 .search-box {
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: var(--bg-secondary);
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
+    gap: 9px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.09);
+    border-radius: var(--radius-full);
+    padding: 9px 14px;
+    transition: all var(--t-norm);
 }
 
 .search-box:focus-within {
-    background: white;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    background: rgba(255,255,255,0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(255,107,0,0.12);
 }
 
-.search-box svg {
-    color: var(--text-secondary);
+.search-ico { color: var(--text-3); flex-shrink: 0; transition: color var(--t-fast); }
+.search-box:focus-within .search-ico { color: var(--primary); }
+
+#shopSearchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-1);
+}
+
+#shopSearchInput::placeholder { color: var(--text-3); }
+
+.search-clear {
+    display: none;
+    width: 24px; height: 24px;
+    border: none;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    color: var(--text-2);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--t-fast);
     flex-shrink: 0;
 }
 
-.search-box input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    outline: none;
-}
+.search-clear.visible { display: flex; }
+.search-clear:hover { background: var(--error); color: white; }
 
-.search-box input::placeholder {
-    color: var(--text-secondary);
-}
-
-.search-close {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    padding: 4px;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-
-.search-close:hover {
-    background: var(--border-color);
-    color: var(--text-primary);
-}
-
-/* ==================== TABS NAVIGATION ==================== */
-.tabs-nav {
-    position: sticky;
-    top: 78px;
-    background: white;
+.hdr-meta {
     display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 4px 0;
+}
+
+.meta-pill { font-size: 0.72rem; color: var(--text-3); font-weight: 500; }
+.meta-pill b { color: var(--primary); font-weight: 700; }
+.meta-dot { color: var(--text-3); font-size: 0.72rem; }
+
+/* ══ MAIN LAYOUT ══ */
+.snap-main {
+    padding-top: var(--hdr-h);
+    min-height: 100vh;
+}
+
+/* ══ STORIES BAR ══ */
+.stories-bar-wrap {
+    padding: 16px 0 0;
+    background: var(--bg);
+}
+
+.stories-label {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border-color);
-    z-index: 999;
+    padding: 0 16px 10px;
+}
+
+.stories-label-icon { font-size: 1rem; }
+
+.stories-label-txt {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-3);
+}
+
+.stories-bar {
+    display: flex;
+    gap: 14px;
+    padding: 4px 16px 18px;
     overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
 }
 
-.tabs-nav::-webkit-scrollbar {
-    display: none;
-}
+.stories-bar::-webkit-scrollbar { display: none; }
 
-.tab-btn {
+/* ── Story Item ── */
+.story-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    background: var(--bg-secondary);
-    border: 2px solid transparent;
-    border-radius: 12px;
+    gap: 6px;
+    flex-shrink: 0;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    white-space: nowrap;
+    scroll-snap-align: start;
+    animation: storyIn 0.5s var(--ease-bounce) backwards;
 }
 
-.tab-btn:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: var(--primary-color);
+@keyframes storyIn {
+    from { opacity: 0; transform: scale(0.7) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.tab-btn.active {
-    background: var(--bg-gradient);
-    color: white;
-    box-shadow: var(--shadow-sm);
-}
-
-.tab-btn svg {
-    width: 20px;
-    height: 20px;
-}
-
-.tab-badge {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-
-.tab-btn.active .tab-badge {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-/* ==================== CONTENT CONTAINER ==================== */
-.content-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 150px 20px 40px;
-}
-
-.boutiques-section {
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.section-header {
-    margin-bottom: 24px;
-}
-
-.section-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.section-header p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-/* ==================== BOUTIQUES LIST (WhatsApp Style) ==================== */
-.boutiques-list {
-    background: white;
-    border-radius: 16px;
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-}
-
-.boutique-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: all 0.3s ease;
+.story-ring-outer {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) 0%, var(--snap-yellow) 50%, var(--primary) 100%);
+    padding: 3px;
     position: relative;
+    transition: transform var(--t-bounce);
 }
 
-.boutique-item:last-child {
-    border-bottom: none;
+.story-item:hover .story-ring-outer,
+.story-item:active .story-ring-outer {
+    transform: scale(1.08);
 }
 
-.boutique-item:hover {
-    background: var(--bg-secondary);
+.story-ring-outer.rank-1 {
+    background: conic-gradient(#F5A623, #FFD700, #F5A623, #A07000, #F5A623);
+    box-shadow: 0 0 14px rgba(245, 166, 35, 0.6);
 }
 
-.boutique-item:active {
-    background: rgba(102, 126, 234, 0.1);
+.story-ring-outer.rank-2 {
+    background: conic-gradient(#9BB3CC, #CDD8E3, #9BB3CC);
+    box-shadow: 0 0 10px rgba(155, 179, 204, 0.4);
 }
 
-.boutique-logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
-    background: var(--bg-gradient);
+.story-ring-outer.rank-3 {
+    background: conic-gradient(#C47D4A, #E8A87C, #C47D4A);
+    box-shadow: 0 0 10px rgba(196, 125, 74, 0.4);
+}
+
+.story-ring-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid var(--bg);
+    overflow: hidden;
+    background: var(--surface);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    box-shadow: var(--shadow-sm);
-    flex-shrink: 0;
-    overflow: hidden;
+    font-size: 1.6rem;
 }
 
-.boutique-logo img {
+.story-ring-inner img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
 }
 
-/* Lazy loading placeholder */
-.boutique-logo img.lazy-load {
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.story-rank-badge {
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 900;
+    font-family: var(--font-display);
+    z-index: 2;
 }
 
-.boutique-logo img:not(.lazy-load) {
-    opacity: 1;
-}
+.story-rank-badge.gold   { background: linear-gradient(135deg, #F5A623, #D4820A); color: white; }
+.story-rank-badge.silver { background: linear-gradient(135deg, #9BB3CC, #6B8AA5); color: white; }
+.story-rank-badge.bronze { background: linear-gradient(135deg, #C47D4A, #9A5A2A); color: white; }
+.story-rank-badge.other  { background: var(--surface-2); color: var(--text-3); font-size: 0.55rem; }
 
-.boutique-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.boutique-name {
-    font-size: 1rem;
+.story-name {
+    font-family: var(--font-body);
+    font-size: 0.68rem;
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
+    color: var(--text-2);
+    text-align: center;
+    max-width: 64px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.boutique-slug {
+.story-subs {
+    font-size: 0.6rem;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* ── Story Skeleton ── */
+.story-skel {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 6px;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-.boutique-slug svg {
-    width: 14px;
-    height: 14px;
-}
-
-.boutique-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.btn-save {
-    width: 40px;
-    height: 40px;
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    font-size: 20px;
-}
-
-.btn-save:hover {
-    transform: scale(1.1);
-}
-
-.btn-save.saved {
-    background: var(--error-color);
-    border-color: var(--error-color);
-    animation: heartBeat 0.5s ease;
-}
-
-@keyframes heartBeat {
-    0%, 100% { transform: scale(1); }
-    25% { transform: scale(1.2); }
-    50% { transform: scale(1.1); }
-}
-
-.btn-info {
-    width: 8px;
-    height: 8px;
-    background: var(--primary-color);
-    border-radius: 50%;
-}
-
-/* ==================== EMPTY STATE ==================== */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.empty-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
-
-.empty-state h3 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.empty-state p {
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-}
-
-.btn-primary {
-    padding: 12px 24px;
-    background: var(--bg-gradient);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-/* ==================== MODAL ==================== */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-container {
-    background: white;
-    border-radius: 20px;
-    max-width: 500px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-xl);
-    animation: modalSlideUp 0.3s ease;
-}
-
-@keyframes modalSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 24px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.btn-close-modal {
-    width: 40px;
-    height: 40px;
-    background: var(--bg-secondary);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.btn-close-modal:hover {
-    background: var(--border-color);
-    transform: rotate(90deg);
-}
-
-.modal-content {
-    padding: 24px;
-}
-
-.modal-boutique-header {
-    text-align: center;
-    margin-bottom: 24px;
-}
-
-.modal-logo {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 16px;
-    border-radius: 20px;
-    background: var(--bg-gradient);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-}
-
-.modal-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.modal-boutique-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.modal-boutique-slug {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    font-family: monospace;
-}
-
-.modal-info-grid {
-    display: grid;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.info-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-}
-
-.info-icon {
-    width: 40px;
-    height: 40px;
-    background: white;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     flex-shrink: 0;
 }
 
-.info-content {
+.story-skel-ring {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.story-skel-name {
+    width: 50px; height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ══ SNAP DIVIDER ══ */
+.snap-divider {
+    padding: 6px 16px 14px;
+    background: var(--bg);
+}
+
+.snap-divider-line {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 12px;
+}
+
+.snap-divider-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.snap-divider-txt {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+}
+
+.snap-sort-wrap {
+    position: relative;
+}
+
+.snap-sort {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    padding: 6px 30px 6px 12px;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238896B3' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: all var(--t-fast);
+}
+
+.snap-sort:focus {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ══ DISCOVER GRID (Snapchat Tiles) ══ */
+.discover-section {
+    padding: 0 10px 32px;
+    background: var(--bg);
+}
+
+/* Masonry-style: 2 columns on mobile, adapts to content */
+.discover-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* Featured card (first of every 5) takes full width */
+.discover-grid .tile-card:nth-child(5n+1) {
+    grid-column: 1 / -1;
+}
+
+@media (min-width: 480px) {
+    .discover-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+@media (min-width: 720px) {
+    .discover-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .discover-grid .tile-card:nth-child(5n+1) { grid-column: span 1; }
+    .discover-grid .tile-card:nth-child(7n+1) { grid-column: 1 / -1; }
+}
+
+@media (min-width: 1024px) {
+    .discover-section { padding: 0 16px 40px; }
+    .discover-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .discover-grid .tile-card:nth-child(7n+1) { grid-column: span 1; }
+    .discover-grid .tile-card:nth-child(9n+1) { grid-column: span 2; }
+}
+
+/* ── Tile Card ── */
+.tile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--t-bounce), box-shadow var(--t-norm), border-color var(--t-norm);
+    animation: tileIn 0.45s var(--ease-bounce) backwards;
+}
+
+@keyframes tileIn {
+    from { opacity: 0; transform: scale(0.88) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tile-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: var(--border-accent);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,107,0,0.08);
+}
+
+.tile-card:active { transform: scale(0.97); }
+
+/* Rank borders */
+.tile-card.rank-1 { border-color: rgba(245, 166, 35, 0.45); }
+.tile-card.rank-2 { border-color: rgba(155, 179, 204, 0.35); }
+.tile-card.rank-3 { border-color: rgba(196, 125, 74, 0.35); }
+
+/* ── Tile Cover (image/color zone) ── */
+.tile-cover {
+    height: 90px;
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+    flex-shrink: 0;
+}
+
+/* Full-width featured card gets taller cover */
+.tile-card:nth-child(5n+1) .tile-cover,
+.tile-card.tile-featured .tile-cover {
+    height: 140px;
+}
+
+.tile-cover-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.5s var(--ease-out);
+}
+
+.tile-card:hover .tile-cover-bg { transform: scale(1.06); }
+
+.tile-cover-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0.6) 100%
+    );
+}
+
+/* Cover top badges */
+.tile-cover-badges {
+    position: absolute;
+    top: 8px; left: 8px;
+    display: flex;
+    gap: 5px;
+    z-index: 2;
+}
+
+.tile-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+    letter-spacing: 0.04em;
+}
+
+.tile-badge-rank {
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.tile-badge-rank.gold   { background: rgba(245, 166, 35, 0.85); color: #000; border: none; }
+.tile-badge-rank.silver { background: rgba(155, 179, 204, 0.85); color: #000; border: none; }
+.tile-badge-rank.bronze { background: rgba(196, 125, 74, 0.85); color: #fff; border: none; }
+
+.tile-badge-verified {
+    background: rgba(0, 214, 143, 0.2);
+    color: var(--success);
+    border: 1px solid rgba(0, 214, 143, 0.3);
+}
+
+/* Subscribe badge on cover */
+.tile-cover-sub {
+    position: absolute;
+    top: 8px; right: 8px;
+    z-index: 2;
+}
+
+.tile-sub-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.55);
+    color: var(--text-2);
+    transition: all var(--t-bounce);
+    line-height: 1;
+}
+
+.tile-sub-btn:hover,
+.tile-sub-btn.subbed {
+    background: rgba(0, 214, 143, 0.25);
+    color: var(--success);
+    transform: scale(1.15);
+}
+
+.tile-sub-btn.loading { opacity: 0.5; pointer-events: none; }
+
+/* ── Tile Body ── */
+.tile-body {
+    padding: 11px 12px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
     flex: 1;
 }
 
-.info-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+.tile-top-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.tile-avatar {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-s);
+    object-fit: cover;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    transition: transform var(--t-bounce);
+}
+
+.tile-card:hover .tile-avatar { transform: scale(1.08) rotate(2deg); }
+
+.tile-avatar-placeholder {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-s);
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: transform var(--t-bounce);
+}
+
+.tile-card:hover .tile-avatar-placeholder { transform: scale(1.08) rotate(2deg); }
+
+.tile-name-wrap { flex: 1; min-width: 0; }
+
+.tile-name {
+    font-family: var(--font-display);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-1);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
     margin-bottom: 2px;
 }
 
-.info-value {
-    font-size: 0.95rem;
+.tile-slug {
+    font-size: 0.67rem;
+    color: var(--text-3);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Stats chips ── */
+.tile-stats {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.chip svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+.chip-likes {
+    background: rgba(255, 77, 109, 0.1);
+    border: 1px solid rgba(255, 77, 109, 0.2);
+    color: #FF4D6D;
+}
+
+.chip-products {
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    color: #60A5FA;
+}
+
+.chip-subs {
+    background: var(--primary-soft);
+    border: 1px solid rgba(255, 107, 0, 0.2);
+    color: var(--primary);
+}
+
+/* ── Description preview ── */
+.tile-desc {
+    font-size: 0.71rem;
+    color: var(--text-2);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ── Action bar ── */
+.tile-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.tile-btn-sub {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: var(--radius-s);
+    border: 1.5px solid rgba(255,255,255,0.09);
+    background: var(--surface);
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all var(--t-bounce);
+    position: relative;
+    overflow: hidden;
+}
+
+.tile-btn-sub::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    opacity: 0;
+    transition: opacity var(--t-fast);
+}
+
+.tile-btn-sub:hover::after { opacity: 0.12; }
+
+.tile-btn-sub.subscribed {
+    border-color: rgba(0, 214, 143, 0.35);
+    color: var(--success);
+    background: rgba(0, 214, 143, 0.08);
+}
+
+.tile-btn-sub.loading { opacity: 0.55; pointer-events: none; }
+
+.tile-btn-visit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 14px;
+    border-radius: var(--radius-s);
+    border: none;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+    transition: all var(--t-bounce);
+}
+
+.tile-btn-visit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(255, 107, 0, 0.45);
+}
+
+/* ── Tile Skeleton ── */
+.tile-skel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    animation: tileIn 0.45s var(--ease-bounce) backwards;
+}
+
+.tile-skel-cover {
+    height: 90px;
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.tile-skel-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 9px; }
+.tile-skel-row { display: flex; gap: 9px; align-items: center; }
+.tile-skel-av { width: 38px; height: 38px; border-radius: var(--radius-s); flex-shrink: 0; background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+.tile-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.tile-skel-line { height: 10px; border-radius: 4px; background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+.tile-skel-line.w70 { width: 70%; }
+.tile-skel-line.w45 { width: 45%; }
+.tile-skel-chips { display: flex; gap: 5px; }
+.tile-skel-chip { height: 22px; width: 60px; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+.tile-skel-btns { display: flex; gap: 6px; }
+.tile-skel-btn { height: 34px; flex: 1; border-radius: var(--radius-s); background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+
+/* ══ EMPTY STATE ══ */
+.snap-empty {
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.snap-empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.snap-empty h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-2);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+.snap-empty p {
+    font-size: 0.85rem;
+    color: var(--text-3);
+    margin-bottom: 20px;
+}
+
+.snap-btn-reset {
+    padding: 10px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--t-fast);
+}
+
+.snap-btn-reset:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ══ LOAD MORE ══ */
+.snap-load-more-wrap {
+    padding: 20px 0 10px;
+    text-align: center;
+}
+
+.snap-load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--t-bounce);
+}
+
+.snap-load-more-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-soft);
+    transform: translateY(-2px);
+}
+
+/* ══ TOAST ══ */
+.toast-container {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0));
+    right: 14px;
+    left: 14px;
+    z-index: 99998;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    padding: 12px 16px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.55);
+    pointer-events: all;
+    animation: toastIn 0.4s var(--ease-bounce);
+    max-width: 380px;
+    width: fit-content;
+    margin: 0 auto;
+    backdrop-filter: blur(14px);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.toast.fade-out { animation: toastOut 0.3s ease forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateY(10px) scale(0.92); } }
+
+.toast.success { border-color: rgba(0, 214, 143, 0.4); }
+.toast.error   { border-color: rgba(255, 77, 109, 0.4); }
+.toast.info    { border-color: rgba(255, 107, 0, 0.4); }
+.toast-icon    { font-size: 1.1rem; }
+
+/* ══ MODAL (bottom sheet style) ══ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 5000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--t-norm);
+}
+
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal-sheet {
+    background: var(--bg-card);
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    position: relative;
+    transform: translateY(100%);
+    transition: transform 0.4s var(--ease-bounce);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.6);
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+.modal-overlay.active .modal-sheet { transform: translateY(0); }
+
+.modal-drag-handle {
+    width: 40px; height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: var(--radius-full);
+    margin: 12px auto 0;
+}
+
+.modal-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    width: 32px; height: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text-2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--t-fast);
+    z-index: 2;
+}
+
+.modal-close:hover { background: var(--error); color: white; border-color: var(--error); }
+
+/* Modal inner content */
+.modal-shop-cover {
+    height: 8px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--shop-color, var(--primary)), transparent);
+}
+
+.modal-body-inner { padding: 20px 20px 24px; }
+
+.modal-shop-header {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-top: 4px;
+}
+
+.modal-shop-avatar {
+    width: 72px; height: 72px;
+    border-radius: var(--radius-m);
+    object-fit: cover;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+}
+
+.modal-shop-avatar-ph {
+    width: 72px; height: 72px;
+    border-radius: var(--radius-m);
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.modal-shop-info { flex: 1; min-width: 0; }
+
+.modal-shop-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-1);
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
     word-break: break-word;
 }
 
-.modal-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
+.modal-shop-slug {
+    font-size: 0.77rem;
+    color: var(--text-3);
+    font-weight: 500;
 }
 
-.btn-modal {
-    padding: 14px 20px;
-    border-radius: 12px;
-    font-size: 0.95rem;
+.modal-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--success);
+    background: rgba(0, 214, 143, 0.12);
+    border: 1px solid rgba(0, 214, 143, 0.2);
+    border-radius: var(--radius-full);
+    padding: 2px 8px;
+    margin-top: 4px;
+}
+
+.modal-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.modal-stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    padding: 12px 8px;
+    text-align: center;
+}
+
+.modal-stat-num {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--text-1);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.modal-stat-label {
+    font-size: 0.66rem;
+    color: var(--text-3);
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.modal-desc {
+    font-size: 0.84rem;
+    color: var(--text-2);
+    line-height: 1.6;
+    margin-bottom: 18px;
+}
+
+.modal-actions { display: flex; gap: 10px; }
+
+.modal-btn-sub {
+    flex: 1;
+    padding: 13px;
+    border-radius: var(--radius-s);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    background: var(--surface);
+    color: var(--text-2);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    transition: all var(--t-bounce);
 }
 
-.btn-visit {
-    background: var(--bg-gradient);
-    color: white;
+.modal-btn-sub.subscribed {
+    border-color: rgba(0, 214, 143, 0.4);
+    color: var(--success);
+    background: rgba(0, 214, 143, 0.08);
+}
+
+.modal-btn-visit {
+    flex: 1;
+    padding: 13px;
+    border-radius: var(--radius-s);
     border: none;
-    box-shadow: var(--shadow-sm);
-}
-
-.btn-visit:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-save-modal {
-    background: white;
-    color: var(--text-primary);
-    border: 2px solid var(--border-color);
-}
-
-.btn-save-modal:hover {
-    background: var(--bg-secondary);
-    border-color: var(--primary-color);
-}
-
-.btn-save-modal.saved {
-    background: var(--error-color);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    border-color: var(--error-color);
-}
-
-/* ==================== TOAST ==================== */
-.toast-container {
-    position: fixed;
-    top: 100px;
-    right: 20px;
-    z-index: 10001;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.toast {
-    background: white;
-    padding: 16px 20px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-lg);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 12px;
-    animation: slideInRight 0.3s ease;
-    min-width: 300px;
-    border-left: 4px solid var(--primary-color);
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(255,107,0,0.3);
+    transition: all var(--t-bounce);
 }
 
-.toast.success {
-    border-left-color: var(--success-color);
+.modal-btn-visit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(255,107,0,0.5);
 }
 
-.toast.error {
-    border-left-color: var(--error-color);
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ══ UTILITIES ══ */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
 }
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.toast-icon {
-    font-size: 1.5rem;
-}
-
-.toast-message {
-    flex: 1;
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 768px) {
-    .header-content {
-        padding: 12px 16px;
-    }
-
-    .logo-text h1 {
-        font-size: 1.1rem;
-    }
-
-    .logo-subtitle {
-        display: none;
-    }
-
-    .content-container {
-        padding: 140px 16px 32px;
-    }
-
-    .tabs-nav {
-        padding: 12px 16px;
-    }
-
-    .tab-btn {
-        padding: 10px 16px;
-        font-size: 0.85rem;
-    }
-
-    .section-header h2 {
-        font-size: 1.25rem;
-    }
-
-    .boutique-item {
-        padding: 12px;
-    }
-
-    .boutique-logo {
-        width: 48px;
-        height: 48px;
-        font-size: 24px;
-    }
-
-    .boutique-name {
-        font-size: 0.95rem;
-    }
-
-    .modal-container {
-        border-radius: 20px 20px 0 0;
-        max-height: 80vh;
-    }
-
-    .modal-actions {
-        grid-template-columns: 1fr;
-    }
-
-    .toast-container {
-        right: 16px;
-        left: 16px;
-    }
-
-    .toast {
-        min-width: auto;
-    }
-}
-
-@media (max-width: 480px) {
-    .boutique-count {
-        padding: 6px 12px;
-    }
-
-    .count-number {
-        font-size: 1rem;
-    }
-
-    .count-label {
-        font-size: 0.65rem;
-    }
-}
-    </style>
+</style>
 <body>
-    <!-- Loader -->
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
-        <p>Chargement des boutiques...</p>
-    </div>
 
-    <!-- Header -->
-    <header class="main-header">
-        <div class="header-content">
-            <button class="menu-btn" id="btnBack">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+<!-- ══ PAGE LOADER ══ -->
+<div class="page-loader" id="pageLoader">
+    <div class="loader-inner">
+        <div class="loader-ring">
+            <span class="loader-emoji">🛍️</span>
+            <svg class="loader-svg" viewBox="0 0 80 80">
+                <circle class="loader-track" cx="40" cy="40" r="36"/>
+                <circle class="loader-fill" cx="40" cy="40" r="36"/>
+            </svg>
+        </div>
+        <p class="loader-label" id="loaderText">Chargement...</p>
+        <div class="loader-bar-wrap">
+            <div class="loader-bar" id="loaderBarFill"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ SIDE MENU ══ -->
+<div class="side-menu" id="sideMenu">
+    <div class="side-menu-header">
+        <span class="side-menu-logo">🛍️ ODA</span>
+        <button class="side-menu-close" id="closeMenuBtn" onclick="closeMenu()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <nav class="side-menu-nav">
+        <p class="side-nav-label">Navigation</p>
+        <a href="oda-achats.html" class="side-nav-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2"/></svg>
+            Accueil
+        </a>
+        <a href="favorie.html" class="side-nav-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2"/></svg>
+            Mes Favoris
+        </a>
+        <a href="boutiques.html" class="side-nav-link active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" stroke="currentColor" stroke-width="2"/><path d="M3 9l1.5-5h15L21 9" stroke="currentColor" stroke-width="2"/></svg>
+            Boutiques
+        </a>
+    </nav>
+</div>
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
+
+<!-- ══ HEADER ══ -->
+<header class="app-header" id="mainHeader">
+    <div class="app-header-inner">
+        <button class="hdr-btn" id="menuBtn" onclick="openMenu()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/>
+            </svg>
+        </button>
+
+        <div class="hdr-center">
+            <span class="hdr-logo-icon">🛍️</span>
+            <span class="hdr-logo-text">Odamarket</span>
+        </div>
+
+        <div class="hdr-right">
+            <button class="hdr-btn" onclick="window.location.href='favorie.html'" title="Favoris">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
             </button>
-            
-            <div class="logo">
-                <div class="logo-icon">🏪</div>
-                <div class="logo-text">
-                    <h1>ODA Boutiques</h1>
-                    <p class="logo-subtitle">Découvrez toutes les boutiques</p>
-                </div>
-            </div>
-            
-            <div class="header-icons">
-                <button class="icon-btn" id="searchBtn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/>
-                        <path d="M21 21l-4.35-4.35"/>
-                    </svg>
-                </button>
+            <button class="hdr-btn vendor-btn" id="vendorBtn" title="Espace Vendeur">
+                <img src="oda-logo.png" alt="ODA" style="width:22px;height:22px;border-radius:5px;object-fit:cover;">
+            </button>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="hdr-search">
+        <div class="search-box" id="searchWrapper">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-ico">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="shopSearchInput" placeholder="Rechercher une boutique..." autocomplete="off" spellcheck="false">
+            <button class="search-clear" id="searchClear">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
 
-      
+        <div class="hdr-meta">
+            <span class="meta-pill"><b id="totalShopsNum">–</b> boutiques</span>
+            <span class="meta-dot">·</span>
+            <span class="meta-pill"><b id="totalSubscribedNum">–</b> abonnements</span>
         </div>
-    </header>
+    </div>
+</header>
 
-    <!-- Tabs Navigation -->
-    <nav class="tabs-nav">
-        <button class="tab-btn active" data-tab="all">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-            </svg>
-            <span>Toutes les boutiques</span>
-            <span class="tab-badge" id="badgeAll">0</span>
-        </button>
-        <button class="tab-btn" data-tab="saved">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-            <span>Mes favoris</span>
-            <span class="tab-badge" id="badgeSaved">0</span>
-        </button>
-        <button class="tab-btn" data-tab="active">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-            <span>Plus actifs</span>
-            <span class="tab-badge" id="badgeActive">0</span>
-        </button>
-    </nav>
-    <!-- Content Container -->
-    <main class="content-container">
-          <!-- Barre de recherche (cachée par défaut) -->
-          <div class="search-container" id="searchContainer" style="display: none;">
-            <div class="search-box">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input type="text" placeholder="Rechercher une boutique..." id="searchInput">
-                <button class="search-close" id="searchClose">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-          </div>
-        <!-- Slider 1: Toutes les boutiques -->
-        <section class="boutiques-section active" id="sectionAll">
-            <div class="section-header">
-                <h2>📍 Explorer les boutiques</h2>
-                <p>Découvrez toutes les boutiques disponibles</p>
-            </div>
-            
-            <div class="boutiques-list" id="boutiquesListAll">
-                <!-- Les boutiques seront générées ici -->
-            </div>
+<!-- ══ MAIN CONTENT ══ -->
+<main class="snap-main" id="snapMain">
 
-            <div class="empty-state" id="emptyStateAll" style="display: none;">
-                <div class="empty-icon">🏪</div>
-                <h3>Aucune boutique trouvée</h3>
-                <p>Aucune boutique n'est disponible pour le moment</p>
-            </div>
-        </section>
+    <!-- ── STORIES BAR (Top 10) ── -->
+    <section class="stories-bar-wrap" id="top10Section">
+        <div class="stories-label">
+            <span class="stories-label-icon">🏆</span>
+            <span class="stories-label-txt">Top Boutiques</span>
+        </div>
+        <div class="stories-bar" id="top10Grid">
+            <!-- Stories remplies par JS -->
+        </div>
+    </section>
 
-        <!-- Slider 2: Boutiques enregistrées -->
-        <section class="boutiques-section" id="sectionSaved" style="display: none;">
-            <div class="section-header">
-                <h2>❤️ Mes boutiques favorites</h2>
-                <p>Retrouvez vos boutiques enregistrées</p>
-            </div>
-            
-            <div class="boutiques-list" id="boutiquesListSaved">
-                <!-- Les boutiques enregistrées seront générées ici -->
-            </div>
-
-            <div class="empty-state" id="emptyStateSaved" style="display: none;">
-                <div class="empty-icon">❤️</div>
-                <h3>Aucune boutique favorite</h3>
-                <p>Enregistrez vos boutiques préférées pour les retrouver ici</p>
-                <button class="btn-primary" onclick="switchTab('all')">
-                    Explorer les boutiques
-                </button>
-                <section class="boutiques-section" id="sectionActive" style="display: none;">
-                    <div class="section-header">
-                        <h2>⚡ Boutiques les plus actives</h2>
-                        <p>Les boutiques avec le plus de produits et d'activité récente</p>
-                    </div>
-                    
-                    <div class="boutiques-list" id="boutiquesListActive">
-                        <!-- Les boutiques actives seront générées ici -->
-                    </div>
-                
-                    <div class="empty-state" id="emptyStateActive" style="display: none;">
-                        <div class="empty-icon">⚡</div>
-                        <h3>Aucune boutique active</h3>
-                        <p>Aucune boutique active pour le moment</p>
-                    </div>
-                </section>
-            </div>
-        </section>
-    </main>
-
-    <!-- Modal Détails Boutique -->
-    <div class="modal-overlay" id="modalOverlay" style="display: none;">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 id="modalTitle">Détails de la boutique</h3>
-                <button class="btn-close-modal" id="btnCloseModal">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="modal-content" id="modalContent">
-                <!-- Le contenu sera généré dynamiquement -->
+    <!-- ── SECTION DIVIDER ── -->
+    <div class="snap-divider">
+        <div class="snap-divider-line"></div>
+        <div class="snap-divider-controls">
+            <span class="snap-divider-txt">Toutes les boutiques</span>
+            <div class="snap-sort-wrap">
+                <select class="snap-sort" id="sortSelect">
+                    <option value="random">✨ Aléatoire</option>
+                    <option value="products">📦 Produits</option>
+                    <option value="subscribers">🔔 Abonnés</option>
+                    <option value="likes">❤️ Likes</option>
+                    <option value="name">🔤 A–Z</option>
+                </select>
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-<script type="module">
-    // ==================== CONFIGURATION SUPABASE ====================
-const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
+    <!-- ── DISCOVER TILES GRID ── -->
+    <section class="discover-section" id="allShopsSection">
+        <div class="discover-grid" id="allShopsGrid">
+            <!-- Tiles remplies par JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="snap-empty" id="emptyState" style="display:none;">
+            <div class="snap-empty-icon">🔍</div>
+            <h3>Aucune boutique trouvée</h3>
+            <p>Essayez un autre terme de recherche</p>
+            <button class="snap-btn-reset" onclick="resetSearch()">Réinitialiser</button>
+        </div>
+
+        <!-- Load More -->
+        <div class="snap-load-more-wrap" id="loadMoreWrap" style="display:none;">
+            <button class="snap-load-more-btn" id="btnLoadMore">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                Voir plus
+            </button>
+        </div>
+    </section>
+
+</main>
+
+<!-- ══ TOAST ══ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══ MODAL BOUTIQUE ══ -->
+<div class="modal-overlay" id="shopModalOverlay" onclick="closeShopModal()">
+    <div class="modal-sheet" id="shopModal" onclick="event.stopPropagation()">
+        <div class="modal-drag-handle"></div>
+        <button class="modal-close" onclick="closeShopModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div id="shopModalContent"></div>
+    </div>
+</div>
+
+<script>
+    /**
+ * ODA BOUTIQUES — boutiques.js
+ * Layout Snapchat : Stories bar (Top10) + Discover tiles grid
+ */
+'use strict';
+
+/* ══════════════════════════════════════════════
+   CONFIG & SUPABASE
+══════════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ==================== VARIABLES GLOBALES ====================
-let allBoutiques = [];
-let activeBoutiques = [];
-let savedBoutiques = new Set();
-let currentTab = 'all';
-let searchQuery = '';
+const CFG = {
+    PAGE_SIZE:       12,
+    TOP_COUNT:       10,
+    DEBOUNCE_MS:     260,
+    CACHE_KEY:       'oda_boutiques_v4_snap',
+    CACHE_DURATION:  7 * 24 * 60 * 60 * 1000,
+    DEFAULT_COLORS:  ['#FF6B00','#6366F1','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#EC4899'],
+};
 
-// Cache configuration
-const CACHE_KEY = 'oda_boutiques_cache';
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+const STATE = {
+    currentUser:          null,
+    allShops:             [],
+    top10:                [],
+    rest:                 [],
+    restFiltered:         [],
+    visibleCount:         CFG.PAGE_SIZE,
+    searchTerm:           '',
+    sortBy:               'random',
+    subscribedShops:      new Set(),
+    shopLikes:            {},
+    shopProductCounts:    {},
+    shopSubscriberCounts: {},
+};
 
-// ==================== GESTION DU CACHE ====================
-function saveBoutiquesToCache(boutiques) {
-    try {
-        const cacheData = {
-            boutiques: boutiques,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-        console.log('💾 Boutiques sauvegardées en cache');
-    } catch (e) {
-        console.warn('Erreur sauvegarde cache:', e);
+/* ══════════════════════════════════════════════
+   DOM HELPERS
+══════════════════════════════════════════════ */
+const $  = id => document.getElementById(id);
+const dom = {
+    loader:            () => $('pageLoader'),
+    loaderBar:         () => $('loaderBarFill'),
+    loaderText:        () => $('loaderText'),
+    header:            () => $('mainHeader'),
+    searchInput:       () => $('shopSearchInput'),
+    searchClear:       () => $('searchClear'),
+    top10Grid:         () => $('top10Grid'),
+    allShopsGrid:      () => $('allShopsGrid'),
+    emptyState:        () => $('emptyState'),
+    loadMoreWrap:      () => $('loadMoreWrap'),
+    btnLoadMore:       () => $('btnLoadMore'),
+    sortSelect:        () => $('sortSelect'),
+    totalShopsNum:     () => $('totalShopsNum'),
+    totalSubscribedNum:() => $('totalSubscribedNum'),
+    toastContainer:    () => $('toastContainer'),
+    shopModalOverlay:  () => $('shopModalOverlay'),
+    shopModalContent:  () => $('shopModalContent'),
+    sideMenu:          () => $('sideMenu'),
+    overlay:           () => $('overlay'),
+};
+
+/* ══════════════════════════════════════════════
+   CACHE MANAGER
+══════════════════════════════════════════════ */
+class CacheManager {
+    constructor() { this.KEY = CFG.CACHE_KEY; this.DUR = CFG.CACHE_DURATION; }
+
+    save(data) {
+        try {
+            localStorage.setItem(this.KEY, JSON.stringify({
+                data, timestamp: Date.now(), expiresAt: Date.now() + this.DUR
+            }));
+            return true;
+        } catch (e) {
+            console.warn('Cache save failed:', e.message);
+            return false;
+        }
     }
-}
 
-function loadBoutiquesFromCache() {
-    try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (!cached) return null;
-
-        const cacheData = JSON.parse(cached);
-        const age = Date.now() - cacheData.timestamp;
-
-        if (age < CACHE_DURATION) {
-            console.log(`📦 ${cacheData.boutiques.length} boutiques chargées depuis le cache (${Math.round(age/1000)}s)`);
-            return cacheData.boutiques;
-        } else {
-            console.log('⏰ Cache expiré');
-            localStorage.removeItem(CACHE_KEY);
+    load() {
+        try {
+            const raw = localStorage.getItem(this.KEY);
+            if (!raw) return null;
+            const entry = JSON.parse(raw);
+            if (!entry?.data) return null;
+            const now   = Date.now();
+            const fresh = now < entry.expiresAt;
+            const stale = (now - entry.timestamp) < this.DUR * 2;
+            if (!fresh && !stale) { localStorage.removeItem(this.KEY); return null; }
+            return { data: entry.data, fresh, stale };
+        } catch {
+            localStorage.removeItem(this.KEY);
             return null;
         }
+    }
+
+    clear() { localStorage.removeItem(this.KEY); }
+}
+
+const cacheManager = new CacheManager();
+
+/* ══════════════════════════════════════════════
+   LOADER
+══════════════════════════════════════════════ */
+const loader = {
+    _pct: 0,
+    start() { this.update(2, 'Connexion...'); },
+    update(pct, txt) {
+        this._pct = pct;
+        const bar = dom.loaderBar(); if (bar) bar.style.width = pct + '%';
+        const lbl = dom.loaderText(); if (lbl) lbl.textContent = txt || '';
+    },
+    async simulate(from, to, ms = 400) {
+        const steps = 20;
+        const step  = (to - from) / steps;
+        const delay = ms / steps;
+        for (let i = 0; i < steps; i++) {
+            await this.delay(delay);
+            this.update(Math.round(from + step * i), null);
+        }
+        this.update(to, null);
+    },
+    delay(ms) { return new Promise(r => setTimeout(r, ms)); },
+    complete() {
+        this.update(100, 'Prêt !');
+        setTimeout(() => dom.loader()?.classList.add('fade-out'), 300);
+    },
+    showError(msg) {
+        const lbl = dom.loaderText();
+        if (lbl) lbl.textContent = '❌ ' + msg;
+    }
+};
+
+/* ══════════════════════════════════════════════
+   DATA LOADING
+══════════════════════════════════════════════ */
+async function loadFromNetwork(withProgress = false) {
+    if (withProgress) loader.update(10, 'Chargement boutiques...');
+
+    // ✅ Vraie table : parametres_boutique (données en JSONB dans config)
+    const { data: rawShops, error } = await db
+        .from('parametres_boutique')
+        .select('user_id, config, created_at')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!rawShops?.length) return { shops: [], likes: {}, products: {}, subscribers: {} };
+
+    // Normaliser le schéma JSONB vers le format plat attendu par le reste du code
+    const shops = rawShops.map(row => ({
+        id:          row.user_id,
+        name:        row.config?.general?.nom || row.config?.nom || 'Boutique',
+        description: row.config?.general?.description || row.config?.description || '',
+        slug:        row.config?.identifiant?.slug || row.config?.slug || null,
+        logo_url:    row.config?.apparence?.logoUrl || row.config?.logo_url || null,
+        cover_url:   row.config?.apparence?.coverUrl || row.config?.cover_url || null,
+        color:       row.config?.apparence?.couleurPrimaire || row.config?.color || null,
+        verified:    row.config?.verified || false,
+        created_at:  row.created_at,
+    }));
+
+    if (withProgress) loader.update(35, 'Statistiques...');
+
+    const ids = shops.map(s => s.id);
+
+    // ✅ produits remplace products (lié au shop via user_id)
+    const [prodsRes] = await Promise.all([
+        db.from('produits').select('user_id').in('user_id', ids),
+    ]);
+
+    const products    = aggregateCount(prodsRes.data, 'user_id');
+    const likes       = {}; // product_likes est lié à product_id, pas shop_id
+    const subscribers = {}; // shop_subscriptions n'existe pas encore
+
+    if (withProgress) loader.update(72, 'Organisation...');
+
+    const result = { shops, likes, products, subscribers };
+    cacheManager.save(result);
+    return result;
+}
+
+function aggregateCount(rows, key) {
+    if (!rows) return {};
+    return rows.reduce((acc, r) => {
+        acc[r[key]] = (acc[r[key]] || 0) + 1;
+        return acc;
+    }, {});
+}
+
+function applyToState(data) {
+    STATE.shopLikes            = data.likes       || {};
+    STATE.shopProductCounts    = data.products    || {};
+    STATE.shopSubscriberCounts = data.subscribers || {};
+
+    const shops = (data.shops || []).map(s => ({
+        ...s,
+        likeCount:       STATE.shopLikes[s.id]            || 0,
+        productCount:    STATE.shopProductCounts[s.id]     || 0,
+        subscriberCount: STATE.shopSubscriberCounts[s.id]  || 0,
+        color:           s.color || CFG.DEFAULT_COLORS[Math.floor(Math.random() * CFG.DEFAULT_COLORS.length)],
+    }));
+
+    shops.sort((a, b) => b.likeCount - a.likeCount);
+    STATE.top10    = shops.slice(0, CFG.TOP_COUNT);
+    STATE.rest     = shops.slice(CFG.TOP_COUNT);
+    STATE.allShops = shops;
+    STATE.restFiltered = [...STATE.rest];
+}
+
+/* ══════════════════════════════════════════════
+   AUTH & SUBSCRIPTIONS
+══════════════════════════════════════════════ */
+async function initAuth() {
+    try {
+        const { data: { session } } = await db.auth.getSession();
+        STATE.currentUser = session?.user || null;
+    } catch { STATE.currentUser = null; }
+}
+
+async function loadSubscriptions() {
+    // shop_subscriptions n'existe pas encore en base
+    // Fonctionnalité désactivée — à activer quand la table sera créée
+    console.info('Abonnements : table shop_subscriptions non disponible');
+}
+
+async function toggleSubscribe(shopId, btnEl) {
+    if (!STATE.currentUser) {
+        showToast('Connectez-vous pour vous abonner', 'info');
+        return;
+    }
+    btnEl.classList.add('loading');
+    const was = STATE.subscribedShops.has(shopId);
+    try {
+        // Gestion locale jusqu'à ce que shop_subscriptions soit créé en base
+        if (was) {
+            STATE.subscribedShops.delete(shopId);
+            showToast('Abonnement retiré', 'info');
+        } else {
+            STATE.subscribedShops.add(shopId);
+            showToast('Abonnement ajouté ! 🔔', 'success');
+        }
+        updateAllSubscribeButtons();
+        updateHeaderStats();
     } catch (e) {
-        console.warn('Erreur lecture cache:', e);
-        return null;
-    }
-}
-
-// ==================== CHARGEMENT DES BOUTIQUES OPTIMISÉ ====================
-async function loadBoutiques() {
-    try {
-        // Essayer de charger depuis le cache d'abord
-        const cachedBoutiques = loadBoutiquesFromCache();
-        
-        if (cachedBoutiques && cachedBoutiques.length > 0) {
-            allBoutiques = cachedBoutiques;
-            loadSavedBoutiques();
-            await loadActiveBoutiques();
-            updateBadges();
-            displayBoutiques();
-            hideLoader();
-            
-            // Mettre à jour en arrière-plan
-            updateBoutiquesInBackground();
-            return;
-        }
-
-        showLoader();
-
-        // Charger avec select optimisé (seulement les champs nécessaires)
-        const { data: boutiquesData, error } = await supabase
-            .from('parametres_boutique')
-            .select('user_id, config, created_at, updated_at')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        allBoutiques = boutiquesData.map(item => ({
-            id: item.user_id,
-            nom: item.config?.general?.nom || 'Boutique Sans Nom',
-            description: item.config?.general?.description || '',
-            email: item.config?.general?.email || '',
-            telephone: item.config?.general?.telephone || '',
-            adresse: item.config?.general?.adresse || '',
-            slug: item.config?.identifiant?.slug || item.config?.slug || '',
-            logo: item.config?.apparence?.logo || '',
-            couleur: item.config?.apparence?.couleurPrimaire || '#667eea',
-            dateCreation: item.created_at,
-            dateModification: item.updated_at
-        })).filter(b => b.slug); // Ne garder que les boutiques avec un slug
-
-        console.log(`✅ ${allBoutiques.length} boutiques chargées depuis Supabase`);
-        
-        // Sauvegarder en cache
-        saveBoutiquesToCache(allBoutiques);
-        
-        loadSavedBoutiques();
-        await loadActiveBoutiques();
-        updateBadges();
-        displayBoutiques();
-
-    } catch (error) {
-        console.error('Erreur chargement boutiques:', error);
-        showToast('Erreur lors du chargement des boutiques', 'error');
-        displayBoutiques(); // Afficher l'état vide
+        showToast('Erreur : ' + e.message, 'error');
     } finally {
-        hideLoader();
+        btnEl.classList.remove('loading');
     }
 }
 
-// ==================== CHARGEMENT BOUTIQUES ACTIVES ====================
-async function loadActiveBoutiques() {
-    try {
-        console.log('⚡ Chargement des boutiques actives...');
-
-        // Charger tous les produits pour compter par boutique
-        const { data: allProducts, error } = await supabase
-            .from('produits')
-            .select('user_id, created_at, updated_at');
-
-        if (error) throw error;
-
-        // Compter les produits par boutique
-        const boutiqueProductCount = {};
-        const boutiqueLastActivity = {};
-
-        allProducts.forEach(product => {
-            const userId = product.user_id;
-            
-            // Compter les produits
-            boutiqueProductCount[userId] = (boutiqueProductCount[userId] || 0) + 1;
-            
-            // Dernière activité
-            const lastDate = new Date(product.updated_at || product.created_at);
-            if (!boutiqueLastActivity[userId] || lastDate > boutiqueLastActivity[userId]) {
-                boutiqueLastActivity[userId] = lastDate;
-            }
-        });
-
-        // Filtrer et trier les boutiques
-        activeBoutiques = allBoutiques
-            .map(boutique => ({
-                ...boutique,
-                productCount: boutiqueProductCount[boutique.id] || 0,
-                lastActivity: boutiqueLastActivity[boutique.id] || new Date(boutique.dateCreation)
-            }))
-            .filter(b => b.productCount > 0) // Au moins 1 produit
-            .sort((a, b) => {
-                // Trier par nombre de produits puis par activité récente
-                if (b.productCount !== a.productCount) {
-                    return b.productCount - a.productCount;
-                }
-                return b.lastActivity - a.lastActivity;
-            })
-            .slice(0, 50); // Limiter aux 50 plus actifs
-
-        console.log(`✅ ${activeBoutiques.length} boutiques actives trouvées`);
-        updateBadges();
-
-    } catch (error) {
-        console.error('Erreur chargement boutiques actives:', error);
-        activeBoutiques = [];
-    }
-}
-
-// ==================== MISE À JOUR EN ARRIÈRE-PLAN ====================
-async function updateBoutiquesInBackground() {
-    try {
-        console.log('🔄 Mise à jour silencieuse du cache...');
-        
-        const { data: boutiquesData } = await supabase
-            .from('parametres_boutique')
-            .select('user_id, config, created_at, updated_at')
-            .order('created_at', { ascending: false });
-
-        if (boutiquesData) {
-            const updatedBoutiques = boutiquesData.map(item => ({
-                id: item.user_id,
-                nom: item.config?.general?.nom || 'Boutique Sans Nom',
-                description: item.config?.general?.description || '',
-                email: item.config?.general?.email || '',
-                telephone: item.config?.general?.telephone || '',
-                adresse: item.config?.general?.adresse || '',
-                slug: item.config?.identifiant?.slug || item.config?.slug || '',
-                logo: item.config?.apparence?.logo || '',
-                couleur: item.config?.apparence?.couleurPrimaire || '#667eea',
-                dateCreation: item.created_at,
-                dateModification: item.updated_at
-            })).filter(b => b.slug);
-
-            // Mettre à jour le cache
-            saveBoutiquesToCache(updatedBoutiques);
-            
-            // Si les données ont changé, mettre à jour l'affichage
-            if (JSON.stringify(updatedBoutiques) !== JSON.stringify(allBoutiques)) {
-                allBoutiques = updatedBoutiques;
-                await loadActiveBoutiques();
-                updateBadges();
-                displayBoutiques();
-                console.log('✅ Cache mis à jour en arrière-plan');
-            }
+function updateAllSubscribeButtons() {
+    document.querySelectorAll('[data-subscribe]').forEach(btn => {
+        const sid = btn.dataset.subscribe;
+        const subbed = STATE.subscribedShops.has(sid);
+        if (btn.classList.contains('tile-btn-sub')) {
+            btn.classList.toggle('subscribed', subbed);
+            btn.innerHTML = subbed
+                ? `<span>✓</span><span>Abonné</span>`
+                : `<span>🔔</span><span>S'abonner</span>`;
+        } else if (btn.classList.contains('tile-sub-btn')) {
+            btn.classList.toggle('subbed', subbed);
+            btn.innerHTML = subbed ? '✓' : '🔔';
+        } else if (btn.classList.contains('modal-btn-sub')) {
+            btn.classList.toggle('subscribed', subbed);
+            btn.textContent = subbed ? '✓ Abonné' : "🔔 S'abonner";
         }
-    } catch (error) {
-        console.warn('Erreur mise à jour arrière-plan:', error);
-    }
+    });
 }
 
-// ==================== GESTION DES FAVORIS ====================
-function loadSavedBoutiques() {
-    const stored = localStorage.getItem('oda_saved_boutiques');
-    if (stored) {
-        try {
-            savedBoutiques = new Set(JSON.parse(stored));
-            console.log(`❤️ ${savedBoutiques.size} boutiques enregistrées`);
-        } catch (e) {
-            savedBoutiques = new Set();
-        }
-    }
+/* ══════════════════════════════════════════════
+   RENDER — STORIES (Top 10)
+══════════════════════════════════════════════ */
+function renderStorySkeletons(container, n = 5) {
+    container.innerHTML = Array.from({ length: n }, () => `
+        <div class="story-skel">
+            <div class="story-skel-ring"></div>
+            <div class="story-skel-name"></div>
+        </div>
+    `).join('');
 }
 
-function saveBoutiques() {
-    localStorage.setItem('oda_saved_boutiques', JSON.stringify([...savedBoutiques]));
+function renderTop10() {
+    const container = dom.top10Grid();
+    if (!container) return;
+    if (!STATE.top10.length) { container.innerHTML = ''; return; }
+
+    container.innerHTML = STATE.top10.map((shop, i) => {
+        const rank  = i + 1;
+        const cls   = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+        const badgeCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'other';
+        const badgeTxt = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+        const delay = i * 60;
+
+        const avatarHtml = shop.logo_url
+            ? `<img src="${escHtml(shop.logo_url)}" alt="${escHtml(shop.name)}" class="story-ring-inner" style="object-fit:cover;">`
+            : `<div class="story-ring-inner">${getShopEmoji(shop)}</div>`;
+
+        return `
+        <div class="story-item ${cls}" style="animation-delay:${delay}ms"
+             onclick="openShopModal('${shop.id}')">
+            <div class="story-ring-outer ${cls}" style="--shop-color:${shop.color}">
+                ${avatarHtml}
+                <div class="story-rank-badge ${badgeCls}">${badgeTxt}</div>
+            </div>
+            <span class="story-name">${escHtml(shop.name)}</span>
+            <span class="story-subs">${formatNum(shop.subscriberCount)} 🔔</span>
+        </div>`;
+    }).join('');
 }
 
-function toggleSaveBoutique(boutiqueId) {
-    const boutique = allBoutiques.find(b => b.id === boutiqueId);
-    if (!boutique) return;
-
-    if (savedBoutiques.has(boutiqueId)) {
-        savedBoutiques.delete(boutiqueId);
-        showToast(`${boutique.nom} retirée des favoris`, 'info');
-    } else {
-        savedBoutiques.add(boutiqueId);
-        showToast(`${boutique.nom} ajoutée aux favoris`, 'success');
-    }
-    
-    saveBoutiques();
-    updateBadges();
-    displayBoutiques();
+/* ══════════════════════════════════════════════
+   RENDER — DISCOVER TILES (Toutes boutiques)
+══════════════════════════════════════════════ */
+function renderTileSkeletons(container, n = 6) {
+    container.innerHTML = Array.from({ length: n }, (_, i) => `
+        <div class="tile-skel" style="animation-delay:${i * 55}ms">
+            <div class="tile-skel-cover"></div>
+            <div class="tile-skel-body">
+                <div class="tile-skel-row">
+                    <div class="tile-skel-av"></div>
+                    <div class="tile-skel-lines">
+                        <div class="tile-skel-line w70"></div>
+                        <div class="tile-skel-line w45"></div>
+                    </div>
+                </div>
+                <div class="tile-skel-chips">
+                    <div class="tile-skel-chip"></div>
+                    <div class="tile-skel-chip"></div>
+                    <div class="tile-skel-chip"></div>
+                </div>
+                <div class="tile-skel-btns">
+                    <div class="tile-skel-btn"></div>
+                    <div class="tile-skel-btn" style="max-width:80px"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
-// ==================== MISE À JOUR DES BADGES ====================
-function updateBadges() {
-    const badgeAll = document.getElementById('badgeAll');
-    const badgeSaved = document.getElementById('badgeSaved');
-    const badgeActive = document.getElementById('badgeActive');
+function renderAllShops() {
+    const container = dom.allShopsGrid();
+    if (!container) return;
 
-    const filteredBoutiques = getFilteredBoutiques();
-    
-    if (badgeAll) badgeAll.textContent = allBoutiques.length;
-    if (badgeSaved) badgeSaved.textContent = savedBoutiques.size;
-    if (badgeActive) badgeActive.textContent = activeBoutiques.length;
+    const visible = STATE.restFiltered.slice(0, STATE.visibleCount);
+    const hasMore = STATE.restFiltered.length > STATE.visibleCount;
+    const empty   = STATE.restFiltered.length === 0;
+
+    dom.emptyState().style.display   = empty ? 'block' : 'none';
+    const lmw = dom.loadMoreWrap();
+    if (lmw) lmw.style.display = hasMore ? 'block' : 'none';
+
+    if (empty) { container.innerHTML = ''; return; }
+
+    container.innerHTML = visible.map((shop, i) => buildTileCard(shop, i)).join('');
 }
 
-// ==================== FILTRAGE ET RECHERCHE ====================
-function getFilteredBoutiques() {
-    let boutiques = currentTab === 'active' ? [...activeBoutiques] : [...allBoutiques];
+function buildTileCard(shop, i) {
+    const subbed = STATE.subscribedShops.has(shop.id);
+    const delay  = (i % 12) * 45;
 
-    // Filtrer par recherche
-    if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        boutiques = boutiques.filter(b => 
-            b.nom.toLowerCase().includes(query) ||
-            b.slug.toLowerCase().includes(query) ||
-            b.description?.toLowerCase().includes(query) ||
-            b.adresse?.toLowerCase().includes(query)
+    // Cover background
+    const coverBg = shop.cover_url
+        ? `background-image:url('${escHtml(shop.cover_url)}')`
+        : `background: linear-gradient(135deg, ${shop.color}33, ${shop.color}08)`;
+
+    // Avatar
+    const avatarHtml = shop.logo_url
+        ? `<img src="${escHtml(shop.logo_url)}" alt="${escHtml(shop.name)}" class="tile-avatar" loading="lazy">`
+        : `<div class="tile-avatar-placeholder">${getShopEmoji(shop)}</div>`;
+
+    // Description preview (only if not empty)
+    const descHtml = shop.description
+        ? `<p class="tile-desc">${escHtml(shop.description)}</p>`
+        : '';
+
+    // Verified badge
+    const verifiedHtml = shop.verified
+        ? `<span class="tile-badge tile-badge-verified">✓ Vérifié</span>`
+        : '';
+
+    return `
+    <div class="tile-card" style="animation-delay:${delay}ms; --shop-color:${shop.color}"
+         onclick="openShopModal('${shop.id}')">
+
+        <!-- Cover -->
+        <div class="tile-cover">
+            <div class="tile-cover-bg" style="${coverBg}"></div>
+            <div class="tile-cover-gradient"></div>
+            <div class="tile-cover-badges">
+                ${verifiedHtml}
+            </div>
+            <div class="tile-cover-sub">
+                <button class="tile-sub-btn ${subbed ? 'subbed' : ''}"
+                    data-subscribe="${shop.id}"
+                    onclick="event.stopPropagation(); toggleSubscribe('${shop.id}', this)">
+                    ${subbed ? '✓' : '🔔'}
+                </button>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="tile-body">
+            <div class="tile-top-row">
+                ${avatarHtml}
+                <div class="tile-name-wrap">
+                    <div class="tile-name">${escHtml(shop.name)}</div>
+                    <div class="tile-slug">
+                        ${shop.slug ? '@' + escHtml(shop.slug) : ''}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="tile-stats">
+                <span class="chip chip-likes">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09A6.065 6.065 0 0 1 16.5 3C19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    ${formatNum(shop.likeCount)}
+                </span>
+                <span class="chip chip-products">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    ${formatNum(shop.productCount)}
+                </span>
+                <span class="chip chip-subs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    ${formatNum(shop.subscriberCount)}
+                </span>
+            </div>
+
+            ${descHtml}
+
+            <!-- Actions -->
+            <div class="tile-actions" onclick="event.stopPropagation()">
+                <button class="tile-btn-sub ${subbed ? 'subscribed' : ''}"
+                    data-subscribe="${shop.id}"
+                    onclick="toggleSubscribe('${shop.id}', this)">
+                    ${subbed
+                        ? `<span>✓</span><span>Abonné</span>`
+                        : `<span>🔔</span><span>S'abonner</span>`}
+                </button>
+                <button class="tile-btn-visit"
+                    onclick="visitShop('${shop.id}','${escHtml(shop.slug || '')}')">
+                    Visiter →
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   FILTER & SORT
+══════════════════════════════════════════════ */
+function filterAndSort() {
+    let list = [...STATE.rest];
+
+    // Search
+    const q = STATE.searchTerm.toLowerCase().trim();
+    if (q) {
+        list = list.filter(s =>
+            s.name?.toLowerCase().includes(q) ||
+            s.slug?.toLowerCase().includes(q) ||
+            s.description?.toLowerCase().includes(q)
         );
     }
 
-    // Filtrer par tab
-    if (currentTab === 'saved') {
-        boutiques = [...allBoutiques].filter(b => savedBoutiques.has(b.id));
+    // Sort
+    switch (STATE.sortBy) {
+        case 'likes':       list.sort((a, b) => b.likeCount - a.likeCount); break;
+        case 'products':    list.sort((a, b) => b.productCount - a.productCount); break;
+        case 'subscribers': list.sort((a, b) => b.subscriberCount - a.subscriberCount); break;
+        case 'name':        list.sort((a, b) => a.name.localeCompare(b.name, 'fr')); break;
+        case 'random':      shuffleArr(list); break;
     }
 
-    return boutiques;
-}
-// ==================== AFFICHAGE DES BOUTIQUES ====================
-function displayBoutiques() {
-    const sectionAll = document.getElementById('sectionAll');
-    const sectionSaved = document.getElementById('sectionSaved');
-    const sectionActive = document.getElementById('sectionActive');
-    const listAll = document.getElementById('boutiquesListAll');
-    const listSaved = document.getElementById('boutiquesListSaved');
-    const listActive = document.getElementById('boutiquesListActive');
-    const emptyStateAll = document.getElementById('emptyStateAll');
-    const emptyStateSaved = document.getElementById('emptyStateSaved');
-    const emptyStateActive = document.getElementById('emptyStateActive');
-
-    // Masquer toutes les sections
-    sectionAll.style.display = 'none';
-    sectionSaved.style.display = 'none';
-    sectionActive.style.display = 'none';
-
-    // Afficher la section active
-    let activeSection, activeList, activeEmptyState;
-    
-    if (currentTab === 'all') {
-        activeSection = sectionAll;
-        activeList = listAll;
-        activeEmptyState = emptyStateAll;
-    } else if (currentTab === 'saved') {
-        activeSection = sectionSaved;
-        activeList = listSaved;
-        activeEmptyState = emptyStateSaved;
-    } else if (currentTab === 'active') {
-        activeSection = sectionActive;
-        activeList = listActive;
-        activeEmptyState = emptyStateActive;
-    }
-
-    activeSection.style.display = 'block';
-
-    // Obtenir les boutiques filtrées
-    const filteredBoutiques = getFilteredBoutiques();
-
-    if (filteredBoutiques.length === 0) {
-        activeList.style.display = 'none';
-        activeEmptyState.style.display = 'block';
-    } else {
-        activeList.style.display = 'block';
-        activeEmptyState.style.display = 'none';
-        
-        // Afficher badge produits pour onglet "actifs"
-        if (currentTab === 'active') {
-            renderActiveBoutiquesProgressively(activeList, filteredBoutiques);
-        } else {
-            renderBoutiquesProgressively(activeList, filteredBoutiques);
-        }
-    }
-
-    updateBadges();
+    STATE.restFiltered = list;
+    STATE.visibleCount = CFG.PAGE_SIZE;
+    renderAllShops();
 }
 
-// ==================== RENDU PROGRESSIF (BATCH RENDERING) ====================
-function renderBoutiquesProgressively(container, boutiques) {
-    container.innerHTML = '';
-    
-    if (boutiques.length <= 20) {
-        container.innerHTML = boutiques.map(b => createBoutiqueItem(b)).join('');
-        return;
-    }
-    
-    const batchSize = 20;
-    let currentIndex = 0;
-    
-    function renderBatch() {
-        const batch = boutiques.slice(currentIndex, currentIndex + batchSize);
-        const fragment = document.createDocumentFragment();
-        
-        batch.forEach(boutique => {
-            const div = document.createElement('div');
-            div.innerHTML = createBoutiqueItem(boutique);
-            fragment.appendChild(div.firstChild);
-        });
-        
-        container.appendChild(fragment);
-        currentIndex += batchSize;
-        
-        if (currentIndex < boutiques.length) {
-            requestAnimationFrame(renderBatch);
-        }
-    }
-    
-    renderBatch();
+/* ── Search (debounced) ── */
+let _searchTimer = null;
+function onSearch(val) {
+    const clear = dom.searchClear();
+    if (clear) clear.classList.toggle('visible', val.length > 0);
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => {
+        STATE.searchTerm = val;
+        STATE.visibleCount = CFG.PAGE_SIZE;
+        filterAndSort();
+    }, CFG.DEBOUNCE_MS);
 }
 
-function renderActiveBoutiquesProgressively(container, boutiques) {
-    container.innerHTML = '';
-    
-    if (boutiques.length <= 20) {
-        container.innerHTML = boutiques.map(b => createActiveBoutiqueItem(b)).join('');
-        return;
-    }
-    
-    const batchSize = 20;
-    let currentIndex = 0;
-    
-    function renderBatch() {
-        const batch = boutiques.slice(currentIndex, currentIndex + batchSize);
-        const fragment = document.createDocumentFragment();
-        
-        batch.forEach(boutique => {
-            const div = document.createElement('div');
-            div.innerHTML = createActiveBoutiqueItem(boutique);
-            fragment.appendChild(div.firstChild);
-        });
-        
-        container.appendChild(fragment);
-        currentIndex += batchSize;
-        
-        if (currentIndex < boutiques.length) {
-            requestAnimationFrame(renderBatch);
-        }
-    }
-    
-    renderBatch();
+function resetSearch() {
+    const inp = dom.searchInput();
+    if (inp) inp.value = '';
+    dom.searchClear()?.classList.remove('visible');
+    STATE.searchTerm = '';
+    STATE.visibleCount = CFG.PAGE_SIZE;
+    filterAndSort();
 }
 
-// ==================== CRÉATION D'UN ITEM BOUTIQUE STANDARD ====================
-function createBoutiqueItem(boutique) {
-    const isSaved = savedBoutiques.has(boutique.id);
-    
-    const logoDisplay = boutique.logo 
-        ? `<img data-src="${boutique.logo}" alt="${boutique.nom}" class="lazy-load">` 
-        : getEmojiForBoutique(boutique.nom);
+/* ══════════════════════════════════════════════
+   MODAL DETAIL BOUTIQUE
+══════════════════════════════════════════════ */
+function openShopModal(shopId) {
+    const shop = STATE.allShops.find(s => s.id === shopId);
+    if (!shop) return;
 
-    return `
-        <div class="boutique-item" onclick="showBoutiqueModal('${boutique.id}')">
-            <div class="boutique-logo" style="background: ${boutique.couleur};">
-                ${logoDisplay}
-            </div>
-            
-            <div class="boutique-info">
-                <div class="boutique-name">${boutique.nom}</div>
-                <div class="boutique-slug">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                    </svg>
-                    @${boutique.slug}
+    const isSubbed  = STATE.subscribedShops.has(shopId);
+    const content   = dom.shopModalContent();
+    if (!content) return;
+
+    const avatarHtml = shop.logo_url
+        ? `<img src="${escHtml(shop.logo_url)}" class="modal-shop-avatar" alt="${escHtml(shop.name)}">`
+        : `<div class="modal-shop-avatar-ph">${getShopEmoji(shop)}</div>`;
+
+    const verifiedHtml = shop.verified
+        ? `<span class="modal-verified">✓ Boutique Vérifiée</span>` : '';
+
+    const descHtml = shop.description
+        ? `<p class="modal-desc">${escHtml(shop.description)}</p>` : '';
+
+    content.innerHTML = `
+        <div class="modal-shop-cover" style="--shop-color:${shop.color}"></div>
+        <div class="modal-body-inner">
+            <div class="modal-shop-header">
+                ${avatarHtml}
+                <div class="modal-shop-info">
+                    <div class="modal-shop-name">${escHtml(shop.name)}</div>
+                    ${shop.slug ? `<div class="modal-shop-slug">@${escHtml(shop.slug)}</div>` : ''}
+                    ${verifiedHtml}
                 </div>
             </div>
-            
-            <div class="boutique-actions">
-                <button class="btn-save ${isSaved ? 'saved' : ''}" 
-                        onclick="event.stopPropagation(); toggleSaveBoutique('${boutique.id}')">
-                    ${isSaved ? '❤️' : '🤍'}
+
+            <div class="modal-stats-grid">
+                <div class="modal-stat-box">
+                    <div class="modal-stat-num" style="color:#FF4D6D">${formatNum(shop.likeCount)}</div>
+                    <div class="modal-stat-label">❤️ Likes</div>
+                </div>
+                <div class="modal-stat-box">
+                    <div class="modal-stat-num" style="color:#60A5FA">${formatNum(shop.productCount)}</div>
+                    <div class="modal-stat-label">📦 Produits</div>
+                </div>
+                <div class="modal-stat-box">
+                    <div class="modal-stat-num" style="color:var(--primary)">${formatNum(shop.subscriberCount)}</div>
+                    <div class="modal-stat-label">🔔 Abonnés</div>
+                </div>
+            </div>
+
+            ${descHtml}
+
+            <div class="modal-actions">
+                <button class="modal-btn-sub ${isSubbed ? 'subscribed' : ''}"
+                    data-subscribe="${shop.id}"
+                    onclick="toggleSubscribe('${shop.id}', this)">
+                    ${isSubbed ? '✓ Abonné' : "🔔 S'abonner"}
                 </button>
-                <div class="btn-info"></div>
-            </div>
-        </div>
-    `;
-}
-
-// ==================== CRÉATION D'UN ITEM BOUTIQUE ACTIVE ====================
-function createActiveBoutiqueItem(boutique) {
-    const isSaved = savedBoutiques.has(boutique.id);
-    
-    const logoDisplay = boutique.logo 
-        ? `<img data-src="${boutique.logo}" alt="${boutique.nom}" class="lazy-load">` 
-        : getEmojiForBoutique(boutique.nom);
-
-    // Calculer l'activité récente
-    const now = new Date();
-    const lastActivity = new Date(boutique.lastActivity);
-    const daysSinceActivity = Math.floor((now - lastActivity) / (1000 * 60 * 60 * 24));
-    
-    let activityText = '';
-    if (daysSinceActivity === 0) activityText = "Aujourd'hui";
-    else if (daysSinceActivity === 1) activityText = "Hier";
-    else if (daysSinceActivity < 7) activityText = `Il y a ${daysSinceActivity}j`;
-    else if (daysSinceActivity < 30) activityText = `Il y a ${Math.floor(daysSinceActivity / 7)}sem`;
-    else activityText = `Il y a ${Math.floor(daysSinceActivity / 30)}mois`;
-
-    return `
-        <div class="boutique-item" onclick="showBoutiqueModal('${boutique.id}')">
-            <div class="boutique-logo" style="background: ${boutique.couleur};">
-                ${logoDisplay}
-            </div>
-            
-            <div class="boutique-info">
-                <div class="boutique-name">${boutique.nom}</div>
-                <div class="boutique-slug">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    </svg>
-                    ${boutique.productCount} produit${boutique.productCount > 1 ? 's' : ''} • ${activityText}
-                </div>
-            </div>
-            
-            <div class="boutique-actions">
-                <button class="btn-save ${isSaved ? 'saved' : ''}" 
-                        onclick="event.stopPropagation(); toggleSaveBoutique('${boutique.id}')">
-                    ${isSaved ? '❤️' : '🤍'}
+                <button class="modal-btn-visit"
+                    onclick="visitShop('${shop.id}','${escHtml(shop.slug || '')}')">
+                    Visiter →
                 </button>
-                <div class="btn-info"></div>
             </div>
-        </div>
-    `;
+        </div>`;
+
+    dom.shopModalOverlay()?.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
-// ==================== LAZY LOADING DES IMAGES ====================
-function initLazyLoading() {
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const src = img.getAttribute('data-src');
-                    if (src) {
-                        img.src = src;
-                        img.classList.remove('lazy-load');
-                        observer.unobserve(img);
-                    }
-                }
-            });
-        }, {
-            rootMargin: '50px'
-        });
+function closeShopModal() {
+    dom.shopModalOverlay()?.classList.remove('active');
+    document.body.style.overflow = '';
+}
 
-        // Observer toutes les images lazy
-        document.querySelectorAll('.lazy-load').forEach(img => {
-            imageObserver.observe(img);
-        });
-    } else {
-        // Fallback pour les navigateurs sans IntersectionObserver
-        document.querySelectorAll('.lazy-load').forEach(img => {
-            const src = img.getAttribute('data-src');
-            if (src) img.src = src;
-        });
+function visitShop(shopId, slug) {
+    window.location.href = slug
+        ? `shop.html?s=${encodeURIComponent(slug)}`
+        : `shop.html?id=${encodeURIComponent(shopId)}`;
+}
+
+/* ══════════════════════════════════════════════
+   MENU
+══════════════════════════════════════════════ */
+function openMenu() {
+    dom.sideMenu()?.classList.add('active');
+    dom.overlay()?.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMenu() {
+    dom.sideMenu()?.classList.remove('active');
+    dom.overlay()?.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+/* ══════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════ */
+function updateHeaderStats() {
+    const t = dom.totalShopsNum();
+    const s = dom.totalSubscribedNum();
+    if (t) t.textContent = formatNum(STATE.allShops.length);
+    if (s) s.textContent = formatNum(STATE.subscribedShops.size);
+}
+
+function loadMore() {
+    STATE.visibleCount += CFG.PAGE_SIZE;
+    renderAllShops();
+}
+
+function shuffleArr(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
     }
 }
 
-// ==================== EMOJI PAR DÉFAUT ====================
-function getEmojiForBoutique(nom) {
-    const emojis = ['🪐', '🛍️', '🏬', '🛒', '🎁', '📦', '🎨', '👕', '👗', '👠'];
-    const index = nom.charCodeAt(0) % emojis.length;
-    return emojis[index];
+function formatNum(n) {
+    if (!n) return '0';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k';
+    return String(n);
 }
 
-// ==================== MODAL DÉTAILS BOUTIQUE ====================
-function showBoutiqueModal(boutiqueId) {
-    const boutique = allBoutiques.find(b => b.id === boutiqueId);
-    if (!boutique) return;
-
-    const modal = document.getElementById('modalOverlay');
-    const modalContent = document.getElementById('modalContent');
-    const isSaved = savedBoutiques.has(boutiqueId);
-
-    const dateCreation = formatDate(boutique.dateCreation);
-    const dateModification = boutique.dateModification ? formatDate(boutique.dateModification) : 'Jamais';
-    
-    const logoDisplay = boutique.logo 
-        ? `<img src="${boutique.logo}" alt="${boutique.nom}">` 
-        : getEmojiForBoutique(boutique.nom);
-
-    modalContent.innerHTML = `
-        <div class="modal-boutique-header">
-            <div class="modal-logo" style="background: ${boutique.couleur};">
-                ${logoDisplay}
-            </div>
-            <h2 class="modal-boutique-name">${boutique.nom}</h2>
-            <div class="modal-boutique-slug">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-                @${boutique.slug}
-            </div>
-        </div>
-
-        <div class="modal-info-grid">
-            ${boutique.description ? `
-                <div class="info-item">
-                    <div class="info-icon">📝</div>
-                    <div class="info-content">
-                        <div class="info-label">Description</div>
-                        <div class="info-value">${boutique.description}</div>
-                    </div>
-                </div>
-            ` : ''}
-
-            <div class="info-item">
-                <div class="info-icon">📅</div>
-                <div class="info-content">
-                    <div class="info-label">Date de création</div>
-                    <div class="info-value">${dateCreation}</div>
-                </div>
-            </div>
-
-            ${boutique.dateModification ? `
-                <div class="info-item">
-                    <div class="info-icon">🔄</div>
-                    <div class="info-content">
-                        <div class="info-label">Dernière modification</div>
-                        <div class="info-value">${dateModification}</div>
-                    </div>
-                </div>
-            ` : ''}
-
-            ${boutique.adresse ? `
-                <div class="info-item">
-                    <div class="info-icon">📍</div>
-                    <div class="info-content">
-                        <div class="info-label">Adresse</div>
-                        <div class="info-value">${boutique.adresse}</div>
-                    </div>
-                </div>
-            ` : ''}
-
-            ${boutique.telephone ? `
-                <div class="info-item">
-                    <div class="info-icon">📞</div>
-                    <div class="info-content">
-                        <div class="info-label">Téléphone</div>
-                        <div class="info-value">${boutique.telephone}</div>
-                    </div>
-                </div>
-            ` : ''}
-
-            ${boutique.email ? `
-                <div class="info-item">
-                    <div class="info-icon">✉️</div>
-                    <div class="info-content">
-                        <div class="info-label">Email</div>
-                        <div class="info-value">${boutique.email}</div>
-                    </div>
-                </div>
-            ` : ''}
-        </div>
-
-        <div class="modal-actions">
-            <button class="btn-modal btn-visit" onclick="visitBoutique('${boutique.slug}')">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15 3 21 3 21 9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                Visiter la boutique
-            </button>
-            <button class="btn-modal btn-save-modal ${isSaved ? 'saved' : ''}" 
-                    onclick="toggleSaveBoutique('${boutique.id}'); updateModalSaveButton('${boutique.id}')">
-                ${isSaved ? '❤️ Enregistrée' : '🤍 Enregistrer'}
-            </button>
-        </div>
-    `;
-
-    modal.style.display = 'flex';
+function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-// ==================== MISE À JOUR BOUTON SAVE MODAL ====================
-window.updateModalSaveButton = function(boutiqueId) {
-    const isSaved = savedBoutiques.has(boutiqueId);
-    const btn = document.querySelector('.btn-save-modal');
-    if (btn) {
-        btn.className = `btn-modal btn-save-modal ${isSaved ? 'saved' : ''}`;
-        btn.innerHTML = isSaved ? '❤️ Enregistrée' : '🤍 Enregistrer';
-    }
-};
-
-// ==================== NAVIGATION VERS BOUTIQUE ====================
-window.visitBoutique = function(slug) {
-    window.location.href = `boutique.html?shop=${slug}`;
-};
-
-// ==================== GESTION DES TABS ====================
-function switchTab(tab) {
-    currentTab = tab;
-
-    // Mettre à jour les boutons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tab);
-    });
-
-    displayBoutiques();
-    
-    // Initialiser le lazy loading après l'affichage
-    setTimeout(() => initLazyLoading(), 100);
+function getShopEmoji(shop) {
+    const emojis = ['🛍️','🏪','🎁','💎','👗','👟','🍕','📱','🌿','💄','🎨','🏺'];
+    const idx = (shop.name?.charCodeAt(0) || 0) % emojis.length;
+    return emojis[idx];
 }
 
-window.switchTab = switchTab;
-
-// ==================== GESTION DE LA RECHERCHE ====================
-let searchTimeout;
-
-function handleSearch(value) {
-    clearTimeout(searchTimeout);
-    
-    searchTimeout = setTimeout(() => {
-        searchQuery = value;
-        displayBoutiques();
-        setTimeout(() => initLazyLoading(), 100);
-    }, 300);
-}
-
-function toggleSearch() {
-    const searchContainer = document.getElementById('searchContainer');
-    const searchInput = document.getElementById('searchInput');
-    
-    if (searchContainer.style.display === 'none') {
-        searchContainer.style.display = 'block';
-        searchInput.focus();
-    } else {
-        searchContainer.style.display = 'none';
-        searchInput.value = '';
-        searchQuery = '';
-        displayBoutiques();
-        setTimeout(() => initLazyLoading(), 100);
-    }
-}
-
-// ==================== UTILITAIRES ====================
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const options = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    return date.toLocaleDateString('fr-FR', options);
-}
-
-function showLoader() {
-    const loader = document.getElementById('loader');
-    if (loader) loader.style.display = 'flex';
-}
-
-function hideLoader() {
-    const loader = document.getElementById('loader');
-    if (loader) loader.style.display = 'none';
-}
-
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const icons = {
-        success: '✅',
-        error: '❌',
-        info: 'ℹ️',
-        warning: '⚠️'
-    };
-
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <div class="toast-icon">${icons[type]}</div>
-        <div class="toast-message">${message}</div>
-    `;
-
-    container.appendChild(toast);
-
+function showToast(msg, type = 'info') {
+    const c = dom.toastContainer();
+    if (!c) return;
+    const icons = { success: '✅', error: '❌', info: '💬' };
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="toast-icon">${icons[type] || '💬'}</span><span>${escHtml(msg)}</span>`;
+    c.appendChild(t);
     setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+        t.classList.add('fade-out');
+        setTimeout(() => t.remove(), 350);
+    }, 3200);
 }
 
-// ==================== EXPOSER LES FONCTIONS GLOBALES ====================
-window.toggleSaveBoutique = toggleSaveBoutique;
-window.showBoutiqueModal = showBoutiqueModal;
+/* ══════════════════════════════════════════════
+   EVENT LISTENERS
+══════════════════════════════════════════════ */
+function initEventListeners() {
+    $('menuBtn')?.addEventListener('click', openMenu);
+    $('closeMenuBtn')?.addEventListener('click', closeMenu);
+    dom.overlay()?.addEventListener('click', closeMenu);
 
-// ==================== INITIALISATION ====================
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🪐 ODA Boutiques - Initialisation...');
-
-    // Gestion du bouton retour
-    const btnBack = document.getElementById('btnBack');
-    if (btnBack) {
-        btnBack.addEventListener('click', () => {
-            if (document.referrer && document.referrer.includes(window.location.origin)) {
-                window.history.back();
-            } else {
-                window.location.href = 'oda-achats.html';
-            }
+    const si = dom.searchInput();
+    if (si) {
+        si.addEventListener('input', e => onSearch(e.target.value));
+        si.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { resetSearch(); si.blur(); }
         });
     }
 
-    // Charger les boutiques
-    await loadBoutiques();
-    
-    // Initialiser le lazy loading
-    setTimeout(() => initLazyLoading(), 100);
-
-    // Gestion des tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            switchTab(btn.dataset.tab);
-        });
+    dom.searchClear()?.addEventListener('click', () => {
+        if (dom.searchInput()) dom.searchInput().value = '';
+        resetSearch();
+        dom.searchInput()?.focus();
     });
 
-    // Gestion de la recherche
-    const searchBtn = document.getElementById('searchBtn');
-    const searchClose = document.getElementById('searchClose');
-    const searchInput = document.getElementById('searchInput');
+    dom.sortSelect()?.addEventListener('change', e => {
+        STATE.sortBy = e.target.value;
+        filterAndSort();
+    });
 
-    if (searchBtn) searchBtn.addEventListener('click', toggleSearch);
-    if (searchClose) searchClose.addEventListener('click', toggleSearch);
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            handleSearch(e.target.value);
-        });
-    }
+    dom.btnLoadMore()?.addEventListener('click', loadMore);
 
-    // Gestion de la modal
-    const modalOverlay = document.getElementById('modalOverlay');
-    const btnCloseModal = document.getElementById('btnCloseModal');
-
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener('click', () => {
-            modalOverlay.style.display = 'none';
-        });
-    }
-
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                modalOverlay.style.display = 'none';
-            }
-        });
-    }
-
-    // Gestion du scroll header
-    let lastScrollTop = 0;
     window.addEventListener('scroll', () => {
-        const header = document.querySelector('.main-header');
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
-        if (scrollTop > lastScrollTop && scrollTop > 100) {
-            header.style.transform = 'translateY(-100%)';
-        } else {
-            header.style.transform = 'translateY(0)';
-        }
-        
-        lastScrollTop = scrollTop;
-    });
+        dom.header()?.classList.toggle('scrolled', window.scrollY > 30);
+    }, { passive: true });
 
-    console.log('✅ Initialisation terminée');
-});
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeShopModal();
+    });
+}
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+async function init() {
+    const t0 = performance.now();
+
+    // Afficher skeletons immédiatement
+    renderStorySkeletons(dom.top10Grid(), 5);
+    renderTileSkeletons(dom.allShopsGrid(), 6);
+
+    initEventListeners();
+    loader.start();
+
+    const cached = cacheManager.load();
+
+    if (cached?.fresh) {
+        loader.update(10, 'Cache détecté...');
+        await loader.delay(60);
+        loader.update(45, 'Chargement boutiques...');
+        applyToState(cached.data);
+        renderTop10();
+        await loader.delay(60);
+        loader.update(75, 'Affichage...');
+        filterAndSort();
+        updateHeaderStats();
+        await loader.simulate(75, 100, 250);
+        loader.complete();
+        console.log(`⚡ Chargé depuis cache en ${(performance.now()-t0).toFixed(0)}ms`);
+
+        initAuth().then(() => { if (STATE.currentUser) loadSubscriptions(); });
+        setTimeout(async () => {
+            try {
+                const fresh = await loadFromNetwork(false);
+                applyToState(fresh);
+                renderTop10();
+                filterAndSort();
+                updateHeaderStats();
+                if (STATE.currentUser) updateAllSubscribeButtons();
+            } catch (e) { console.warn('Refresh silencieux échoué:', e.message); }
+        }, 3000);
+        return;
+    }
+
+    if (cached?.stale) {
+        loader.update(20, 'Cache (actualisation...)');
+        applyToState(cached.data);
+        renderTop10();
+        filterAndSort();
+        updateHeaderStats();
+        loader.complete();
+        console.log(`📦 Cache expiré utilisé — refresh`);
+
+        initAuth().then(() => { if (STATE.currentUser) loadSubscriptions(); });
+        setTimeout(async () => {
+            try {
+                const fresh = await loadFromNetwork(false);
+                cacheManager.save(fresh);
+                applyToState(fresh);
+                renderTop10();
+                filterAndSort();
+                updateHeaderStats();
+                if (STATE.currentUser) updateAllSubscribeButtons();
+            } catch (e) { console.warn('Refresh échoué:', e.message); }
+        }, 500);
+        return;
+    }
+
+    // Première visite — réseau
+    try {
+        const [shops] = await Promise.all([
+            loadFromNetwork(true),
+            initAuth(),
+        ]);
+        loader.update(90, 'Affichage final...');
+        applyToState(shops);
+        renderTop10();
+        filterAndSort();
+        updateHeaderStats();
+        if (STATE.currentUser) await loadSubscriptions();
+        loader.complete();
+        console.log(`🌐 Chargé depuis réseau en ${(performance.now()-t0).toFixed(0)}ms`);
+    } catch (err) {
+        console.error('❌ Init error:', err);
+        loader.showError(err.message || 'Erreur de chargement');
+        showToast('❌ Erreur : ' + (err.message || 'Vérifiez votre connexion'), 'error');
+    }
+}
+
+/* ══════════════════════════════════════════════
+   GLOBALS & START
+══════════════════════════════════════════════ */
+window.toggleSubscribe = toggleSubscribe;
+window.visitShop       = visitShop;
+window.openShopModal   = openShopModal;
+window.closeShopModal  = closeShopModal;
+window.closeMenu       = closeMenu;
+window.openMenu        = openMenu;
+window.resetSearch     = resetSearch;
+
+window.ODA_BOUTIQUES = {
+    state:        () => STATE,
+    cacheFlush:   () => { cacheManager.clear(); location.reload(); },
+    forceRefresh: async () => { cacheManager.clear(); await init(); },
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+} else {
+    init();
+}
+
+console.log('🏪 ODA Boutiques Snap — JS v4 chargé');
 </script>
 </body>
 </html>

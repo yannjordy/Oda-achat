@@ -2680,7 +2680,225 @@ body.dark-mode .section-header h3 {
     margin-left: 8px;
     font-weight: 700;
 }
+/* ====== BOUTON VENDEUR ODA ====== */
+.oda-vendor-btn {
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    border-radius: 10px !important;
+    transition: all 0.3s !important;
+}
+.oda-vendor-btn:hover {
+    border-color: var(--primary-color) !important;
+    background: rgba(255,107,0,0.15) !important;
+}
+.oda-vendor-btn.connected {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.3) !important;
+}
 
+/* ====== MODAL ODA VENDEUR ====== */
+.oda-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 70px;
+    padding-right: 16px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.oda-modal-overlay.active {
+    pointer-events: all;
+    opacity: 1;
+}
+.oda-modal-overlay .backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.2);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.oda-modal-box {
+    position: relative;
+    z-index: 1;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 28px 24px;
+    width: 280px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    transform: translateY(-10px) scale(0.96);
+    transition: all 0.25s cubic-bezier(0.34,1.4,0.64,1);
+    text-align: center;
+}
+.oda-modal-overlay.active .oda-modal-box {
+    transform: translateY(0) scale(1);
+}
+.oda-modal-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    object-fit: cover;
+    margin: 0 auto 14px;
+    display: block;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.oda-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.oda-modal-sub {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+.oda-connect-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.95);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+.oda-connect-btn:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+.oda-connect-btn img {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+}
+.oda-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.72rem;
+}
+.oda-divider::before, .oda-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+}
+.oda-no-account {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+}
+.oda-no-account a {
+    color: rgba(255,255,255,0.9);
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+/* État connecté */
+.oda-connected-state .oda-modal-title { font-size: 0.85rem; color: rgba(255,255,255,0.8); font-weight:500; }
+.oda-user-avatar {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #FF6B00, #e55d00);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 800; color: white;
+    margin: 0 auto 10px;
+    box-shadow: 0 4px 14px rgba(255,107,0,0.4);
+}
+.oda-sandbox-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #FF6B00, #e55d00);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(255,107,0,0.35);
+    margin-bottom: 8px;
+}
+.oda-sandbox-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,0,0.5); }
+.oda-logout-link {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    transition: color 0.2s;
+}
+.oda-logout-link:hover { color: rgba(255,255,255,0.8); }
+@keyframes bounceIn {
+    0%{transform:scale(0);opacity:0}
+    60%{transform:scale(1.2)}
+    100%{transform:scale(1);opacity:1}
+}
+@keyframes pulse {
+    0%{box-shadow:0 0 0 0 rgba(255,107,0,0.7)}
+    70%{box-shadow:0 0 0 20px rgba(255,107,0,0)}
+    100%{box-shadow:0 0 0 0 rgba(255,107,0,0)}
+}
+@keyframes confettiFall {
+    0%{transform:translateY(-10px) rotate(0deg);opacity:1}
+    100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+@keyframes odaFadeIn {
+    from{opacity:0;transform:translateY(-8px) scale(0.97)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+.oda-form-input {
+    width:100%;
+    padding:11px 14px;
+    background:rgba(255,255,255,0.15);
+    border:1.5px solid rgba(255,255,255,0.3);
+    border-radius:10px;
+    font-size:0.88rem;
+    color:white;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    transition:all 0.2s;
+    margin-bottom:10px;
+}
+.oda-form-input::placeholder{color:rgba(255,255,255,0.55);}
+.oda-form-input:focus{
+    border-color:rgba(255,255,255,0.7);
+    background:rgba(255,255,255,0.22);
+}
+.oda-form-error {
+    background:rgba(239,68,68,0.2);
+    border:1px solid rgba(239,68,68,0.4);
+    color:#fca5a5;
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:0.78rem;
+    margin-bottom:10px;
+    display:none;
+    text-align:left;
+}
+.oda-form-error.show{display:block;}
 </style>
 <body>
     <!-- Loader -->
@@ -2717,11 +2935,8 @@ body.dark-mode .section-header h3 {
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
                 </button>
-                <button class="icon-btn" id="notifBtn" title="Notifications">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                    </svg>
+                <button class="icon-btn oda-vendor-btn" id="vendorBtn" title="Se connecter - Espace Vendeur" onclick="ouvrirModalOda()">
+                    <img src="oda-logo.png" alt="ODA" style="width:26px;height:26px;border-radius:6px;object-fit:cover;">
                 </button>
                 
                
@@ -2736,6 +2951,12 @@ body.dark-mode .section-header h3 {
                     <path d="M21 21l-4.35-4.35"/>
                 </svg>
                 <input type="text" placeholder="Rechercher des produits, boutiques..." id="searchInput">
+            </div>
+        </div>
+        <div class="oda-modal-overlay" id="odaModalOverlay">
+            <div class="backdrop" onclick="fermerOdaModal()"></div>
+            <div class="oda-modal-box" id="odaModalBox">
+                <!-- Contenu injecté dynamiquement -->
             </div>
         </div>
     </header>
@@ -2828,13 +3049,7 @@ body.dark-mode .section-header h3 {
         </div>
     </div>
 </div>
-<!-- ============================================ -->
-<!-- CODE HTML À AJOUTER AVANT </body>           -->
-<!-- Placez ce code juste avant la ligne 5314    -->
-<!-- (avant la balise </body>)                   -->
-<!-- ============================================ -->
 
-<!-- Modal 1: À propos -->
 <div id="aboutModal" class="oda-modal">
     <div class="modal-overlay" onclick="closeModal('aboutModal')"></div>
     <div class="modal-content modal-about">
@@ -3219,6 +3434,33 @@ body.dark-mode .section-header h3 {
                     <small class="form-hint" id="nameChangeHint">Changement de nom autorisé tous les 3 mois</small>
                 </div>
             </div>
+            <div class="oda-modal-overlay" id="odaModalOverlay">
+                <div class="backdrop" onclick="fermerOdaModal()"></div>
+                <div class="oda-modal-box" id="odaModalBox"></div>
+            </div>
+            
+            <!-- ====== ANIMATION FÉLICITATIONS ====== -->
+            <div id="odaCelebration" style="
+                position:fixed;inset:0;z-index:999999;
+                display:none;align-items:center;justify-content:center;
+                background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);
+                flex-direction:column;gap:16px;
+            ">
+                <div id="celebrationContent" style="text-align:center;">
+                    <div style="font-size:4rem;animation:bounceIn 0.6s ease;">🎉</div>
+                    <div style="font-size:1.4rem;font-weight:800;color:white;margin-top:12px;" id="celebrationName"></div>
+                    <div style="font-size:0.9rem;color:rgba(255,255,255,0.8);margin-top:6px;">Bienvenue dans votre espace vendeur !</div>
+                    <div style="
+                        margin-top:20px;width:60px;height:60px;
+                        border-radius:50%;background:linear-gradient(135deg,#FF6B00,#e55d00);
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:1.6rem;margin:20px auto 0;
+                        box-shadow:0 0 0 0 rgba(255,107,0,0.7);
+                        animation:pulse 1.5s infinite;
+                    ">🏪</div>
+                </div>
+                <div id="celebrationConfetti" style="position:fixed;inset:0;pointer-events:none;overflow:hidden;"></div>
+            </div>
             
             <!-- Section Notifications -->
             
@@ -3341,6 +3583,7 @@ body.dark-mode .section-header h3 {
     </div>
 </div>
 <script src="pwa-manager.js"></script>
+<script src="connexion-vendeur.js"></script>
 <script type="module">
     // ==================== CONFIGURATION SUPABASE ====================
 const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';

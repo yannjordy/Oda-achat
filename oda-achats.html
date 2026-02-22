@@ -1765,13 +1765,13 @@ body {
 }
 
 .modal-backdrop {
-    position: absolute;
+    position: fixed;           /* ← fixed au lieu de absolute */
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 0;
 }
 
 @keyframes modalSlideIn {
@@ -1990,14 +1990,13 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: transparent;   
+   /
 }
 
 .settings-modal.active {
     display: flex;
 }
-
 .settings-modal-content {
     position: relative;
     background: white;
@@ -2008,7 +2007,7 @@ body {
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease;
-    z-index: 1;
+    z-index: 1;               
 }
 
 .settings-header {
@@ -3585,1426 +3584,1103 @@ body.dark-mode .section-header h3 {
 <script src="pwa-manager.js"></script>
 <script src="connexion-vendeur.js"></script>
 <script type="module">
-    // ==================== CONFIGURATION SUPABASE ====================
+
+
+// ==================== CONFIGURATION SUPABASE ====================
 const SUPABASE_URL = 'https://xjckbqbqxcwzcrlmuvzf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqY2ticWJxeGN3emNybG11dnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTk1MzMsImV4cCI6MjA3NjA5NTUzM30.AMzAUwtjFt7Rvof5r2enMyYIYToc1wNWWEjvZqK_YXM';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==================== VARIABLES GLOBALES ====================
-let allProducts = [];
+let allProducts      = [];
 let favoriteProducts = new Set();
-let productLikes = {};
-let productComments = {};
-let currentFilter = 'all';
+let productLikes     = {};
+let productComments  = {};
+let currentFilter    = 'all';
 let carouselInterval;
-let currentSlide = 0;
-let popularProducts = [];
-let currentUserId = getUserId();
+let currentSlide     = 0;
+let popularProducts  = [];
+let currentUserId    = getUserId();
 
-// ==================== 1. CACHE MANAGER ====================
+// ==================== CONFIGURATION APP ====================
+const CONFIG = {
+    CACHE_DURATION : 5 * 60 * 1000,  // ✅ 5 minutes (plus 7 jours)
+    DEBOUNCE_DELAY : 300,
+    CAROUSEL_INTERVAL : 5000,
+    LOW_STOCK_THRESHOLD : 5,
+    NEW_PRODUCT_DAYS : 7,
+    RECOMMEND_LIKES : 3,
+    TOP_RATING : 4,
+    SALE_PRICE : 5000,
+    TOP_PERCENT : 0.3,
+};
 
+// ==================== CACHE MANAGER (5 minutes) ====================
 class CacheManager {
     constructor() {
-        this.CACHE_KEYS = {
-            PRODUCTS: 'oda_products_v2',
-            LIKES: 'oda_likes_v2',
-            COMMENTS: 'oda_comments_v2',
-            SHOPS: 'oda_shops_v2',
-            TIMESTAMP: 'oda_cache_timestamp'
+        this.KEYS = {
+            PRODUCTS  : 'oda_products_v3',
+            LIKES     : 'oda_likes_v3',
+            COMMENTS  : 'oda_comments_v3',
+            SHOPS     : 'oda_shops_v3',
+            TIMESTAMP : 'oda_cache_ts_v3',
         };
-        
-        // MODIFICATION IMPORTANTE: Cache de 7 jours au lieu de 1 heure
-        this.CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
-        
-        console.log(`📦 CacheManager initialisé - Durée: ${this.CACHE_DURATION / (24 * 60 * 60 * 1000)} jours`);
     }
 
-    saveToCache(key, data) {
+    // ─── Écriture ───────────────────────────────────────────
+    save(key, data) {
         try {
-            const cacheData = { 
-                data, 
-                timestamp: Date.now(),
-                expiresAt: Date.now() + this.CACHE_DURATION
-            };
-            
-            localStorage.setItem(key, JSON.stringify(cacheData));
-            
-            // Calculer la date d'expiration
-            const expirationDate = new Date(cacheData.expiresAt);
-            console.log(`💾 Cache sauvegardé: ${key}`);
-            console.log(`   📅 Expire le: ${expirationDate.toLocaleDateString('fr-FR')} à ${expirationDate.toLocaleTimeString('fr-FR')}`);
-            
+            localStorage.setItem(key, JSON.stringify({
+                data,
+                ts : Date.now(),
+                exp: Date.now() + CONFIG.CACHE_DURATION,
+            }));
             return true;
         } catch (e) {
-            console.error(`❌ Erreur cache ${key}:`, e);
-            
-            // Si quota dépassé, nettoyer les anciens caches
-            if (e.name === 'QuotaExceededError') {
-                console.warn('⚠️ Quota localStorage dépassé - Nettoyage en cours...');
-                this.clearOldCaches();
-                
-                try {
-                    localStorage.setItem(key, JSON.stringify({ 
-                        data, 
-                        timestamp: Date.now(),
-                        expiresAt: Date.now() + this.CACHE_DURATION
-                    }));
-                    console.log('✅ Cache sauvegardé après nettoyage');
-                    return true;
-                } catch (e2) {
-                    console.error('❌ Échec après nettoyage:', e2);
-                }
-            }
+            if (e.name === 'QuotaExceededError') this._purge();
             return false;
         }
     }
 
-    loadFromCache(key) {
-        try {
-            const cached = localStorage.getItem(key);
-            if (!cached) {
-                console.log(`📦 Cache non trouvé: ${key}`);
-                return null;
-            }
-            
-            const { data, timestamp, expiresAt } = JSON.parse(cached);
-            const now = Date.now();
-            const age = now - timestamp;
-            const remainingTime = expiresAt - now;
-            
-            // Vérifier si le cache n'est pas expiré
-            if (remainingTime > 0) {
-                const ageInDays = Math.floor(age / (24 * 60 * 60 * 1000));
-                const ageInHours = Math.floor((age % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-                const remainingDays = Math.floor(remainingTime / (24 * 60 * 60 * 1000));
-                
-                console.log(`📦 Cache chargé: ${key}`);
-                console.log(`   ⏱️ Âge: ${ageInDays}j ${ageInHours}h`);
-                console.log(`   ⏳ Reste: ${remainingDays} jours`);
-                
-                return data;
-            } else {
-                console.log(`⏰ Cache expiré: ${key} - Suppression`);
-                localStorage.removeItem(key);
-                return null;
-            }
-        } catch (e) {
-            console.error(`❌ Erreur lecture cache ${key}:`, e);
-            // Supprimer le cache corrompu
-            localStorage.removeItem(key);
-            return null;
-        }
+    saveAll(products, likes, comments, shops) {
+        this.save(this.KEYS.PRODUCTS,  products);
+        this.save(this.KEYS.LIKES,     likes);
+        this.save(this.KEYS.COMMENTS,  comments);
+        this.save(this.KEYS.SHOPS,     shops);
+        localStorage.setItem(this.KEYS.TIMESTAMP, Date.now().toString());
+        console.log('💾 Cache sauvegardé (expire dans 5 min)');
     }
 
-    saveAll(products, likes, comments, shops) {
-        console.log('💾 Sauvegarde complète en cache...');
-        
-        const results = {
-            products: this.saveToCache(this.CACHE_KEYS.PRODUCTS, products),
-            likes: this.saveToCache(this.CACHE_KEYS.LIKES, likes),
-            comments: this.saveToCache(this.CACHE_KEYS.COMMENTS, comments),
-            shops: this.saveToCache(this.CACHE_KEYS.SHOPS, shops)
-        };
-        
-        // Enregistrer le timestamp global
-        localStorage.setItem(this.CACHE_KEYS.TIMESTAMP, Date.now().toString());
-        
-        const allSaved = Object.values(results).every(r => r);
-        
-        if (allSaved) {
-            console.log('✅ Toutes les données mises en cache');
-            console.log(`   📦 Produits: ${products.length}`);
-            console.log(`   👍 Likes: ${Object.keys(likes).length} produits`);
-            console.log(`   💬 Commentaires: ${Object.keys(comments).length} produits`);
-            console.log(`   🏪 Boutiques: ${Object.keys(shops).length}`);
-        } else {
-            console.warn('⚠️ Certaines données n\'ont pas pu être mises en cache');
-        }
-        
-        return allSaved;
+    // ─── Lecture ────────────────────────────────────────────
+    load(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return null;
+            const { data, exp } = JSON.parse(raw);
+            if (Date.now() > exp) { localStorage.removeItem(key); return null; }
+            return data;
+        } catch { localStorage.removeItem(key); return null; }
     }
 
     loadAll() {
-        console.log('📦 Chargement complet depuis le cache...');
-        
         return {
-            products: this.loadFromCache(this.CACHE_KEYS.PRODUCTS),
-            likes: this.loadFromCache(this.CACHE_KEYS.LIKES),
-            comments: this.loadFromCache(this.CACHE_KEYS.COMMENTS),
-            shops: this.loadFromCache(this.CACHE_KEYS.SHOPS)
+            products : this.load(this.KEYS.PRODUCTS),
+            likes    : this.load(this.KEYS.LIKES),
+            comments : this.load(this.KEYS.COMMENTS),
+            shops    : this.load(this.KEYS.SHOPS),
         };
     }
 
-    hasCompleteCache() {
-        const hasAll = Object.values(this.CACHE_KEYS).slice(0, 4).every(key => {
-            const item = localStorage.getItem(key);
-            if (!item) return false;
-            
-            try {
-                const { timestamp, expiresAt } = JSON.parse(item);
-                const isValid = Date.now() < expiresAt;
-                
-                if (!isValid) {
-                    console.log(`⏰ Cache expiré détecté: ${key}`);
-                }
-                
-                return isValid;
-            } catch { 
-                console.error(`❌ Cache corrompu: ${key}`);
-                return false; 
-            }
-        });
-        
-        if (hasAll) {
-            console.log('✅ Cache complet et valide disponible');
-        } else {
-            console.log('❌ Cache incomplet ou expiré');
-        }
-        
-        return hasAll;
-    }
-
-    clearOldCaches() {
-        console.log('🧹 Nettoyage des anciens caches...');
-        
-        let clearedCount = 0;
-        const keysToKeep = Object.values(this.CACHE_KEYS);
-        
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            
-            // Ne pas supprimer les clés importantes
-            if (!keysToKeep.includes(key)) {
-                // Supprimer les anciennes clés ODA
-                if (key.startsWith('oda_')) {
-                    localStorage.removeItem(key);
-                    clearedCount++;
-                    console.log(`   🗑️ Supprimé: ${key}`);
-                }
-            }
-        }
-        
-        console.log(`✅ ${clearedCount} ancien(s) cache(s) supprimé(s)`);
-    }
-
-    clearAll() {
-        console.log('🗑️ Suppression complète du cache...');
-        
-        Object.values(this.CACHE_KEYS).forEach(key => {
-            localStorage.removeItem(key);
-            console.log(`   🗑️ Supprimé: ${key}`);
-        });
-        
-        console.log('✅ Cache vidé complètement');
-    }
-
-    getStats() {
-        const stats = {
-            valid: this.hasCompleteCache(),
-            size: 0,
-            items: {},
-            totalAge: 0,
-            oldestItem: null,
-            newestItem: null
-        };
-        
-        Object.entries(this.CACHE_KEYS).slice(0, 4).forEach(([name, key]) => {
-            const item = localStorage.getItem(key);
-            if (item) {
+    // ─── Validité ───────────────────────────────────────────
+    isValid() {
+        return [this.KEYS.PRODUCTS, this.KEYS.LIKES, this.KEYS.COMMENTS, this.KEYS.SHOPS]
+            .every(k => {
                 try {
-                    const { timestamp, data, expiresAt } = JSON.parse(item);
-                    const age = Date.now() - timestamp;
-                    const size = new Blob([item]).size;
-                    const remainingTime = expiresAt - Date.now();
-                    
-                    stats.items[name] = {
-                        size,
-                        age,
-                        timestamp,
-                        expiresAt,
-                        remainingDays: Math.floor(remainingTime / (24 * 60 * 60 * 1000)),
-                        count: Array.isArray(data) ? data.length : Object.keys(data).length
-                    };
-                    
-                    stats.size += size;
-                    stats.totalAge += age;
-                    
-                    if (!stats.oldestItem || timestamp < stats.oldestItem.timestamp) {
-                        stats.oldestItem = { name, timestamp, age };
-                    }
-                    
-                    if (!stats.newestItem || timestamp > stats.newestItem.timestamp) {
-                        stats.newestItem = { name, timestamp, age };
-                    }
-                } catch (e) {
-                    console.error(`❌ Erreur stats pour ${key}:`, e);
-                }
-            }
-        });
-        
-        return stats;
+                    const raw = localStorage.getItem(k);
+                    if (!raw) return false;
+                    const { exp } = JSON.parse(raw);
+                    return Date.now() < exp;
+                } catch { return false; }
+            });
     }
 
-    displayStats() {
-        const stats = this.getStats();
-        
-        console.log('📊 STATISTIQUES DU CACHE');
-        console.log('═'.repeat(50));
-        console.log(`Status: ${stats.valid ? '✅ Valide' : '❌ Invalide/Expiré'}`);
-        console.log(`Taille totale: ${(stats.size / 1024).toFixed(2)} KB`);
-        
-        if (stats.oldestItem) {
-            const ageInDays = Math.floor(stats.oldestItem.age / (24 * 60 * 60 * 1000));
-            console.log(`Plus ancien: ${stats.oldestItem.name} (${ageInDays} jours)`);
+    // ─── Nettoyage ──────────────────────────────────────────
+    clearAll() {
+        Object.values(this.KEYS).forEach(k => localStorage.removeItem(k));
+        console.log('🗑️ Cache vidé');
+    }
+
+    _purge() {
+        // Supprime les anciennes clés ODA uniquement
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('oda_') && !Object.values(this.KEYS).includes(k)) {
+                localStorage.removeItem(k);
+            }
         }
-        
-        console.log('─'.repeat(50));
-        Object.entries(stats.items).forEach(([name, info]) => {
-            console.log(`${name}:`);
-            console.log(`  - Éléments: ${info.count}`);
-            console.log(`  - Taille: ${(info.size / 1024).toFixed(2)} KB`);
-            console.log(`  - Reste: ${info.remainingDays} jours`);
-        });
-        console.log('═'.repeat(50));
+    }
+
+    getInfo() {
+        const ts = localStorage.getItem(this.KEYS.TIMESTAMP);
+        if (!ts) return { valid: false, age: null };
+        const age = Date.now() - parseInt(ts);
+        const min = Math.floor(age / 60000);
+        return {
+            valid : this.isValid(),
+            age   : min < 60 ? `${min} min` : `${Math.floor(min / 60)} h`,
+        };
     }
 }
 
-// Initialiser le gestionnaire de cache global
+// Singleton global
 window.cacheManager = new CacheManager();
-console.log('✅ CacheManager initialisé avec durée de 7 jours');
+console.log('✅ CacheManager prêt (TTL = 5 min)');
 
-// ==================== 2. LOADING PROGRESS ====================
-
+// ==================== LOADING PROGRESS ====================
 class LoadingProgress {
     constructor() {
-        this.currentProgress = 0;
-        this.targetProgress = 0;
-        this.isLoading = false;
-        this.animationFrameId = null;
-        this.init();
+        this.overlay   = null;
+        this.bar       = null;
+        this.pct       = null;
+        this.stepEl    = null;
+        this.current   = 0;
+        this.target    = 0;
+        this.active    = false;
+        this.rafId     = null;
+        this._injectStyles();
     }
 
-    init() {
-        const styles = `<style>
-            .loader-overlay { 
-                position: fixed; 
-                top: 0; 
-                left: 0; 
-                right: 0; 
-                bottom: 0; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                z-index: 99999; 
-                opacity: 1; 
-                transition: opacity 0.5s; 
-            }
-            .loader-overlay.fade-out { 
-                opacity: 0; 
-                pointer-events: none; 
-            }
-            .loader-content { 
-                text-align: center; 
-                max-width: 400px; 
-                width: 90%; 
-            }
-            .loader-logo { 
-                margin-bottom: 40px; 
-                animation: fadeInDown 0.6s; 
-            }
-            .logo-icon { 
-                font-size: 4rem; 
-                margin-bottom: 16px; 
-                animation: bounce 2s infinite; 
-            }
-            .logo-text { 
-                font-size: 1.8rem; 
-                font-weight: 800; 
-                color: white; 
-                text-shadow: 0 2px 20px rgba(0,0,0,0.3); 
-            }
-            .progress-container { 
-                margin-bottom: 24px; 
-                animation: fadeInUp 0.6s 0.2s both; 
-            }
-            .progress-bar-bg { 
-                position: relative; 
-                width: 100%; 
-                height: 8px; 
-                background: rgba(255,255,255,0.2); 
-                border-radius: 10px; 
-                overflow: hidden; 
-                margin-bottom: 12px; 
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-            }
-            .progress-bar { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                height: 100%; 
-                background: linear-gradient(90deg, #FF6B00, #FFA500); 
-                border-radius: 10px; 
-                width: 0%; 
-                transition: width 0.3s ease; 
-                box-shadow: 0 0 20px rgba(255,107,0,0.5); 
-            }
-            .progress-shine { 
-                position: absolute; 
-                top: 0; 
-                left: -100%; 
-                width: 100%; 
-                height: 100%; 
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); 
-                animation: shine 2s infinite; 
-            }
-            @keyframes shine { 
-                0% { left: -100%; } 
-                50%, 100% { left: 100%; } 
-            }
-            .progress-text { 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center;
-                color: white; 
-                font-size: 0.9rem; 
-            }
-            .progress-percentage { 
-                font-size: 2.5rem; 
-                font-weight: 800; 
-                text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                font-family: 'Inter', -apple-system, sans-serif;
-                letter-spacing: -1px;
-                background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.8) 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-            }
-            .progress-step { 
-                font-size: 0.85rem; 
-                opacity: 0.9;
-                font-weight: 500;
-            }
-            .loading-dots { 
-                display: flex; 
-                justify-content: center; 
-                gap: 8px; 
-                animation: fadeInUp 0.6s 0.4s both; 
-            }
-            .loading-dots span { 
-                width: 8px; 
-                height: 8px; 
-                background: rgba(255,255,255,0.6); 
-                border-radius: 50%; 
-                animation: dotPulse 1.4s infinite both; 
-            }
-            .loading-dots span:nth-child(1) { 
-                animation-delay: -0.32s; 
-            }
-            .loading-dots span:nth-child(2) { 
-                animation-delay: -0.16s; 
-            }
-            @keyframes dotPulse { 
-                0%, 80%, 100% { 
-                    transform: scale(0.8); 
-                    opacity: 0.5; 
-                } 
-                40% { 
-                    transform: scale(1.2); 
-                    opacity: 1; 
-                } 
-            }
-            @keyframes fadeInDown { 
-                from { 
-                    opacity: 0; 
-                    transform: translateY(-30px); 
-                } 
-                to { 
-                    opacity: 1; 
-                    transform: translateY(0); 
-                } 
-            }
-            @keyframes fadeInUp { 
-                from { 
-                    opacity: 0; 
-                    transform: translateY(30px); 
-                } 
-                to { 
-                    opacity: 1; 
-                    transform: translateY(0); 
-                } 
-            }
-            @keyframes bounce { 
-                0%, 100% { 
-                    transform: translateY(0); 
-                } 
-                50% { 
-                    transform: translateY(-10px); 
-                } 
-            }
-        </style>`;
-        document.head.insertAdjacentHTML('beforeend', styles);
+    _injectStyles() {
+        if (document.getElementById('lp-styles')) return;
+        const s = document.createElement('style');
+        s.id = 'lp-styles';
+        s.textContent = `
+            .lp-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#667eea,#764ba2);
+                display:flex;align-items:center;justify-content:center;z-index:99999;
+                opacity:1;transition:opacity .5s;}
+            .lp-overlay.fade{opacity:0;pointer-events:none;}
+            .lp-box{text-align:center;width:90%;max-width:360px;}
+            .lp-icon{font-size:3.5rem;animation:lpBounce 1.5s infinite;}
+            .lp-title{font-size:1.6rem;font-weight:800;color:#fff;margin:12px 0 24px;}
+            .lp-track{width:100%;height:8px;background:rgba(255,255,255,.2);border-radius:10px;
+                overflow:hidden;margin-bottom:12px;}
+            .lp-bar{height:100%;width:0%;background:linear-gradient(90deg,#FF6B00,#FFA500);
+                border-radius:10px;transition:width .3s ease;}
+            .lp-row{display:flex;justify-content:space-between;color:#fff;font-size:.85rem;}
+            .lp-pct{font-size:2rem;font-weight:800;color:#fff;}
+            @keyframes lpBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        `;
+        document.head.appendChild(s);
     }
 
     start() {
-        this.isLoading = true;
-        this.currentProgress = 0;
-        this.targetProgress = 0;
-        
-        const html = `<div class="loader-overlay" id="loaderOverlay">
-            <div class="loader-content">
-                <div class="loader-logo">
-                    <div class="logo-icon">🛍️</div>
-                    <div class="logo-text">ODA Marketplace</div>
-                </div>
-                <div class="progress-container">
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar" id="progressBar"></div>
-                        <div class="progress-shine"></div>
-                    </div>
-                    <div class="progress-text">
-                        <span class="progress-percentage" id="progressPercentage">0%</span>
-                        <span class="progress-step" id="progressStep">Initialisation...</span>
+        this.current = 0; this.target = 0; this.active = true;
+        const html = `
+            <div class="lp-overlay" id="lpOverlay">
+                <div class="lp-box">
+                    <div class="lp-icon">🛍️</div>
+                    <div class="lp-title">ODA Marketplace</div>
+                    <div class="lp-track"><div class="lp-bar" id="lpBar"></div></div>
+                    <div class="lp-row">
+                        <span class="lp-pct" id="lpPct">0%</span>
+                        <span id="lpStep">Initialisation…</span>
                     </div>
                 </div>
-                <div class="loading-dots"><span></span><span></span><span></span></div>
-            </div>
-        </div>`;
-        
+            </div>`;
         document.body.insertAdjacentHTML('afterbegin', html);
-        this.overlay = document.getElementById('loaderOverlay');
-        this.progressBar = document.getElementById('progressBar');
-        this.progressPercentage = document.getElementById('progressPercentage');
-        this.progressStep = document.getElementById('progressStep');
-        
-        // Démarrer l'animation
-        this.animate();
-        
-        console.log('📊 Loader démarré - Affichage: 0%');
+        this.overlay = document.getElementById('lpOverlay');
+        this.bar     = document.getElementById('lpBar');
+        this.pct     = document.getElementById('lpPct');
+        this.stepEl  = document.getElementById('lpStep');
+        this._animate();
     }
 
-    updateProgress(percentage, step) {
-        // Assurer que le pourcentage est entre 0 et 100
-        this.targetProgress = Math.min(100, Math.max(0, percentage));
-        
-        // Mettre à jour le texte de l'étape si fourni
-        if (step && this.progressStep) {
-            this.progressStep.textContent = step;
-        }
-        
-        console.log(`📊 Progression: ${this.targetProgress}% ${step ? `- ${step}` : ''}`);
+    update(pct, label) {
+        this.target = Math.min(100, Math.max(0, pct));
+        if (label && this.stepEl) this.stepEl.textContent = label;
     }
 
-    animate() {
-        if (!this.isLoading) return;
-        
-        // Animation fluide avec interpolation
-        const diff = this.targetProgress - this.currentProgress;
-        
-        if (Math.abs(diff) > 0.1) {
-            // Augmenter progressivement
-            this.currentProgress += diff * 0.15;
-            
-            // Arrondir pour l'affichage
-            const displayProgress = Math.round(this.currentProgress);
-            
-            // Mettre à jour la barre de progression
-            if (this.progressBar) {
-                this.progressBar.style.width = `${displayProgress}%`;
-            }
-            
-            // Mettre à jour le pourcentage affiché
-            if (this.progressPercentage) {
-                this.progressPercentage.textContent = `${displayProgress}%`;
-            }
-            
-            // Continuer l'animation
-            this.animationFrameId = requestAnimationFrame(() => this.animate());
-        } else {
-            // Fixer à la valeur exacte quand très proche
-            this.currentProgress = this.targetProgress;
-            const displayProgress = Math.round(this.currentProgress);
-            
-            if (this.progressBar) {
-                this.progressBar.style.width = `${displayProgress}%`;
-            }
-            
-            if (this.progressPercentage) {
-                this.progressPercentage.textContent = `${displayProgress}%`;
-            }
-            
-            // Continuer d'écouter les changements
-            this.animationFrameId = requestAnimationFrame(() => this.animate());
-        }
+    _animate() {
+        if (!this.active) return;
+        const diff = this.target - this.current;
+        if (Math.abs(diff) > 0.1) this.current += diff * 0.15;
+        else this.current = this.target;
+        const d = Math.round(this.current);
+        if (this.bar)  this.bar.style.width  = `${d}%`;
+        if (this.pct)  this.pct.textContent  = `${d}%`;
+        this.rafId = requestAnimationFrame(() => this._animate());
     }
 
     complete() {
-        console.log('✅ Loader - Chargement terminé à 100%');
-        this.updateProgress(100, 'Chargement terminé !');
-        
-        // Attendre un peu avant de masquer pour montrer 100%
-        setTimeout(() => this.hide(), 800);
+        this.update(100, 'Chargement terminé !');
+        setTimeout(() => this._hide(), 800);
     }
 
-    hide() {
-        console.log('👋 Loader - Masquage du loader');
-        this.isLoading = false;
-        
-        // Annuler l'animation
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
-        }
-        
+    _hide() {
+        this.active = false;
+        cancelAnimationFrame(this.rafId);
         if (this.overlay) {
-            this.overlay.classList.add('fade-out');
-            setTimeout(() => {
-                if (this.overlay && this.overlay.parentNode) {
-                    this.overlay.remove();
-                }
-            }, 500);
+            this.overlay.classList.add('fade');
+            setTimeout(() => this.overlay?.remove(), 500);
         }
     }
 
     showError(msg) {
-        console.error(`❌ Loader - Erreur: ${msg}`);
-        
-        if (this.progressStep) {
-            this.progressStep.textContent = `❌ ${msg}`;
-        }
-        
-        if (this.progressBar) {
-            this.progressBar.style.background = 'linear-gradient(90deg, #EF4444, #DC2626)';
-        }
-        
-        setTimeout(() => this.hide(), 2000);
-    }
-    
-    // Méthode pour réinitialiser complètement
-    reset() {
-        this.hide();
-        this.currentProgress = 0;
-        this.targetProgress = 0;
-        this.isLoading = false;
+        if (this.stepEl) this.stepEl.textContent = `❌ ${msg}`;
+        if (this.bar)    this.bar.style.background = 'linear-gradient(90deg,#EF4444,#DC2626)';
+        setTimeout(() => this._hide(), 2000);
     }
 }
 
-// Initialiser globalement
 window.loadingProgress = new LoadingProgress();
-console.log('✅ LoadingProgress initialisé avec animation 0% → 100%');
-
-// ==================== 3. OPTIMIZED DATA LOADER ====================
-// ==================== ARTEFACT 3: OPTIMIZEDDATALOADER AMÉLIORÉ ====================
-// Chargeur de données optimisé avec progression fluide de 0% à 100%
-// À remplacer dans oda-achats.html à partir de la ligne 2500
+console.log('✅ LoadingProgress prêt');
 
 class OptimizedDataLoader {
-    constructor(supabase) {
-        this.supabase = supabase;
+    constructor(supabaseClient) {
+        this.sb    = supabaseClient;
         this.cache = window.cacheManager;
-        this.loader = window.loadingProgress;
-        this.data = { products: [], likes: {}, comments: {}, shops: {} };
+        this.data  = { products: [], likes: {}, comments: {}, shops: {} };
     }
 
+    // ─── Point d'entrée principal ───────────────────────────
     async load() {
-        // Démarrer le loader à 0%
-        this.loader.start();
-        this.loader.updateProgress(0, 'Vérification du cache...');
-        
-        console.log('🚀 Démarrage du chargement des données');
+        window.loadingProgress.start();
+        window.loadingProgress.update(5, 'Vérification du cache…');
 
         try {
-            // Vérifier le cache
-            if (this.cache.hasCompleteCache()) {
-                console.log('📦 Cache valide trouvé - Chargement rapide');
-                await this.loadFromCache();
-                this.loader.complete();
-                return this.data;
+            if (this.cache.isValid()) {
+                console.log('📦 Cache valide — chargement local');
+                await this._fromCache();
+            } else {
+                console.log('🌐 Cache expiré — chargement Supabase');
+                await this._fromServer();
             }
-
-            console.log('🌐 Cache manquant ou expiré - Chargement depuis le serveur');
-            await this.loadFromServer();
-            this.loader.complete();
+            window.loadingProgress.complete();
             return this.data;
-        } catch (error) {
-            console.error('❌ Erreur lors du chargement:', error);
-            this.loader.showError('Échec du chargement');
-            throw error;
+        } catch (err) {
+            console.error('❌ Erreur chargement:', err);
+            window.loadingProgress.showError('Échec du chargement');
+            throw err;
         }
     }
 
-    async loadFromCache() {
-        console.log('📦 Chargement depuis le cache local...');
-        
-        // Progression 0-10%
-        this.loader.updateProgress(5, 'Lecture du cache...');
-        
+    // ─── Depuis le cache local ──────────────────────────────
+    async _fromCache() {
+        window.loadingProgress.update(20, 'Lecture du cache…');
         const cached = this.cache.loadAll();
-        
-        // Progression 10-30%
-        this.loader.updateProgress(15, 'Chargement des produits...');
+
         this.data.products = cached.products || [];
-        await this.delay(100);
-        
-        // Progression 30-50%
-        this.loader.updateProgress(35, 'Chargement des likes...');
-        this.data.likes = cached.likes || {};
-        await this.delay(100);
-        
-        // Progression 50-70%
-        this.loader.updateProgress(55, 'Chargement des commentaires...');
+        window.loadingProgress.update(50, 'Produits restaurés…');
+
+        this.data.likes    = cached.likes    || {};
         this.data.comments = cached.comments || {};
-        await this.delay(100);
-        
-        // Progression 70-90%
-        this.loader.updateProgress(75, 'Chargement des boutiques...');
-        this.data.shops = cached.shops || {};
-        await this.delay(100);
-        
-        // Animation finale jusqu'à 100%
-        await this.simulateProgress(85, 100, 300);
-        
-        console.log(`✅ ${this.data.products.length} produits chargés depuis le cache`);
-        console.log('📊 Statistiques du cache:');
-        console.log(`   - Produits: ${this.data.products.length}`);
-        console.log(`   - Likes: ${Object.keys(this.data.likes).length} produits`);
-        console.log(`   - Commentaires: ${Object.keys(this.data.comments).length} produits`);
-        console.log(`   - Boutiques: ${Object.keys(this.data.shops).length}`);
-        
-        // Mise à jour en arrière-plan après un délai
-        setTimeout(() => this.updateInBackground(), 2000);
+        this.data.shops    = cached.shops    || {};
+        window.loadingProgress.update(90, 'Finalisation…');
+
+        console.log(`📦 ${this.data.products.length} produits depuis le cache`);
+
+        // ✅ Mise à jour silencieuse en arrière-plan
+        setTimeout(() => this._updateInBackground(), 1000);
     }
 
-    async loadFromServer() {
-        console.log('🌐 Chargement depuis le serveur Supabase...');
-        
-        try {
-            // Étape 1: Boutiques (0-20%)
-            this.loader.updateProgress(0, 'Connexion au serveur...');
-            await this.delay(200);
-            
-            this.loader.updateProgress(5, 'Chargement des boutiques...');
-            await this.loadShops();
-            this.loader.updateProgress(20, 'Boutiques chargées ✓');
-            await this.delay(150);
-            
-            // Étape 2: Produits (20-50%)
-            this.loader.updateProgress(25, 'Chargement des produits...');
-            await this.loadProducts();
-            this.loader.updateProgress(50, 'Produits chargés ✓');
-            await this.delay(150);
-            
-            // Étape 3: Likes (50-70%)
-            this.loader.updateProgress(55, 'Chargement des likes...');
-            await this.loadLikes();
-            this.loader.updateProgress(70, 'Likes chargés ✓');
-            await this.delay(150);
-            
-            // Étape 4: Commentaires (70-85%)
-            this.loader.updateProgress(73, 'Chargement des commentaires...');
-            await this.loadComments();
-            this.loader.updateProgress(85, 'Commentaires chargés ✓');
-            await this.delay(150);
-            
-            // Étape 5: Traitement (85-93%)
-            this.loader.updateProgress(87, 'Traitement des données...');
-            this.processData();
-            this.loader.updateProgress(93, 'Données traitées ✓');
-            await this.delay(150);
-            
-            // Étape 6: Mise en cache (93-98%)
-            this.loader.updateProgress(94, 'Sauvegarde en cache...');
-            this.saveToCache();
-            this.loader.updateProgress(98, 'Cache enregistré ✓');
-            await this.delay(150);
-            
-            // Finalisation (98-100%)
-            this.loader.updateProgress(99, 'Finalisation...');
-            await this.delay(100);
-            this.loader.updateProgress(100, 'Chargement terminé !');
-            
-        } catch (error) {
-            console.error('❌ Erreur chargement serveur:', error);
-            throw error;
-        }
-    }
+    // ─── Depuis Supabase ────────────────────────────────────
+    async _fromServer() {
+        window.loadingProgress.update(10, 'Connexion Supabase…');
 
-    async loadShops() {
-        try {
-            const { data, error } = await this.supabase
-                .from('parametres_boutique')
-                .select('user_id, config');
-                
-            if (error) throw error;
-            
-            data.forEach(shop => {
-                const slug = shop.config?.identifiant?.slug || shop.config?.slug || null;
-                this.data.shops[shop.user_id] = {
-                    nom: shop.config?.general?.nom || 'Boutique',
-                    identifiant: slug,
-                    couleurPrimaire: shop.config?.apparence?.couleurPrimaire || '#FF6B00'
-                };
-            });
-            
-            console.log(`🏪 ${Object.keys(this.data.shops).length} boutiques chargées`);
-        } catch (error) {
-            console.error('❌ Erreur chargement boutiques:', error);
-            throw error;
-        }
-    }
+        // Toutes les requêtes en parallèle (plus rapide)
+        const [shopsRes, productsRes, likesRes, commentsRes] = await Promise.all([
+            this.sb.from('parametres_boutique').select('user_id, config'),
+            this.sb.from('produits').select('*').eq('statut', 'published').gt('stock', 0),
+            this.sb.from('product_likes').select('product_id, user_id'),
+            this.sb.from('product_comments').select('*').order('created_at', { ascending: false }),
+        ]);
 
-    async loadProducts() {
-        try {
-            const { data, error } = await this.supabase
-                .from('produits')
-                .select('*')
-                .eq('statut', 'published')
-                .gt('stock', 0);
-                
-            if (error) throw error;
-            
-            this.data.products = data.map(p => ({
-                id: p.id,
-                nom: p.nom,
-                description: p.description,
-                prix: p.prix,
-                stock: p.stock,
-                mainImage: p.main_image,
-                categorie: p.categorie,
-                userId: p.user_id,
-                created_at: p.created_at
-            }));
-            
-            console.log(`📦 ${this.data.products.length} produits chargés`);
-        } catch (error) {
-            console.error('❌ Erreur chargement produits:', error);
-            throw error;
-        }
-    }
+        window.loadingProgress.update(60, 'Traitement des données…');
 
-    async loadLikes() {
-        try {
-            const { data, error } = await this.supabase
-                .from('product_likes')
-                .select('product_id, user_id');
-                
-            if (error) throw error;
-            
-            data.forEach(like => {
-                if (!this.data.likes[like.product_id]) {
-                    this.data.likes[like.product_id] = { count: 0, users: [] };
-                }
-                this.data.likes[like.product_id].count++;
-                this.data.likes[like.product_id].users.push(like.user_id);
-            });
-            
-            console.log(`👍 ${Object.keys(this.data.likes).length} produits avec likes`);
-        } catch (error) {
-            console.error('❌ Erreur chargement likes:', error);
-            throw error;
-        }
-    }
+        // Boutiques
+        (shopsRes.data || []).forEach(s => {
+            const slug = s.config?.identifiant?.slug || s.config?.slug || null;
+            this.data.shops[s.user_id] = {
+                nom             : s.config?.general?.nom || 'Boutique',
+                identifiant     : slug,
+                couleurPrimaire : s.config?.apparence?.couleurPrimaire || '#FF6B00',
+            };
+        });
 
-    async loadComments() {
-        try {
-            const { data, error } = await this.supabase
-                .from('product_comments')
-                .select('*')
-                .order('created_at', { ascending: false });
-                
-            if (error) throw error;
-            
-            data.forEach(comment => {
-                if (!this.data.comments[comment.product_id]) {
-                    this.data.comments[comment.product_id] = [];
-                }
-                this.data.comments[comment.product_id].push(comment);
-            });
-            
-            console.log(`💬 ${Object.keys(this.data.comments).length} produits avec commentaires`);
-        } catch (error) {
-            console.error('❌ Erreur chargement commentaires:', error);
-            throw error;
-        }
-    }
+        // Produits enrichis
+        this.data.products = (productsRes.data || []).map(p => ({
+            id          : p.id,
+            nom         : p.nom,
+            description : p.description,
+            prix        : p.prix,
+            stock       : p.stock,
+            mainImage   : p.main_image,
+            categorie   : p.categorie,
+            userId      : p.user_id,
+            created_at  : p.created_at,
+            shopName    : this.data.shops[p.user_id]?.nom || 'Boutique',
+            shopSlug    : this.data.shops[p.user_id]?.identifiant,
+            shopColor   : this.data.shops[p.user_id]?.couleurPrimaire || '#FF6B00',
+            rating      : '0.0',
+            likes       : 0,
+        }));
 
-    processData() {
-        console.log('⚙️ Traitement des données...');
-        
+        // Likes
+        (likesRes.data || []).forEach(l => {
+            if (!this.data.likes[l.product_id])
+                this.data.likes[l.product_id] = { count: 0, users: [] };
+            this.data.likes[l.product_id].count++;
+            this.data.likes[l.product_id].users.push(l.user_id);
+        });
+
+        // Commentaires + note moyenne
+        const commentsByProduct = {};
+        (commentsRes.data || []).forEach(c => {
+            if (!this.data.comments[c.product_id]) this.data.comments[c.product_id] = [];
+            this.data.comments[c.product_id].push(c);
+        });
+
+        // Enrichir rating et likes dans les produits
         this.data.products = this.data.products.map(p => ({
             ...p,
-            shopName: this.data.shops[p.userId]?.nom || 'Boutique',
-            shopSlug: this.data.shops[p.userId]?.identifiant,
-            shopColor: this.data.shops[p.userId]?.couleurPrimaire,
-            likes: this.data.likes[p.id]?.count || 0,
-            commentsCount: (this.data.comments[p.id] || []).length,
-            rating: this.calculateAverageRating(this.data.comments[p.id] || [])
+            likes  : this.data.likes[p.id]?.count || 0,
+            rating : this._avgRating(this.data.comments[p.id] || []),
         }));
-        
-        console.log('✅ Données enrichies avec succès');
-    }
 
-    calculateAverageRating(comments) {
-        if (!comments || comments.length === 0) return '0.0';
-        const average = comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length;
-        return average.toFixed(1);
-    }
-
-    saveToCache() {
-        console.log('💾 Sauvegarde des données en cache...');
-        
-        const saved = this.cache.saveAll(
-            this.data.products, 
-            this.data.likes, 
-            this.data.comments, 
-            this.data.shops
+        window.loadingProgress.update(85, 'Mise en cache…');
+        this.cache.saveAll(
+            this.data.products,
+            this.data.likes,
+            this.data.comments,
+            this.data.shops,
         );
-        
-        if (saved) {
-            console.log('✅ Toutes les données sauvegardées en cache (valide 7 jours)');
-        } else {
-            console.warn('⚠️ Certaines données n\'ont pas pu être sauvegardées');
+        window.loadingProgress.update(98, 'Presque prêt…');
+        console.log(`✅ ${this.data.products.length} produits chargés depuis Supabase`);
+    }
+
+    // ─── Mise à jour silencieuse (rafraîchit l'UI) ─────────
+    async _updateInBackground() {
+        console.log('🔄 Mise à jour silencieuse en cours…');
+        try {
+            // Sauvegarde temporaire du loader actif (on ne le montre pas)
+            const prev = window.loadingProgress;
+            window.loadingProgress = { start(){}, update(){}, complete(){}, showError(){} };
+
+            await this._fromServer();
+
+            window.loadingProgress = prev;
+
+            // ✅ On met à jour les variables globales et l'interface
+            _applyLoadedData(this.data);
+
+            console.log('✅ Mise à jour silencieuse terminée — interface rafraîchie');
+        } catch (e) {
+            console.warn('⚠️ Mise à jour silencieuse échouée:', e);
         }
-    }
-
-    async updateInBackground() {
-        console.log('🔄 Mise à jour en arrière-plan programmée...');
-        
-        setTimeout(async () => {
-            try {
-                console.log('🔄 Démarrage de la mise à jour en arrière-plan...');
-                
-                // Charger discrètement sans afficher le loader
-                const tempLoader = this.loader;
-                this.loader = { 
-                    updateProgress: () => {}, 
-                    complete: () => {} 
-                };
-                
-                await this.loadFromServer();
-                
-                // Restaurer le loader
-                this.loader = tempLoader;
-                
-                console.log('✅ Mise à jour en arrière-plan terminée');
-                console.log('📊 Cache rafraîchi et valide pour 7 jours');
-            } catch (error) {
-                console.error('❌ Erreur mise à jour arrière-plan:', error);
-            }
-        }, 2000);
-    }
-
-    async simulateProgress(from, to, duration) {
-        const steps = 10;
-        const increment = (to - from) / steps;
-        const delay = duration / steps;
-        
-        for (let i = 0; i < steps; i++) {
-            await this.delay(delay);
-            this.loader.updateProgress(from + increment * (i + 1));
-        }
-    }
-
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async forceReload() {
-        console.log('🔄 Rechargement forcé demandé...');
         this.cache.clearAll();
         return this.load();
     }
+
+    _avgRating(comments) {
+        if (!comments.length) return '0.0';
+        return (comments.reduce((s, c) => s + (c.rating || 0), 0) / comments.length).toFixed(1);
+    }
 }
 
-console.log('✅ OptimizedDataLoader défini avec progression améliorée 0% → 100%');
+console.log('✅ OptimizedDataLoader prêt');
 
-// ==================== 4. IMPROVED MENU ====================
+// ==================== IMPROVED MENU (CATÉGORIES LATÉRALES) ====================
 class ImprovedMenu {
     constructor() {
-        this.products = [];
-        this.categories = new Map();
-        this.expandedCategories = new Set(); // Pour suivre les catégories ouvertes
-        this.injectStyles();
+        this.products           = [];
+        this.categories         = new Map();
+        this.expandedCategories = new Set();
+        this._injectStyles();
     }
 
+    // ─── Initialisation ─────────────────────────────────────
     init(products) {
         this.products = products;
-        this.generateCategories();
+        this._buildCategories();
         this.render();
-    }
-
-    generateCategories() {
-        this.categories.clear();
-        
-        // Catégorie "Tous" avec sous-catégories
-        const allSubcategories = this.getSubcategories(this.products);
-        this.categories.set('Tous', {
-            count: this.products.length,
-            subcategories: allSubcategories
-        });
-        
-        // Catégories traditionnelles avec leurs sous-catégories
-        const counts = {};
-        this.products.forEach(p => {
-            const cat = p.categorie || 'Autres';
-            if (!counts[cat]) {
-                counts[cat] = [];
-            }
-            counts[cat].push(p);
-        });
-        
-        Object.entries(counts)
-            .sort((a, b) => b[1].length - a[1].length)
-            .forEach(([cat, products]) => {
-                const subcategories = this.getSubcategories(products);
-                this.categories.set(cat, {
-                    count: products.length,
-                    subcategories: subcategories
-                });
-            });
-        
-        console.log(`📂 ${this.categories.size} catégories avec sous-catégories`);
-    }
-
-    getSubcategories(products) {
-        const subcategories = {};
-        
-        // Recommandé - produits avec plus de 5 likes
-        const recommended = products.filter(p => (p.likes || 0) >= 5);
-        if (recommended.length > 0) {
-            subcategories['Recommandé'] = recommended.length;
-        }
-        
-        // Populaire - produits les plus likés (top 20%)
-        const topLikesThreshold = Math.ceil(products.length * 0.2);
-        const sortedByLikes = [...products].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-        const popular = sortedByLikes.slice(0, Math.max(1, topLikesThreshold));
-        if (popular.length > 0) {
-            subcategories['Populaire'] = popular.length;
-        }
-        
-        // Arrivage - produits ajoutés dans les 7 derniers jours
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const newArrivals = products.filter(p => {
-            const createdDate = new Date(p.created_at);
-            return createdDate >= sevenDaysAgo;
-        });
-        if (newArrivals.length > 0) {
-            subcategories['Arrivage'] = newArrivals.length;
-        }
-        
-        // Solde - produits avec prix < 5000 FCFA
-        const onSale = products.filter(p => p.prix < 5000);
-        if (onSale.length > 0) {
-            subcategories['Solde'] = onSale.length;
-        }
-        
-        return subcategories;
-    }
-
-    toggleCategory(cat) {
-        if (this.expandedCategories.has(cat)) {
-            this.expandedCategories.delete(cat);
-        } else {
-            this.expandedCategories.add(cat);
-        }
-        this.render();
-    }
-
-    render() {
-        const list = document.getElementById('categoryList');
-        if (!list) return;
-        
-        if (this.categories.size === 0) {
-            list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary)">Chargement...</div>';
-            return;
-        }
-        
-        let html = '';
-        this.categories.forEach((data, cat) => {
-            const isAll = cat === 'Tous';
-            const icon = this.getCategoryIcon(cat);
-            const pct = ((data.count / this.products.length) * 100).toFixed(0);
-            const hasSubcategories = data.subcategories && Object.keys(data.subcategories).length > 0;
-            const isExpanded = this.expandedCategories.has(cat);
-            
-            // Catégorie principale
-            html += `<div class="category-wrapper">
-                <div class="category-item ${isAll ? 'category-all' : ''}" 
-                     data-category="${cat}">
-                    <div class="category-content" onclick="window.improvedMenu.selectCategory('${cat}', 'all')">
-                        <div class="category-header">
-                            <span class="category-icon">${icon}</span>
-                            <span class="category-name">${cat}</span>
-                        </div>
-                        <div class="category-stats">
-                            <span class="category-count">${data.count}</span>
-                            ${!isAll ? `<span class="category-percentage">${pct}%</span>` : ''}
-                        </div>
-                    </div>
-                    ${hasSubcategories ? `
-                        <button class="toggle-subcategories ${isExpanded ? 'expanded' : ''}" 
-                                onclick="event.stopPropagation(); window.improvedMenu.toggleCategory('${cat}')"
-                                title="${isExpanded ? 'Masquer' : 'Afficher'} les sous-catégories">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                    ` : ''}
-                    ${!isAll ? `<div class="category-progress"><div class="category-progress-bar" style="width:${pct}%"></div></div>` : ''}
-                </div>`;
-            
-            // Sous-catégories (masquées par défaut)
-            if (hasSubcategories) {
-                html += `<div class="subcategories-container ${isExpanded ? 'expanded' : ''}">`;
-                Object.entries(data.subcategories).forEach(([subcat, count]) => {
-                    const subIcon = this.getSubcategoryIcon(subcat);
-                    const subPct = ((count / data.count) * 100).toFixed(0);
-                    
-                    html += `<div class="subcategory-item" 
-                                  onclick="event.stopPropagation(); window.improvedMenu.selectCategory('${cat}', '${subcat}')" 
-                                  data-category="${cat}" 
-                                  data-subcategory="${subcat}">
-                        <div class="subcategory-content">
-                            <div class="subcategory-header">
-                                <span class="subcategory-icon">${subIcon}</span>
-                                <span class="subcategory-name">${subcat}</span>
-                            </div>
-                            <div class="subcategory-stats">
-                                <span class="subcategory-count">${count}</span>
-                                <span class="subcategory-percentage">${subPct}%</span>
-                            </div>
-                        </div>
-                        <div class="subcategory-progress">
-                            <div class="subcategory-progress-bar" style="width:${subPct}%"></div>
-                        </div>
-                    </div>`;
-                });
-                html += '</div>';
-            }
-            
-            html += '</div>';
-        });
-        
-        list.innerHTML = html;
-    }
-
-    getCategoryIcon(cat) {
-        const icons = {
-            'Tous': '🏠', 
-            'Électronique': '📱', 
-            'Mode': '👕',
-            'Maison': '🏡', 
-            'Beauté': '💄', 
-            'Sport': '⚽',
-            'Livres': '📚', 
-            'Jouets': '🧸', 
-            'Alimentation': '🍔',
-            'Santé': '💊', 
-            'Auto': '🚗', 
-            'Jardin': '🌱', 
-            'Autres': '📦'
-        };
-        for (const [key, icon] of Object.entries(icons)) {
-            if (cat.toLowerCase().includes(key.toLowerCase())) return icon;
-        }
-        return icons['Autres'];
-    }
-
-    getSubcategoryIcon(subcat) {
-        const icons = {
-            'Recommandé': '⭐',
-            'Populaire': '🔥',
-            'Arrivage': '🆕',
-            'Solde': '💰'
-        };
-        return icons[subcat] || '📌';
-    }
-
-    selectCategory(cat, subcategory = 'all') {
-        this.close();
-        window.dispatchEvent(new CustomEvent('categorySelected', { 
-            detail: { category: cat, subcategory: subcategory } 
-        }));
-        
-        // Mise à jour visuelle
-        document.querySelectorAll('.category-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.category === cat && subcategory === 'all');
-        });
-        document.querySelectorAll('.subcategory-item').forEach(item => {
-            item.classList.toggle('active', 
-                item.dataset.category === cat && item.dataset.subcategory === subcategory);
-        });
-    }
-
-    close() {
-        document.getElementById('sideMenu')?.classList.remove('active');
-        document.getElementById('overlay')?.classList.remove('active');
     }
 
     update(products) {
         this.products = products;
-        this.generateCategories();
+        this._buildCategories();
         this.render();
     }
 
-    injectStyles() {
-        if (document.getElementById('improved-menu-styles')) return;
-        const styles = `<style id="improved-menu-styles">
-            .category-wrapper {
-                margin-bottom: 8px;
+    // ─── Construction des catégories ────────────────────────
+    _buildCategories() {
+        this.categories.clear();
+
+        // "Tous" en premier
+        this.categories.set('Tous', {
+            count         : this.products.length,
+            subcategories : this._getSubcats(this.products),
+        });
+
+        // Catégories réelles triées par nombre de produits
+        const groups = {};
+        this.products.forEach(p => {
+            const c = p.categorie || 'Autres';
+            if (!groups[c]) groups[c] = [];
+            groups[c].push(p);
+        });
+
+        Object.entries(groups)
+            .sort((a, b) => b[1].length - a[1].length)
+            .forEach(([cat, prods]) => {
+                this.categories.set(cat, {
+                    count         : prods.length,
+                    subcategories : this._getSubcats(prods),
+                });
+            });
+    }
+
+    // ─── Sous-catégories dynamiques ─────────────────────────
+    _getSubcats(products) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - CONFIG.NEW_PRODUCT_DAYS);
+        const subs = {};
+
+        const recommended = products.filter(p => (p.likes || 0) >= CONFIG.RECOMMEND_LIKES);
+        if (recommended.length) subs['⭐ Recommandés'] = recommended.length;
+
+        const newOnes = products.filter(p => new Date(p.created_at) >= sevenDaysAgo);
+        if (newOnes.length) subs['🆕 Nouveaux'] = newOnes.length;
+
+        const topN = Math.max(1, Math.ceil(products.length * CONFIG.TOP_PERCENT));
+        const popular = [...products].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, topN);
+        if (popular.length) subs['🔥 Populaires'] = popular.length;
+
+        const lowStock = products.filter(p => p.stock > 0 && p.stock <= CONFIG.LOW_STOCK_THRESHOLD);
+        if (lowStock.length) subs['⚠️ Fin de stock'] = lowStock.length;
+
+        const sales = products.filter(p => p.prix < CONFIG.SALE_PRICE);
+        if (sales.length) subs['💰 Soldes'] = sales.length;
+
+        const topRated = products.filter(p => parseFloat(p.rating || 0) >= CONFIG.TOP_RATING);
+        if (topRated.length) subs['🏆 Mieux notés'] = topRated.length;
+
+        return subs;
+    }
+
+    // ─── Rendu HTML ─────────────────────────────────────────
+    render() {
+        const list = document.getElementById('categoryList');
+        if (!list) return;
+
+        let html = '';
+        this.categories.forEach((data, cat) => {
+            const isAll     = cat === 'Tous';
+            const icon      = this._icon(cat);
+            const pct       = ((data.count / this.products.length) * 100).toFixed(0);
+            const hasSubs   = Object.keys(data.subcategories).length > 0;
+            const expanded  = this.expandedCategories.has(cat);
+
+            html += `<div class="im-wrapper">
+                <div class="im-item ${isAll ? 'im-all' : ''}">
+                    <div class="im-content" onclick="window.improvedMenu.selectCategory('${cat}','all')">
+                        <div class="im-left">
+                            <span class="im-icon">${icon}</span>
+                            <span class="im-name">${cat}</span>
+                        </div>
+                        <div class="im-right">
+                            <span class="im-count">${data.count}</span>
+                            ${!isAll ? `<span class="im-pct">${pct}%</span>` : ''}
+                        </div>
+                    </div>
+                    ${hasSubs ? `
+                    <button class="im-toggle ${expanded ? 'expanded' : ''}"
+                            onclick="event.stopPropagation();window.improvedMenu.toggleCat('${cat}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>` : ''}
+                    ${!isAll ? `<div class="im-progress"><div class="im-progress-bar" style="width:${pct}%"></div></div>` : ''}
+                </div>`;
+
+            if (hasSubs) {
+                html += `<div class="im-subs ${expanded ? 'expanded' : ''}">`;
+                Object.entries(data.subcategories).forEach(([sub, count]) => {
+                    html += `
+                        <div class="im-sub"
+                             onclick="event.stopPropagation();window.improvedMenu.selectCategory('${cat}','${sub}')">
+                            <span class="im-sub-name">${sub}</span>
+                            <span class="im-sub-count">${count}</span>
+                        </div>`;
+                });
+                html += '</div>';
             }
-            .category-item { 
-                padding: 0; 
-                background: var(--bg-secondary); 
-                border-radius: 12px; 
-                cursor: pointer; 
-                transition: all 0.3s; 
-                border: 2px solid transparent; 
-                overflow: hidden; 
-                position: relative;
-            }
-            .category-item.active { 
-                border-color: var(--primary-color); 
-                background: linear-gradient(90deg, rgba(255,107,0,0.1), rgba(255,107,0,0.05)); 
-            }
-            .category-all { 
-                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); 
-                color: white; 
-                font-weight: 600; 
-            }
-            .category-all .category-name, 
-            .category-all .category-count { 
-                color: white; 
-            }
-            .category-content { 
-                padding: 14px 16px; 
-                padding-right: 45px;
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-            }
-            .category-header { 
-                display: flex; 
-                align-items: center; 
-                gap: 10px; 
-            }
-            .category-icon { 
-                font-size: 1.3rem; 
-            }
-            .category-name { 
-                font-weight: 600; 
-                color: var(--text-primary); 
-                font-size: 0.95rem; 
-            }
-            .category-stats { 
-                display: flex; 
-                align-items: center; 
-                gap: 8px; 
-            }
-            .category-count { 
-                font-weight: 700; 
-                color: var(--primary-color); 
-                font-size: 1.1rem; 
-                background: rgba(255,107,0,0.1); 
-                padding: 4px 10px; 
-                border-radius: 12px; 
-                min-width: 40px; 
-                text-align: center; 
-            }
-            .category-all .category-count { 
-                background: rgba(255,255,255,0.2); 
-            }
-            .category-percentage { 
-                font-size: 0.75rem; 
-                color: var(--text-secondary); 
-                font-weight: 600; 
-            }
-            .category-progress { 
-                height: 3px; 
-                background: rgba(0,0,0,0.05); 
-            }
-            .category-progress-bar { 
-                height: 100%; 
-                background: linear-gradient(90deg, var(--primary-color), var(--primary-dark)); 
-                transition: width 0.5s; 
-            }
-            .category-item:hover { 
-                transform: translateX(4px); 
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-            }
-            
-            /* BOUTON TOGGLE SOUS-CATÉGORIES */
-            .toggle-subcategories {
-                position: absolute;
-                right: 8px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 32px;
-                height: 32px;
-                border: none;
-                background: rgba(255,255,255,0.9);
-                border-radius: 8px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-                z-index: 10;
-            }
-            .category-all .toggle-subcategories {
-                background: rgba(255,255,255,0.2);
-            }
-            .toggle-subcategories:hover {
-                background: rgba(255,107,0,0.1);
-                transform: translateY(-50%) scale(1.1);
-            }
-            .toggle-subcategories svg {
-                transition: transform 0.3s ease;
-                color: var(--primary-color);
-            }
-            .category-all .toggle-subcategories svg {
-                color: white;
-            }
-            .toggle-subcategories.expanded svg {
-                transform: rotate(180deg);
-            }
-            
-            /* SOUS-CATÉGORIES */
-            .subcategories-container {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.4s ease, padding 0.4s ease;
-                padding: 0 12px;
-                background: rgba(0,0,0,0.02);
-                border-top: 0px solid rgba(0,0,0,0.05);
-            }
-            .subcategories-container.expanded {
-                max-height: 500px;
-                padding: 8px 12px 12px 12px;
-                border-top: 1px solid rgba(0,0,0,0.05);
-            }
-            .subcategory-item {
-                padding: 0;
-                background: white;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.3s;
-                border: 1px solid var(--border-color);
-                overflow: hidden;
-                margin-bottom: 6px;
-                opacity: 0;
-                transform: translateX(-10px);
-                animation: slideInSubcat 0.3s ease forwards;
-            }
-            @keyframes slideInSubcat {
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-            .subcategory-item:nth-child(1) { animation-delay: 0.05s; }
-            .subcategory-item:nth-child(2) { animation-delay: 0.1s; }
-            .subcategory-item:nth-child(3) { animation-delay: 0.15s; }
-            .subcategory-item:nth-child(4) { animation-delay: 0.2s; }
-            .subcategory-item:last-child {
-                margin-bottom: 0;
-            }
-            .subcategory-item.active {
-                border-color: var(--primary-color);
-                background: linear-gradient(90deg, rgba(255,107,0,0.08), rgba(255,107,0,0.03));
-            }
-            .subcategory-item:hover {
-                transform: translateX(4px);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                border-color: var(--primary-color);
-            }
-            .subcategory-content {
-                padding: 10px 12px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .subcategory-header {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .subcategory-icon {
-                font-size: 1.1rem;
-            }
-            .subcategory-name {
-                font-weight: 500;
-                color: var(--text-primary);
-                font-size: 0.85rem;
-            }
-            .subcategory-stats {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-            .subcategory-count {
-                font-weight: 700;
-                color: var(--primary-color);
-                font-size: 0.9rem;
-                background: rgba(255,107,0,0.1);
-                padding: 2px 8px;
-                border-radius: 8px;
-                min-width: 30px;
-                text-align: center;
-            }
-            .subcategory-percentage {
-                font-size: 0.7rem;
-                color: var(--text-secondary);
-                font-weight: 600;
-            }
-            .subcategory-progress {
-                height: 2px;
-                background: rgba(0,0,0,0.05);
-            }
-            .subcategory-progress-bar {
-                height: 100%;
-                background: linear-gradient(90deg, #667eea, #764ba2);
-                transition: width 0.5s;
-            }
-        </style>`;
-        document.head.insertAdjacentHTML('beforeend', styles);
+
+            html += '</div>';
+        });
+
+        list.innerHTML = html;
+    }
+
+    // ─── Interaction ────────────────────────────────────────
+    toggleCat(cat) {
+        if (this.expandedCategories.has(cat)) this.expandedCategories.delete(cat);
+        else this.expandedCategories.add(cat);
+        this.render();
+    }
+
+    selectCategory(cat, sub = 'all') {
+        this._closeMenu();
+        window.dispatchEvent(new CustomEvent('categorySelected', {
+            detail: { category: cat, subcategory: sub }
+        }));
+    }
+
+    _closeMenu() {
+        document.getElementById('sideMenu')?.classList.remove('active');
+        document.getElementById('overlay')?.classList.remove('active');
+    }
+
+    // ─── Icônes ─────────────────────────────────────────────
+    _icon(cat) {
+        const map = {
+            'Tous':'🏠','Électronique':'📱','Mode':'👕','Maison':'🏡',
+            'Beauté':'💄','Sport':'⚽','Livres':'📚','Jouets':'🧸',
+            'Alimentation':'🍔','Santé':'💊','Auto':'🚗','Jardin':'🌱','Autres':'📦',
+        };
+        for (const [k, v] of Object.entries(map)) {
+            if (cat.toLowerCase().includes(k.toLowerCase())) return v;
+        }
+        return '📦';
+    }
+
+    // ─── Styles injectés ────────────────────────────────────
+    _injectStyles() {
+        if (document.getElementById('im-styles')) return;
+        const s = document.createElement('style');
+        s.id = 'im-styles';
+        s.textContent = `
+            .im-wrapper{margin-bottom:6px;}
+            .im-item{background:var(--bg-secondary);border-radius:12px;overflow:hidden;
+                border:2px solid transparent;position:relative;cursor:pointer;
+                transition:all .2s;}
+            .im-item:hover{transform:translateX(3px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
+            .im-all{background:linear-gradient(135deg,var(--primary-color),var(--primary-dark));
+                border-color:transparent;}
+            .im-all .im-name,.im-all .im-count,.im-all .im-pct{color:#fff!important;}
+            .im-content{display:flex;justify-content:space-between;align-items:center;
+                padding:13px 44px 13px 14px;}
+            .im-left{display:flex;align-items:center;gap:10px;}
+            .im-icon{font-size:1.2rem;}
+            .im-name{font-weight:600;font-size:.95rem;color:var(--text-primary);}
+            .im-right{display:flex;align-items:center;gap:8px;}
+            .im-count{font-weight:700;color:var(--primary-color);
+                background:rgba(255,107,0,.1);padding:3px 10px;border-radius:12px;
+                min-width:38px;text-align:center;font-size:1rem;}
+            .im-pct{font-size:.72rem;color:var(--text-secondary);}
+            .im-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+                width:30px;height:30px;border:none;background:rgba(255,255,255,.9);
+                border-radius:8px;cursor:pointer;display:flex;align-items:center;
+                justify-content:center;transition:all .3s;}
+            .im-toggle svg{transition:transform .3s;color:var(--primary-color);}
+            .im-toggle.expanded svg{transform:rotate(180deg);}
+            .im-progress{height:3px;background:rgba(0,0,0,.05);}
+            .im-progress-bar{height:100%;background:linear-gradient(90deg,var(--primary-color),var(--primary-dark));transition:width .5s;}
+            .im-subs{max-height:0;overflow:hidden;transition:max-height .35s ease;
+                padding:0 10px;background:rgba(0,0,0,.02);}
+            .im-subs.expanded{max-height:400px;padding:6px 10px 10px;}
+            .im-sub{display:flex;justify-content:space-between;align-items:center;
+                padding:9px 10px;background:#fff;border-radius:8px;margin-bottom:5px;
+                border:1px solid var(--border-color);cursor:pointer;transition:all .2s;}
+            .im-sub:hover{transform:translateX(4px);border-color:var(--primary-color);}
+            .im-sub-name{font-size:.85rem;font-weight:500;color:var(--text-primary);}
+            .im-sub-count{font-size:.82rem;font-weight:700;color:var(--primary-color);
+                background:rgba(255,107,0,.1);padding:2px 8px;border-radius:8px;}
+        `;
+        document.head.appendChild(s);
     }
 }
 
 window.improvedMenu = new ImprovedMenu();
-// ==================== SUITE DU CODE (Partie 2) ====================
-// ==================== GESTION UTILISATEUR ====================
-function getUserId() {
-    let userId = localStorage.getItem('oda_user_id');
-    if (!userId) {
-        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('oda_user_id', userId);
+console.log('✅ ImprovedMenu prêt');
+// ============================================================
+// ARTEFACT 3 — AFFICHAGE · CARTES · FILTRES · CARROUSEL
+// Remplace toutes les fonctions : displayProducts,
+// displayProductsByCategories, filterByCategory,
+// createProductCard, updateCarousel, startCarousel, etc.
+// ============================================================
+
+// ==================== STYLES SECTIONS CATÉGORIE ====================
+function _injectSectionStyles() {
+    if (document.getElementById('cat-section-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'cat-section-styles';
+    s.textContent = `
+        /* ─── Section horizontale ─── */
+        .oda-section{margin-bottom:32px;}
+        .oda-section-header{display:flex;justify-content:space-between;
+            align-items:center;margin-bottom:12px;padding:0 2px;}
+        .oda-section-title-wrap{display:flex;align-items:center;gap:8px;}
+        .oda-section-title{font-size:1.05rem;font-weight:700;color:var(--text-primary);}
+        .oda-section-badge{background:var(--primary-color);color:#fff;
+            font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+        .oda-section-count{font-size:.78rem;color:var(--text-secondary);font-weight:500;}
+        .oda-scroll-row{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;
+            padding-bottom:12px;scroll-snap-type:x mandatory;
+            -webkit-overflow-scrolling:touch;scrollbar-width:none;}
+        .oda-scroll-row::-webkit-scrollbar{display:none;}
+
+        /* ─── Badge produit ─── */
+        .oda-badge{position:absolute;font-size:.62rem;font-weight:700;
+            padding:3px 7px;border-radius:10px;z-index:5;pointer-events:none;}
+        .oda-badge-new{top:8px;left:8px;background:#10B981;color:#fff;}
+        .oda-badge-stock{top:34px;left:8px;background:#F59E0B;color:#fff;}
+        .oda-badge-sale{top:8px;right:44px;background:#EF4444;color:#fff;}
+
+        /* ─── Carte produit ─── */
+        .product-card{background:var(--bg-primary);border-radius:12px;overflow:hidden;
+            box-shadow:var(--shadow-sm);cursor:pointer;position:relative;
+            display:flex;flex-direction:column;border:1px solid var(--border-color);
+            transition:all .25s cubic-bezier(.4,0,.2,1);}
+        .product-card:hover{transform:translateY(-3px);
+            box-shadow:0 8px 20px rgba(0,0,0,.12);border-color:var(--primary-color);}
+        .product-image-wrapper{position:relative;width:100%;padding-top:65%;background:#f5f5f5;overflow:hidden;}
+        .product-image{position:absolute;top:0;left:0;width:100%;height:100%;
+            object-fit:cover;transition:transform .3s ease;}
+        .product-card:hover .product-image{transform:scale(1.05);}
+        .btn-favorite{position:absolute;top:8px;right:8px;width:32px;height:32px;
+            border-radius:50%;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);
+            border:none;display:flex;align-items:center;justify-content:center;
+            cursor:pointer;transition:all .3s;font-size:1rem;z-index:5;
+            box-shadow:0 2px 8px rgba(0,0,0,.15);}
+        .btn-favorite:hover{transform:scale(1.1);}
+        .btn-favorite.active{background:var(--error-color);color:#fff;}
+        .product-info{padding:10px;display:flex;flex-direction:column;gap:5px;flex:1;}
+        .shop-badge{display:inline-flex;align-items:center;gap:3px;
+            font-size:.68rem;font-weight:500;color:var(--text-secondary);
+            padding:2px 6px;border-radius:8px;width:fit-content;}
+        .product-name{font-size:.83rem;font-weight:700;color:var(--text-primary);
+            display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+            overflow:hidden;line-height:1.3;}
+        .product-engagement{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+        .btn-like,.btn-comments{display:inline-flex;align-items:center;gap:4px;
+            background:var(--bg-secondary);border:none;border-radius:8px;
+            padding:4px 8px;font-size:.72rem;cursor:pointer;transition:all .2s;}
+        .btn-like.liked{background:rgba(239,68,68,.1);color:#EF4444;}
+        .btn-like:hover{transform:scale(1.05);}
+        .product-rating{font-size:.7rem;color:var(--text-secondary);font-weight:600;}
+        .product-price{font-size:1.05rem;font-weight:800;color:var(--primary-color);}
+        .product-stock{font-size:.68rem;font-weight:600;color:#F59E0B;}
+        .product-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+    `;
+    document.head.appendChild(s);
+}
+
+// ==================== UTILITAIRES SOUS-CATÉGORIES ====================
+function _sevenDaysAgo() {
+    const d = new Date();
+    d.setDate(d.getDate() - CONFIG.NEW_PRODUCT_DAYS);
+    return d;
+}
+
+function _subcatConfigs(baseProducts) {
+    const cutoff = _sevenDaysAgo();
+    const topN   = Math.max(1, Math.ceil(baseProducts.length * CONFIG.TOP_PERCENT));
+    const sorted = [...baseProducts].sort(
+        (a, b) => (productLikes[b.id]?.count || b.likes || 0)
+                - (productLikes[a.id]?.count || a.likes || 0)
+    );
+
+    return [
+        {
+            label  : '⭐ Recommandés',
+            filter : p => (productLikes[p.id]?.count || p.likes || 0) >= CONFIG.RECOMMEND_LIKES,
+        },
+        {
+            label  : '🆕 Nouveaux arrivages',
+            filter : p => new Date(p.created_at) >= cutoff,
+        },
+        {
+            label  : '🔥 Populaires',
+            filter : p => sorted.slice(0, topN).some(t => t.id === p.id),
+        },
+        {
+            label  : '⚠️ Fin de stock',
+            filter : p => p.stock > 0 && p.stock <= CONFIG.LOW_STOCK_THRESHOLD,
+        },
+        {
+            label  : '💰 Soldes & Bons plans',
+            filter : p => p.prix < CONFIG.SALE_PRICE,
+        },
+        {
+            label  : '🏆 Mieux notés',
+            filter : p => parseFloat(p.rating || 0) >= CONFIG.TOP_RATING,
+        },
+    ];
+}
+
+// ==================== CRÉATION CARTE PRODUIT ====================
+function createProductCard(product, isHorizontal = false) {
+    const cardStyle = isHorizontal
+        ? 'min-width:175px;max-width:175px;scroll-snap-align:start;flex-shrink:0;'
+        : '';
+
+    const likeData      = productLikes[product.id]  || { count: 0, userLiked: false };
+    const commentsCount = (productComments[product.id] || []).length;
+    const shopColor     = product.shopColor || '#FF6B00';
+    const cutoff        = _sevenDaysAgo();
+    const isNew         = new Date(product.created_at) >= cutoff;
+    const isLowStock    = product.stock > 0 && product.stock <= CONFIG.LOW_STOCK_THRESHOLD;
+    const isSale        = product.prix < CONFIG.SALE_PRICE;
+
+    return `
+        <div class="product-card" style="${cardStyle}" onclick="goToProduct(${product.id})">
+            <div class="product-image-wrapper">
+                ${isNew      ? `<span class="oda-badge oda-badge-new">Nouveau</span>` : ''}
+                ${isLowStock ? `<span class="oda-badge oda-badge-stock">⚠️ ${product.stock} restant${product.stock > 1 ? 's' : ''}</span>` : ''}
+                ${isSale && !isNew ? `<span class="oda-badge oda-badge-sale">Promo</span>` : ''}
+                <button class="btn-favorite ${favoriteProducts.has(product.id) ? 'active' : ''}"
+                        onclick="event.stopPropagation();toggleFavorite(${product.id})">
+                    ${favoriteProducts.has(product.id) ? '❤️' : '🤍'}
+                </button>
+                <img src="${product.mainImage || 'https://via.placeholder.com/300'}"
+                     class="product-image"
+                     alt="${product.nom}"
+                     loading="lazy"
+                     onerror="this.src='https://via.placeholder.com/300?text=Produit'">
+            </div>
+            <div class="product-info">
+                <span class="shop-badge" style="background:${shopColor}18;color:${shopColor}">
+                    🏪 ${product.shopName || 'Boutique'}
+                </span>
+                <h3 class="product-name">${product.nom}</h3>
+                <div class="product-engagement">
+                    <button class="btn-like ${likeData.userLiked ? 'liked' : ''}"
+                            data-like-product="${product.id}"
+                            onclick="event.stopPropagation();toggleLike(${product.id})">
+                        <span class="like-icon">${likeData.userLiked ? '❤️' : '🤍'}</span>
+                        <span class="like-count">${likeData.count}</span>
+                    </button>
+                    <button class="btn-comments"
+                            onclick="event.stopPropagation();showCommentsModal(${product.id})">
+                        <span>💬</span><span>${commentsCount}</span>
+                    </button>
+                    ${parseFloat(product.rating || 0) >= 1
+                        ? `<span class="product-rating">⭐ ${product.rating}</span>`
+                        : ''}
+                </div>
+                <div class="product-footer">
+                    <div class="product-price" style="color:${shopColor}">
+                        ${formatPrice(product.prix)}
+                    </div>
+                    ${isLowStock
+                        ? `<div class="product-stock">⚠️ Stock faible</div>`
+                        : ''}
+                </div>
+            </div>
+        </div>`;
+}
+
+// ==================== CONSTRUCTION D'UNE SECTION HORIZONTALE ====================
+function _buildSection(title, products, showBadge = false) {
+    if (!products.length) return '';
+    return `
+        <div class="oda-section">
+            <div class="oda-section-header">
+                <div class="oda-section-title-wrap">
+                    <h3 class="oda-section-title">${title}</h3>
+                    ${showBadge
+                        ? `<span class="oda-section-badge">${products.length}</span>`
+                        : ''}
+                </div>
+                <span class="oda-section-count">
+                    ${products.length} produit${products.length > 1 ? 's' : ''}
+                </span>
+            </div>
+            <div class="oda-scroll-row">
+                ${products.map(p => createProductCard(p, true)).join('')}
+            </div>
+        </div>`;
+}
+
+// ==================== VUE "TOUS" — une ligne par catégorie réelle ====================
+function displayProducts() {
+    const grid        = document.getElementById('productsGrid');
+    const emptyState  = document.getElementById('emptyState');
+    const productCount= document.getElementById('productCount');
+    const header      = document.querySelector('.section-header h2');
+
+    _injectSectionStyles();
+
+    if (!allProducts.length) {
+        grid.style.display  = 'none';
+        emptyState.style.display = 'block';
+        if (productCount) productCount.textContent = '0 produits';
+        return;
     }
-    return userId;
+
+    if (header)       header.textContent      = 'Tous les produits';
+    if (productCount) productCount.textContent = `${allProducts.length} produits`;
+    emptyState.style.display = 'none';
+
+    // Icônes par catégorie
+    const ICONS = {
+        'Électronique':'📱','Mode':'👕','Maison':'🏡','Beauté':'💄',
+        'Sport':'⚽','Livres':'📚','Jouets':'🧸','Alimentation':'🍔',
+        'Santé':'💊','Auto':'🚗','Jardin':'🌱','Autres':'📦',
+    };
+    const getIcon = cat => {
+        for (const [k, v] of Object.entries(ICONS)) {
+            if (cat.toLowerCase().includes(k.toLowerCase())) return v;
+        }
+        return '📦';
+    };
+
+    // Regrouper par catégorie
+    const groups = {};
+    allProducts.forEach(p => {
+        const c = p.categorie || 'Autres';
+        if (!groups[c]) groups[c] = [];
+        groups[c].push(p);
+    });
+
+    let html = '';
+    Object.entries(groups)
+        .sort((a, b) => b[1].length - a[1].length)
+        .forEach(([cat, prods]) => {
+            html += _buildSection(`${getIcon(cat)} ${cat}`, prods);
+        });
+
+    grid.innerHTML = html;
+    grid.style.display          = 'block';
+    grid.style.gridTemplateColumns = '1fr';
+}
+
+// ==================== VUE CATÉGORIE — sous-catégories en lignes ====================
+function filterByCategory(category, subcategory = 'all') {
+    const grid        = document.getElementById('productsGrid');
+    const emptyState  = document.getElementById('emptyState');
+    const productCount= document.getElementById('productCount');
+    const header      = document.querySelector('.section-header h2');
+
+    _injectSectionStyles();
+
+    // ── Retour à "Tous" ──
+    if (category === 'Tous' && subcategory === 'all') {
+        displayProducts();
+        document.querySelector('.products-container')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+
+    // ── Produits de base ──
+    const base = category === 'Tous'
+        ? [...allProducts]
+        : allProducts.filter(p => p.categorie === category);
+
+    // ── Sous-catégorie précise sélectionnée ──
+    if (subcategory !== 'all') {
+        // Trouver la config correspondante
+        const cfg = _subcatConfigs(base).find(s => s.label === subcategory);
+        const filtered = cfg ? base.filter(p => cfg.filter(p)) : base;
+
+        if (header) header.textContent = `${category} › ${subcategory}`;
+        if (productCount) productCount.textContent = `${filtered.length} produit${filtered.length > 1 ? 's' : ''}`;
+
+        if (!filtered.length) {
+            grid.style.display  = 'none';
+            emptyState.style.display = 'block';
+        } else {
+            grid.innerHTML = _buildSection(subcategory, filtered);
+            grid.style.display          = 'block';
+            grid.style.gridTemplateColumns = '1fr';
+            emptyState.style.display    = 'none';
+        }
+        document.querySelector('.products-container')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+
+    // ── Vue principale d'une catégorie : toutes les sous-catégories ──
+    if (header) header.textContent      = category === 'Tous' ? 'Tous les produits' : category;
+    if (productCount) productCount.textContent = `${base.length} produit${base.length > 1 ? 's' : ''}`;
+
+    if (!base.length) {
+        grid.style.display  = 'none';
+        emptyState.style.display = 'block';
+        document.querySelector('.products-container')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    grid.style.display          = 'block';
+    grid.style.gridTemplateColumns = '1fr';
+
+    let html = '';
+
+    // Une section par sous-catégorie (seulement celles non vides)
+    _subcatConfigs(base).forEach(sub => {
+        const matching = base.filter(p => sub.filter(p));
+        if (matching.length) {
+            html += _buildSection(sub.label, matching, true);
+        }
+    });
+
+    // Section finale : tous les produits de la catégorie
+    html += _buildSection(`📦 Tous les produits — ${category}`, base);
+
+    grid.innerHTML = html;
+    document.querySelector('.products-container')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ==================== CARROUSEL ====================
+function updateCarousel() {
+    const container     = document.getElementById('carouselContainer');
+    const dotsContainer = document.getElementById('carouselDots');
+    if (!container || !dotsContainer) return;
+
+    popularProducts = [...allProducts]
+        .sort((a, b) =>
+            (productLikes[b.id]?.count || b.likes || 0) -
+            (productLikes[a.id]?.count || a.likes || 0)
+        )
+        .slice(0, 10);
+
+    if (!popularProducts.length) {
+        document.getElementById('heroCarousel')?.style.setProperty('display', 'none');
+        return;
+    }
+
+    container.innerHTML = popularProducts.map(product => {
+        const likeData      = productLikes[product.id] || { count: 0, userLiked: false };
+        const commentsCount = (productComments[product.id] || []).length;
+        return `
+        <div class="carousel-item" onclick="goToProduct(${product.id})">
+            <img src="${product.mainImage || 'https://via.placeholder.com/1200x400'}"
+                 class="carousel-image" alt="${product.nom}"
+                 onerror="this.src='https://via.placeholder.com/1200x400'">
+            <div class="carousel-overlay">
+                <div class="carousel-info">
+                    <h2>${product.nom}</h2>
+                    <p class="shop-name">🏪 ${product.shopName}</p>
+                    <p class="product-price">${formatPrice(product.prix)}</p>
+                    <div style="display:flex;gap:16px;margin-top:8px;font-size:.9rem;opacity:.9;">
+                        <span>❤️ ${likeData.count} likes</span>
+                        <span>💬 ${commentsCount} commentaires</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    dotsContainer.innerHTML = popularProducts.map((_, i) =>
+        `<div class="dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
+    ).join('');
+
+    startCarousel(popularProducts.length);
+}
+
+function startCarousel(total) {
+    if (carouselInterval) clearInterval(carouselInterval);
+    currentSlide = 0;
+    carouselInterval = setInterval(() => {
+        currentSlide = (currentSlide + 1) % total;
+        _updateCarouselPos();
+    }, CONFIG.CAROUSEL_INTERVAL);
+}
+
+function _updateCarouselPos() {
+    const container = document.getElementById('carouselContainer');
+    if (!container) return;
+    container.style.transform = `translateX(-${currentSlide * 100}%)`;
+    document.querySelectorAll('.dot').forEach((d, i) =>
+        d.classList.toggle('active', i === currentSlide)
+    );
+}
+
+window.goToSlide = function(index) {
+    currentSlide = index;
+    _updateCarouselPos();
+    if (carouselInterval) clearInterval(carouselInterval);
+    startCarousel(popularProducts.length);
+};
+
+function initCarouselControls() {
+    const prev = document.getElementById('btnPrev');
+    const next = document.getElementById('btnNext');
+    if (prev) {
+        prev.addEventListener('click', () => {
+            currentSlide = (currentSlide - 1 + popularProducts.length) % popularProducts.length;
+            _updateCarouselPos();
+            if (carouselInterval) clearInterval(carouselInterval);
+            startCarousel(popularProducts.length);
+        });
+    }
+    if (next) {
+        next.addEventListener('click', () => {
+            currentSlide = (currentSlide + 1) % popularProducts.length;
+            _updateCarouselPos();
+            if (carouselInterval) clearInterval(carouselInterval);
+            startCarousel(popularProducts.length);
+        });
+    }
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') prev?.click();
+        if (e.key === 'ArrowRight') next?.click();
+    });
+}
+
+// ==================== RECHERCHE ====================
+function initSearch() {
+    const input = document.getElementById('searchInput')
+               || document.querySelector('.search-box input');
+    if (!input) return;
+
+    let timer;
+    input.addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            const term = e.target.value.toLowerCase().trim();
+            if (!term) { displayProducts(); return; }
+
+            const filtered = allProducts.filter(p =>
+                p.nom?.toLowerCase().includes(term) ||
+                p.shopName?.toLowerCase().includes(term) ||
+                p.categorie?.toLowerCase().includes(term)
+            );
+
+            const grid       = document.getElementById('productsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const pCount     = document.getElementById('productCount');
+
+            _injectSectionStyles();
+
+            if (!filtered.length) {
+                grid.style.display  = 'none';
+                emptyState.style.display = 'block';
+                if (pCount) pCount.textContent = '0 produits';
+            } else {
+                grid.innerHTML = _buildSection(`🔍 Résultats pour "${e.target.value}"`, filtered);
+                grid.style.display          = 'block';
+                grid.style.gridTemplateColumns = '1fr';
+                emptyState.style.display    = 'none';
+                if (pCount) pCount.textContent = `${filtered.length} produit${filtered.length > 1 ? 's' : ''}`;
+            }
+        }, CONFIG.DEBOUNCE_DELAY);
+    });
+}
+
+console.log('✅ Artefact 3 — Affichage & Carrousel prêt');
+
+function getUserId() {
+    let id = localStorage.getItem('oda_user_id');
+    if (!id) {
+        id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('oda_user_id', id);
+    }
+    return id;
 }
 
 function getUserName() {
-    let userName = localStorage.getItem('oda_user_name');
-    if (!userName) {
-        userName = prompt('Entrez votre nom pour commenter:') || 'Anonyme';
-        localStorage.setItem('oda_user_name', userName);
+    let name = localStorage.getItem('oda_user_name');
+    if (!name) {
+        name = prompt('Entrez votre nom pour commenter :') || 'Anonyme';
+        localStorage.setItem('oda_user_name', name);
     }
-    return userName;
+    return name;
 }
 
 // ==================== FAVORIS ====================
 function loadFavorites() {
-    const stored = localStorage.getItem('oda_favorites');
-    if (stored) {
-        try {
-            favoriteProducts = new Set(JSON.parse(stored));
-            console.log(`❤️ ${favoriteProducts.size} favoris chargés`);
-        } catch (e) {
-            favoriteProducts = new Set();
-        }
-    }
+    try {
+        const stored = localStorage.getItem('oda_favorites');
+        if (stored) favoriteProducts = new Set(JSON.parse(stored));
+    } catch { favoriteProducts = new Set(); }
 }
 
 function saveFavorites() {
@@ -5017,737 +4693,261 @@ function toggleFavorite(productId) {
         showToast('Retiré des favoris', 'info');
     } else {
         favoriteProducts.add(productId);
-        showToast('Ajouté aux favoris', 'success');
+        showToast('Ajouté aux favoris ❤️', 'success');
     }
     saveFavorites();
     updateBadges();
-    displayProducts();
-    updateCarousel();
+    // Rafraîchir uniquement le bouton (pas tout l'affichage)
+    document.querySelectorAll(`[onclick*="toggleFavorite(${productId})"]`).forEach(btn => {
+        const isFav = favoriteProducts.has(productId);
+        btn.textContent = isFav ? '❤️' : '🤍';
+        btn.classList.toggle('active', isFav);
+    });
 }
 
 function updateBadges() {
-    const favBadge = document.getElementById('favBadge');
-    if (favBadge) {
-        const favCount = favoriteProducts.size;
-        favBadge.textContent = favCount;
-        favBadge.style.display = favCount > 0 ? 'flex' : 'none';
+    const badge = document.getElementById('favBadge');
+    if (badge) {
+        badge.textContent     = favoriteProducts.size;
+        badge.style.display   = favoriteProducts.size > 0 ? 'flex' : 'none';
     }
 }
 
 // ==================== LIKES ====================
 async function toggleLike(productId) {
-    const currentLike = productLikes[productId] || { count: 0, userLiked: false };
-
+    const current = productLikes[productId] || { count: 0, userLiked: false };
     try {
-        if (currentLike.userLiked) {
+        if (current.userLiked) {
             await supabase.from('product_likes').delete()
                 .eq('product_id', productId).eq('user_id', currentUserId);
-            productLikes[productId] = {
-                count: Math.max(0, currentLike.count - 1),
-                userLiked: false
-            };
+            productLikes[productId] = { count: Math.max(0, current.count - 1), userLiked: false };
             showToast('Like retiré', 'info');
         } else {
             await supabase.from('product_likes').insert({
-                product_id: productId,
-                user_id: currentUserId
+                product_id : productId,
+                user_id    : currentUserId,
             });
-            productLikes[productId] = {
-                count: currentLike.count + 1,
-                userLiked: true
-            };
-            showToast('Produit liké !', 'success');
+            productLikes[productId] = { count: current.count + 1, userLiked: true };
+            showToast('Produit liké ! ❤️', 'success');
         }
-        updateLikeButton(productId);
+        _updateLikeButtons(productId);
         updateCarousel();
-    } catch (error) {
-        console.error('Erreur like:', error);
+    } catch (err) {
+        console.error('Erreur like:', err);
         showToast('Erreur lors du like', 'error');
     }
 }
 
-function updateLikeButton(productId) {
+function _updateLikeButtons(productId) {
     const likeData = productLikes[productId] || { count: 0, userLiked: false };
-    const likeBtns = document.querySelectorAll(`[data-like-product="${productId}"]`);
-    
-    likeBtns.forEach(btn => {
-        const countSpan = btn.querySelector('.like-count');
-        const icon = btn.querySelector('.like-icon');
-        if (countSpan) countSpan.textContent = likeData.count;
-        if (icon) icon.textContent = likeData.userLiked ? '❤️' : '🤍';
+    document.querySelectorAll(`[data-like-product="${productId}"]`).forEach(btn => {
+        const icon  = btn.querySelector('.like-icon');
+        const count = btn.querySelector('.like-count');
+        if (icon)  icon.textContent  = likeData.userLiked ? '❤️' : '🤍';
+        if (count) count.textContent = likeData.count;
         btn.classList.toggle('liked', likeData.userLiked);
     });
 }
 
 // ==================== COMMENTAIRES ====================
-async function addComment(productId, commentText, rating) {
-    if (!commentText.trim()) {
-        showToast('Le commentaire ne peut pas être vide', 'error');
-        return;
-    }
-
-    const userName = getUserName();
-
+async function addComment(productId, text, rating) {
+    if (!text.trim()) { showToast('Commentaire vide', 'error'); return; }
+    const name = getUserName();
     try {
         const { data, error } = await supabase.from('product_comments').insert({
-            product_id: productId,
-            user_id: currentUserId,
-            user_name: userName,
-            comment: commentText.trim(),
-            rating: rating || 5
+            product_id : productId,
+            user_id    : currentUserId,
+            user_name  : name,
+            comment    : text.trim(),
+            rating     : rating || 5,
         }).select().single();
-
         if (error) throw error;
-
-        if (!productComments[productId]) {
-            productComments[productId] = [];
-        }
+        if (!productComments[productId]) productComments[productId] = [];
         productComments[productId].unshift(data);
-        showToast('Commentaire ajouté !', 'success');
+        showToast('Commentaire publié !', 'success');
         return data;
-    } catch (error) {
-        console.error('Erreur commentaire:', error);
+    } catch (err) {
+        console.error('Erreur commentaire:', err);
         showToast('Erreur lors de l\'ajout', 'error');
     }
 }
 
-function calculateAverageRating(comments) {
-    if (!comments || comments.length === 0) return '0.0';
-    const sum = comments.reduce((acc, c) => acc + (c.rating || 0), 0);
-    return (sum / comments.length).toFixed(1);
+function _avgRating(comments) {
+    if (!comments?.length) return '0.0';
+    return (comments.reduce((s, c) => s + (c.rating || 0), 0) / comments.length).toFixed(1);
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Aujourd\'hui';
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
+function formatDate(str) {
+    const date = new Date(str);
+    const diff = Math.floor((Date.now() - date) / 86400000);
+    if (diff === 0) return 'Aujourd\'hui';
+    if (diff === 1) return 'Hier';
+    if (diff < 7)  return `Il y a ${diff} jours`;
+    if (diff < 30) return `Il y a ${Math.floor(diff / 7)} sem.`;
     return date.toLocaleDateString('fr-FR');
 }
 
 // ==================== MODAL COMMENTAIRES ====================
 function showCommentsModal(productId) {
-    const product = allProducts.find(p => p.id === productId);
+    const product  = allProducts.find(p => p.id === productId);
     if (!product) return;
-
     const comments = productComments[productId] || [];
-    const likeData = productLikes[productId] || { count: 0, userLiked: false };
+    const likeData = productLikes[productId]    || { count: 0, userLiked: false };
+
+    // Supprimer modal existant
+    document.querySelector('.comments-modal')?.remove();
 
     const modal = document.createElement('div');
     modal.className = 'comments-modal';
     modal.innerHTML = `
         <div class="modal-backdrop" onclick="this.parentElement.remove()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>${product.nom}</h3>
-                <button class="btn-close" onclick="this.closest('.comments-modal').remove()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
+        <div class="modal-content" style="
+            position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;
+            max-height:85vh;overflow-y:auto;padding:24px;z-index:9000;
+            animation:slideUp .3s ease;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;
+                    margin:0 auto 16px;"></div>
+                <h3 style="font-size:1.1rem;font-weight:700;">${product.nom}</h3>
+            </div>
+            <div style="display:flex;justify-content:space-around;
+                background:var(--bg-secondary);border-radius:12px;padding:16px;margin-bottom:20px;">
+                <div style="text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:800;">${likeData.count}</div>
+                    <div style="font-size:.75rem;color:var(--text-secondary);">❤️ Likes</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:800;">${comments.length}</div>
+                    <div style="font-size:.75rem;color:var(--text-secondary);">💬 Avis</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:1.5rem;font-weight:800;">${_avgRating(comments)}</div>
+                    <div style="font-size:.75rem;color:var(--text-secondary);">⭐ Note</div>
+                </div>
+            </div>
+            <div style="margin-bottom:20px;">
+                <h4 style="font-size:.95rem;font-weight:700;margin-bottom:12px;">
+                    Ajouter un avis
+                </h4>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                    ${[5,4,3,2,1].map(s => `
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="rating" value="${s}"
+                                ${s === 5 ? 'checked' : ''} style="display:none;">
+                            <span style="font-size:1.4rem;">${'⭐'.repeat(s)}</span>
+                        </label>`).join('')}
+                </div>
+                <textarea id="commentInput"
+                    style="width:100%;padding:12px;border:1.5px solid var(--border-color);
+                    border-radius:10px;resize:none;font-family:inherit;font-size:.9rem;outline:none;"
+                    rows="3" placeholder="Partagez votre avis…"></textarea>
+                <button onclick="submitComment(${productId})"
+                    style="margin-top:10px;width:100%;padding:12px;background:var(--primary-color);
+                    color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;
+                    font-size:.95rem;">
+                    Publier
                 </button>
             </div>
-            <div class="modal-stats">
-                <div class="stat-item">
-                    <span class="stat-icon">❤️</span>
-                    <span class="stat-value">${likeData.count}</span>
-                    <span class="stat-label">Likes</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-icon">💬</span>
-                    <span class="stat-value">${comments.length}</span>
-                    <span class="stat-label">Commentaires</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-icon">⭐</span>
-                    <span class="stat-value">${calculateAverageRating(comments)}</span>
-                    <span class="stat-label">Note moyenne</span>
-                </div>
-            </div>
-            <div class="comment-form">
-                <h4>Ajouter un commentaire</h4>
-                <div class="rating-input">
-                    <span>Note :</span>
-                    ${[5,4,3,2,1].map(star => `
-                        <label>
-                            <input type="radio" name="rating" value="${star}" ${star === 5 ? 'checked' : ''}>
-                            <span class="star">${'⭐'.repeat(star)}</span>
-                        </label>
-                    `).join('')}
-                </div>
-                <textarea id="commentInput" placeholder="Partagez votre avis..." rows="3"></textarea>
-                <button class="btn-submit" onclick="submitComment(${productId})">
-                    Publier le commentaire
-                </button>
-            </div>
-            <div class="comments-list">
-                <h4>Tous les commentaires (${comments.length})</h4>
-                ${comments.length === 0 ? `
-                    <div class="empty-comments">
-                        <p>Aucun commentaire</p>
-                        <p>Soyez le premier à donner votre avis !</p>
-                    </div>
-                ` : comments.map(c => `
-                    <div class="comment-item">
-                        <div class="comment-header">
-                            <div class="comment-user">
-                                <span class="user-avatar">${c.user_name.charAt(0).toUpperCase()}</span>
-                                <span class="user-name">${c.user_name}</span>
+            <div>
+                <h4 style="font-size:.95rem;font-weight:700;margin-bottom:12px;">
+                    Tous les avis (${comments.length})
+                </h4>
+                ${comments.length === 0
+                    ? `<p style="text-align:center;color:var(--text-secondary);padding:20px 0;">
+                         Aucun avis — soyez le premier ! 🙌
+                       </p>`
+                    : comments.map(c => `
+                        <div style="padding:14px 0;border-bottom:1px solid var(--border-color);">
+                            <div style="display:flex;justify-content:space-between;
+                                align-items:center;margin-bottom:6px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="width:32px;height:32px;border-radius:50%;
+                                        background:var(--primary-color);color:#fff;
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-weight:700;font-size:.85rem;">
+                                        ${c.user_name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span style="font-weight:600;font-size:.9rem;">${c.user_name}</span>
+                                </div>
+                                <span style="font-size:.8rem;">${'⭐'.repeat(c.rating || 0)}</span>
                             </div>
-                            <div class="comment-rating">${'⭐'.repeat(c.rating)}</div>
-                        </div>
-                        <p class="comment-text">${c.comment}</p>
-                        <span class="comment-date">${formatDate(c.created_at)}</span>
-                    </div>
-                `).join('')}
+                            <p style="margin:0;font-size:.88rem;color:var(--text-primary);
+                                line-height:1.5;">${c.comment}</p>
+                            <span style="font-size:.72rem;color:var(--text-secondary);">
+                                ${formatDate(c.created_at)}
+                            </span>
+                        </div>`).join('')}
             </div>
-        </div>
-    `;
+        </div>`;
+
     document.body.appendChild(modal);
 }
 
 window.submitComment = async function(productId) {
-    const input = document.getElementById('commentInput');
-    const ratingInput = document.querySelector('input[name="rating"]:checked');
-    if (!input || !ratingInput) return;
-    
-    const comment = input.value;
-    const rating = parseInt(ratingInput.value);
-
-    if (comment.trim()) {
-        await addComment(productId, comment, rating);
-        input.value = '';
-        document.querySelector('.comments-modal').remove();
-        showCommentsModal(productId);
-    }
+    const input  = document.getElementById('commentInput');
+    const rating = document.querySelector('input[name="rating"]:checked');
+    if (!input) return;
+    await addComment(productId, input.value, parseInt(rating?.value || 5));
+    document.querySelector('.comments-modal')?.remove();
+    showCommentsModal(productId);
 };
-
-// ==================== UTILITAIRES ====================
-function formatPrice(price) {
-    return `${price.toLocaleString('fr-FR')} FCFA`;
-}
-
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    toast.innerHTML = `<span style="font-size:1.2rem;">${icon}</span><span>${message}</span>`;
-    
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// ==================== NAVIGATION ====================
-window.goToProduct = function(productId) {
-    window.location.href = `produit.html?id=${productId}`;
-};
-
-window.goToShop = function(shopSlug, productId) {
-    if (shopSlug) {
-        window.location.href = `boutique.html?shop=${shopSlug}#product-${productId}`;
-    } else {
-        showToast('Boutique non disponible', 'error');
-    }
-};
-
-window.scrollToProducts = function() {
-    document.querySelector('.products-container')?.scrollIntoView({ 
-        behavior: 'smooth', block: 'start' 
-    });
-};
-
-// Exposer les fonctions globales
-window.toggleFavorite = toggleFavorite;
-window.toggleLike = toggleLike;
-window.showCommentsModal = showCommentsModal;
-// ==================== AFFICHAGE PRODUITS ====================
-function displayProducts() {
-    const grid = document.getElementById('productsGrid');
-    const emptyState = document.getElementById('emptyState');
-    const productCount = document.getElementById('productCount');
-    const sectionHeader = document.querySelector('.section-header h2');
-
-    let filteredProducts = [...allProducts];
-
-    if (filteredProducts.length === 0) {
-        grid.style.display = 'none';
-        emptyState.style.display = 'block';
-        if (productCount) productCount.textContent = '0 produits';
-        return;
-    }
-
-    grid.style.display = 'block';
-    emptyState.style.display = 'none';
-    if (productCount) productCount.textContent = `${filteredProducts.length} produits`;
-    
-    displayProductsByCategories(filteredProducts);
-}
-
-function displayProductsByCategories(products) {
-    const grid = document.getElementById('productsGrid');
-    const sectionHeader = document.querySelector('.section-header h2');
-    if (sectionHeader) sectionHeader.textContent = 'Tous les produits';
-    
-    const categories = {};
-    products.forEach(product => {
-        const cat = product.categorie || 'Autres';
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(product);
-    });
-
-    let html = '';
-    Object.keys(categories).forEach(category => {
-        const categoryProducts = categories[category].slice(0, 20);
-        
-        html += `
-            <div class="category-section" style="margin-bottom: 40px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);">
-                        ${category}
-                    </h3>
-                    <span style="color: var(--text-secondary); font-size: 0.9rem;">
-                        ${categoryProducts.length} produits
-                    </span>
-                </div>
-                <div class="horizontal-scroll" style="
-                    display: flex;
-                    gap: 16px;
-                    overflow-x: auto;
-                    overflow-y: hidden;
-                    padding-bottom: 12px;
-                    scroll-snap-type: x mandatory;
-                    -webkit-overflow-scrolling: touch;
-                ">
-                    ${categoryProducts.map(product => createProductCard(product, true)).join('')}
-                </div>
-            </div>
-        `;
-    });
-    
-    grid.innerHTML = html;
-    grid.style.display = 'block';
-    grid.style.gridTemplateColumns = '1fr';
-}
-
-function createProductCard(product, isHorizontal = false) {
-    const cardStyle = isHorizontal ? `min-width: 200px; max-width: 200px; scroll-snap-align: start;` : '';
-    const likeData = productLikes[product.id] || { count: 0, userLiked: false };
-    const commentsCount = (productComments[product.id] || []).length;
-
-    return `
-        <div class="product-card" style="${cardStyle}" onclick="goToProduct(${product.id})">
-            <div class="product-image-wrapper">
-                <button class="btn-favorite ${favoriteProducts.has(product.id) ? 'active' : ''}"
-                        onclick="event.stopPropagation(); toggleFavorite(${product.id})">
-                    ${favoriteProducts.has(product.id) ? '❤️' : '🤍'}
-                </button>
-                <img src="${product.mainImage || 'https://via.placeholder.com/300'}" 
-                     class="product-image" 
-                     alt="${product.nom}"
-                     loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/300?text=Produit'">
-            </div>
-            <div class="product-info">
-                <span class="shop-badge" style="background: ${product.shopColor}15; color: ${product.shopColor}">
-                    🏪 ${product.shopName}
-                </span>
-                <h3 class="product-name">${product.nom}</h3>
-                
-                <div class="product-engagement">
-                    <button class="btn-like ${likeData.userLiked ? 'liked' : ''}" 
-                            data-like-product="${product.id}"
-                            onclick="event.stopPropagation(); toggleLike(${product.id})">
-                        <span class="like-icon">${likeData.userLiked ? '❤️' : '🤍'}</span>
-                        <span class="like-count">${likeData.count}</span>
-                    </button>
-                    <button class="btn-comments" onclick="event.stopPropagation(); showCommentsModal(${product.id})">
-                        <span>💬</span>
-                        <span>${commentsCount}</span>
-                    </button>
-                    ${product.rating && parseFloat(product.rating) > 0 ? `
-                        <span class="product-rating">⭐ ${product.rating}</span>
-                    ` : ''}
-                </div>
-                
-                <div class="product-price" style="color: ${product.shopColor}">${formatPrice(product.prix)}</div>
-                ${product.stock < 10 ? `<div class="product-stock">Plus que ${product.stock} en stock !</div>` : ''}
-            </div>
-        </div>
-    `;
-}
-
-
-// ==================== FILTRAGE PAR CATÉGORIE ====================
-function filterByCategory(category, subcategory = 'all') {
-    const grid = document.getElementById('productsGrid');
-    const emptyState = document.getElementById('emptyState');
-    const productCount = document.getElementById('productCount');
-    const sectionHeader = document.querySelector('.section-header h2');
-    
-    let filtered = allProducts;
-    
-    // Filtrage par catégorie principale
-    if (category !== 'Tous') {
-        filtered = allProducts.filter(p => p.categorie === category);
-    }
-    
-    // Filtrage par sous-catégorie
-    if (subcategory !== 'all') {
-        if (subcategory === 'Recommandé') {
-            filtered = filtered.filter(p => (p.likes || 0) >= 5);
-        } else if (subcategory === 'Populaire') {
-            const topLikesThreshold = Math.ceil(filtered.length * 0.2);
-            filtered = [...filtered].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, Math.max(1, topLikesThreshold));
-        } else if (subcategory === 'Arrivage') {
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            filtered = filtered.filter(p => {
-                const createdDate = new Date(p.created_at);
-                return createdDate >= sevenDaysAgo;
-            });
-        } else if (subcategory === 'Solde') {
-            filtered = filtered.filter(p => p.prix < 5000);
-        }
-    }
-    
-    // Mise à jour du titre
-    if (sectionHeader) {
-        let title = category === 'Tous' ? 'Tous les produits' : category;
-        if (subcategory !== 'all') {
-            title += ` - ${subcategory}`;
-        }
-        sectionHeader.textContent = title;
-    }
-    
-    // Affichage des résultats
-    if (filtered.length === 0) {
-        grid.style.display = 'none';
-        emptyState.style.display = 'block';
-        if (productCount) productCount.textContent = '0 produits';
-    } else {
-        grid.style.display = 'grid';
-        emptyState.style.display = 'none';
-        if (productCount) productCount.textContent = `${filtered.length} produits`;
-        
-        // TOUTES LES CATÉGORIES ET SOUS-CATÉGORIES AFFICHENT LES PRODUITS COMME "TOUS"
-        displayProductsByCategories(filtered);
-    }
-    
-    document.querySelector('.products-container')?.scrollIntoView({ 
-        behavior: 'smooth', block: 'start' 
-    });
-}
-// ==================== CAROUSEL ====================
-function updateCarousel() {
-    const container = document.getElementById('carouselContainer');
-    const dotsContainer = document.getElementById('carouselDots');
-
-    popularProducts = [...allProducts]
-        .sort((a, b) => {
-            const aLikes = productLikes[a.id]?.count || 0;
-            const bLikes = productLikes[b.id]?.count || 0;
-            return bLikes - aLikes;
-        })
-        .slice(0, 10);
-
-    if (popularProducts.length === 0) {
-        document.getElementById('heroCarousel')?.style.setProperty('display', 'none');
-        return;
-    }
-
-    container.innerHTML = popularProducts.map(product => {
-        const likeData = productLikes[product.id] || { count: 0, userLiked: false };
-        const commentsCount = (productComments[product.id] || []).length;
-        
-        return `
-        <div class="carousel-item" onclick="goToProduct(${product.id})">
-            <img src="${product.mainImage || 'https://via.placeholder.com/1200x400'}" 
-                 class="carousel-image" 
-                 alt="${product.nom}"
-                 onerror="this.src='https://via.placeholder.com/1200x400'">
-            <div class="carousel-overlay">
-                <div class="carousel-info">
-                    <h2>${product.nom}</h2>
-                    <p class="shop-name">🏪 ${product.shopName}</p>
-                    <p class="product-price">${formatPrice(product.prix)}</p>
-                    <div style="display: flex; gap: 16px; margin-top: 8px; font-size: 0.9rem; opacity: 0.9;">
-                        <span>❤️ ${likeData.count} likes</span>
-                        <span>💬 ${commentsCount} commentaires</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    }).join('');
-
-    dotsContainer.innerHTML = popularProducts.map((_, i) => 
-        `<div class="dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
-    ).join('');
-
-    startCarousel(popularProducts.length);
-}
-
-function startCarousel(totalSlides) {
-    if (carouselInterval) clearInterval(carouselInterval);
-    currentSlide = 0;
-    carouselInterval = setInterval(() => {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        updateCarouselPosition();
-    }, 5000);
-}
-
-function updateCarouselPosition() {
-    const container = document.getElementById('carouselContainer');
-    if (!container) return;
-    
-    container.style.transform = `translateX(-${currentSlide * 100}%)`;
-    document.querySelectorAll('.dot').forEach((dot, i) => {
-        dot.classList.toggle('active', i === currentSlide);
-    });
-}
-
-window.goToSlide = function(index) {
-    currentSlide = index;
-    updateCarouselPosition();
-    if (carouselInterval) clearInterval(carouselInterval);
-    startCarousel(popularProducts.length);
-};
-
-function initCarouselControls() {
-    const btnPrev = document.getElementById('btnPrev');
-    const btnNext = document.getElementById('btnNext');
-
-    if (btnPrev) {
-        btnPrev.addEventListener('click', () => {
-            currentSlide = (currentSlide - 1 + popularProducts.length) % popularProducts.length;
-            updateCarouselPosition();
-            if (carouselInterval) clearInterval(carouselInterval);
-            startCarousel(popularProducts.length);
-        });
-    }
-
-    if (btnNext) {
-        btnNext.addEventListener('click', () => {
-            currentSlide = (currentSlide + 1) % popularProducts.length;
-            updateCarouselPosition();
-            if (carouselInterval) clearInterval(carouselInterval);
-            startCarousel(popularProducts.length);
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') btnPrev?.click();
-        else if (e.key === 'ArrowRight') btnNext?.click();
-    });
-}
-
-// ==================== RECHERCHE ====================
-function initSearch() {
-    const searchInput = document.getElementById('searchInput');
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        
-        if (searchTerm.length === 0) {
-            displayProducts();
-            return;
-        }
-        
-        const filtered = allProducts.filter(p => 
-            p.nom.toLowerCase().includes(searchTerm) ||
-            p.shopName.toLowerCase().includes(searchTerm) ||
-            p.categorie?.toLowerCase().includes(searchTerm)
-        );
-        
-        const grid = document.getElementById('productsGrid');
-        const emptyState = document.getElementById('emptyState');
-        const productCount = document.getElementById('productCount');
-        
-        if (filtered.length === 0) {
-            grid.style.display = 'none';
-            emptyState.style.display = 'block';
-            if (productCount) productCount.textContent = '0 produits';
-        } else {
-            grid.style.display = 'grid';
-            emptyState.style.display = 'none';
-            if (productCount) productCount.textContent = `${filtered.length} produits`;
-            grid.innerHTML = filtered.map(product => createProductCard(product, false)).join('');
-        }
-    });
-}
-// ==================== CHARGEMENT OPTIMISÉ ====================
-async function loadAllProductsOptimized() {
-    try {
-        const dataLoader = new OptimizedDataLoader(supabase);
-        const data = await dataLoader.load();
-        
-        allProducts = data.products;
-        productLikes = data.likes;
-        productComments = data.comments;
-        
-        // Convertir les likes au bon format
-        Object.keys(productLikes).forEach(productId => {
-            const likeData = productLikes[productId];
-            productLikes[productId] = {
-                count: likeData.count,
-                userLiked: likeData.users.includes(currentUserId)
-            };
-        });
-        
-        // Initialiser le menu
-        window.improvedMenu.init(allProducts);
-        
-        // Afficher
-        displayProducts();
-        updateCarousel();
-        
-        // Stats
-        console.log('📊 STATISTIQUES:');
-        console.log(`   - Produits: ${allProducts.length}`);
-        console.log(`   - Cache: ${window.cacheManager.getStats().size}`);
-        
-        return data;
-    } catch (error) {
-        console.error('❌ Erreur:', error);
-        document.getElementById('emptyState').style.display = 'block';
-        showToast('Erreur de chargement', 'error');
-        throw error;
-    }
-}
-
-// ==================== FILTRAGE PAR CATÉGORIE ====================
-function setupCategoryFiltering() {
-    window.addEventListener('categorySelected', (e) => {
-    filterByCategory(e.detail.category, e.detail.subcategory || 'all');
-});
-}
 
 // ==================== MENU LATÉRAL ====================
 function initSideMenu() {
-    const menuBtn = document.getElementById('menuBtn');
-    const closeMenuBtn = document.getElementById('closeMenuBtn');
-    const overlay = document.getElementById('overlay');
-    
-    if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            document.getElementById('sideMenu')?.classList.add('active');
-            overlay?.classList.add('active');
-            window.improvedMenu.render();
-        });
-    }
-    
-    if (closeMenuBtn) {
-        closeMenuBtn.addEventListener('click', () => {
-            document.getElementById('sideMenu')?.classList.remove('active');
-            overlay?.classList.remove('active');
-        });
-    }
-    
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            document.getElementById('sideMenu')?.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-    }
-    
-    // Liens du menu
-    const aboutLink = document.getElementById('aboutLink');
-    const contactLink = document.getElementById('contactLink');
-    const helpLink = document.getElementById('helpLink');
-    
-    if (aboutLink) {
-        aboutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast('Page À propos - En construction', 'info');
-        });
-    }
-    
-    if (contactLink) {
-        contactLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast('Page Contact - En construction', 'info');
-        });
-    }
-    
-    if (helpLink) {
-        helpLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast('Page Aide - En construction', 'info');
-        });
-    }
+    const menuBtn     = document.getElementById('menuBtn');
+    const closeMenuBtn= document.getElementById('closeMenuBtn');
+    const overlay     = document.getElementById('overlay');
+
+    menuBtn?.addEventListener('click', () => {
+        document.getElementById('sideMenu')?.classList.add('active');
+        overlay?.classList.add('active');
+        window.improvedMenu.render();
+    });
+
+    closeMenuBtn?.addEventListener('click', () => {
+        document.getElementById('sideMenu')?.classList.remove('active');
+        overlay?.classList.remove('active');
+    });
+
+    overlay?.addEventListener('click', () => {
+        document.getElementById('sideMenu')?.classList.remove('active');
+        overlay.classList.remove('active');
+    });
 }
 
 // ==================== PARAMÈTRES ====================
 let userSettings = {
-    userName: '',
-    lastNameChange: null,
-    notifications: {
-        newProducts: true,
-        promotions: true,
-        comments: true,
-        popular: true
-    },
-    preferences: {
-        darkMode: false,
-        sounds: true
-    }
+    userName     : '',
+    notifications: { newProducts:true, promotions:true, comments:true, popular:true },
+    preferences  : { darkMode:false, sounds:true },
 };
 
 function chargerParametresUtilisateur() {
     try {
         const saved = localStorage.getItem('oda_user_settings');
-        if (saved) {
-            userSettings = { ...userSettings, ...JSON.parse(saved) };
-        }
-        if (!userSettings.userName) {
+        if (saved) userSettings = { ...userSettings, ...JSON.parse(saved) };
+        if (!userSettings.userName)
             userSettings.userName = localStorage.getItem('oda_user_name') || '';
-        }
-        appliquerParametres();
-    } catch (e) {
-        console.error('Erreur chargement paramètres:', e);
-    }
+        _appliquerParametres();
+    } catch { /**/ }
 }
 
-function appliquerParametres() {
-    const input = document.getElementById('userNameInput');
-    if (input) input.value = userSettings.userName || 'Non défini';
-    
-    const notifNewProducts = document.getElementById('notifNewProducts');
-    const notifPromotions = document.getElementById('notifPromotions');
-    const notifComments = document.getElementById('notifComments');
-    const notifPopular = document.getElementById('notifPopular');
-    const darkMode = document.getElementById('darkMode');
-    const appSounds = document.getElementById('appSounds');
-    
-    if (notifNewProducts) notifNewProducts.checked = userSettings.notifications.newProducts;
-    if (notifPromotions) notifPromotions.checked = userSettings.notifications.promotions;
-    if (notifComments) notifComments.checked = userSettings.notifications.comments;
-    if (notifPopular) notifPopular.checked = userSettings.notifications.popular;
-    if (darkMode) darkMode.checked = userSettings.preferences.darkMode;
-    if (appSounds) appSounds.checked = userSettings.preferences.sounds;
-    
-    if (userSettings.preferences.darkMode) {
-        document.body.classList.add('dark-mode');
-    }
+function _appliquerParametres() {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+    set('userNameInput', userSettings.userName || 'Non défini');
+    chk('notifNewProducts', userSettings.notifications.newProducts);
+    chk('notifPromotions',  userSettings.notifications.promotions);
+    chk('notifComments',    userSettings.notifications.comments);
+    chk('notifPopular',     userSettings.notifications.popular);
+    chk('darkMode',         userSettings.preferences.darkMode);
+    chk('appSounds',        userSettings.preferences.sounds);
+    document.body.classList.toggle('dark-mode', userSettings.preferences.darkMode);
 }
 
 function sauvegarderParametres() {
-    try {
-        localStorage.setItem('oda_user_settings', JSON.stringify(userSettings));
-        localStorage.setItem('oda_user_name', userSettings.userName);
-    } catch (e) {
-        console.error('Erreur sauvegarde:', e);
-    }
+    localStorage.setItem('oda_user_settings', JSON.stringify(userSettings));
+    localStorage.setItem('oda_user_name', userSettings.userName);
 }
 
 window.ouvrirParametres = function() {
@@ -5756,214 +4956,384 @@ window.ouvrirParametres = function() {
 };
 
 window.ouvrirChangementNom = function() {
-    const newName = prompt('Entrez votre nouveau nom:', userSettings.userName);
-    if (newName && newName.trim() && newName.trim() !== userSettings.userName) {
-        userSettings.userName = newName.trim();
-        userSettings.lastNameChange = new Date().toISOString();
+    const n = prompt('Nouveau nom :', userSettings.userName);
+    if (n?.trim() && n.trim() !== userSettings.userName) {
+        userSettings.userName = n.trim();
         sauvegarderParametres();
-        appliquerParametres();
+        _appliquerParametres();
         showToast('✅ Nom modifié', 'success');
     }
 };
 
 window.effacerDonnees = function() {
-    if (confirm('⚠️ ATTENTION !\n\nSupprimer vos favoris, paramètres et historique ?')) {
+    if (confirm('⚠️ Supprimer vos favoris, paramètres et historique ?')) {
         localStorage.clear();
         sessionStorage.clear();
         showToast('✅ Données effacées', 'success');
-        setTimeout(() => window.location.reload(), 1500);
+        setTimeout(() => location.reload(), 1500);
     }
 };
-
+// ✅ NOUVEAU CODE — corrigé
 function initialiserParametres() {
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) {
-        settingsBtn.addEventListener('click', window.ouvrirParametres);
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();  // ← bloque la propagation du clic
+            window.ouvrirParametres();
+        });
     }
-    
-    ['notifNewProducts', 'notifPromotions', 'notifComments', 'notifPopular'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            const key = id.replace('notif', '').replace(/^./, str => str.toLowerCase());
-            el.addEventListener('change', function() {
-                userSettings.notifications[key] = this.checked;
-                sauvegarderParametres();
-            });
-        }
+
+    // Empêcher les clics à l'intérieur du modal de le fermer
+    const modalContent = document.querySelector('.settings-modal-content');
+    if (modalContent) {
+        modalContent.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    ['notifNewProducts','notifPromotions','notifComments','notifPopular'].forEach(id => {
+        const el  = document.getElementById(id);
+        if (!el) return;
+        const key = id.replace('notif', '').replace(/^./, c => c.toLowerCase());
+        el.addEventListener('change', function() {
+            userSettings.notifications[key] = this.checked;
+            sauvegarderParametres();
+        });
     });
-    
-    const darkMode = document.getElementById('darkMode');
-    if (darkMode) {
-        darkMode.addEventListener('change', function() {
-            userSettings.preferences.darkMode = this.checked;
-            document.body.classList.toggle('dark-mode', this.checked);
-            sauvegarderParametres();
-        });
-    }
-    
-    const appSounds = document.getElementById('appSounds');
-    if (appSounds) {
-        appSounds.addEventListener('change', function() {
-            userSettings.preferences.sounds = this.checked;
-            sauvegarderParametres();
-        });
-    }
-    
+
+    document.getElementById('darkMode')?.addEventListener('change', function() {
+        userSettings.preferences.darkMode = this.checked;
+        document.body.classList.toggle('dark-mode', this.checked);
+        sauvegarderParametres();
+    });
+
+    document.getElementById('appSounds')?.addEventListener('change', function() {
+        userSettings.preferences.sounds = this.checked;
+        sauvegarderParametres();
+    });
+
     chargerParametresUtilisateur();
 }
 
-// ==================== GESTION DU CACHE ====================
+// ── Bouton rechargement forcé dans paramètres ──
 function addForceReloadButton() {
-    const settingsBody = document.querySelector('.settings-body');
-    if (!settingsBody) return;
-    
-    const cacheSection = document.createElement('div');
-    cacheSection.className = 'settings-section';
-    cacheSection.innerHTML = `
+    const body = document.querySelector('.settings-body');
+    if (!body || document.getElementById('cacheSection')) return;
+
+    const section = document.createElement('div');
+    section.id = 'cacheSection';
+    section.className = 'settings-section';
+    section.innerHTML = `
         <div class="section-header">
             <span class="section-icon">💾</span>
             <h3>Cache de l'application</h3>
         </div>
-        <div id="cacheInfo" style="background:var(--bg-secondary);padding:16px;border-radius:12px;margin-bottom:16px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <span style="color:var(--text-secondary);">Taille:</span>
-                <strong id="cacheSize">Calcul...</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <span style="color:var(--text-secondary);">Âge:</span>
-                <strong id="cacheAge">Calcul...</strong>
+        <div id="cacheInfo" style="background:var(--bg-secondary);padding:14px;
+            border-radius:12px;margin-bottom:14px;font-size:.85rem;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="color:var(--text-secondary);">Statut :</span>
+                <strong id="cacheStatus">—</strong>
             </div>
             <div style="display:flex;justify-content:space-between;">
-                <span style="color:var(--text-secondary);">Statut:</span>
-                <strong id="cacheStatus">Valide</strong>
+                <span style="color:var(--text-secondary);">Âge :</span>
+                <strong id="cacheAge">—</strong>
             </div>
         </div>
-        <button class="btn-primary" onclick="window.forceReloadData()" style="width:100%;background:#3B82F6;margin-bottom:12px;">
+        <button class="btn-primary"
+            onclick="window.forceReloadData()"
+            style="width:100%;background:#3B82F6;margin-bottom:10px;">
             🔄 Forcer le rechargement
         </button>
         <button class="btn-danger" onclick="window.clearAllCache()">
             🗑️ Vider le cache
-        </button>
-    `;
-    settingsBody.appendChild(cacheSection);
-    updateCacheInfo();
+        </button>`;
+    body.appendChild(section);
+    _updateCacheInfo();
 }
 
-function updateCacheInfo() {
-    const stats = window.cacheManager?.getStats();
-    if (!stats) return;
-    
-    const sizeEl = document.getElementById('cacheSize');
-    const ageEl = document.getElementById('cacheAge');
-    const statusEl = document.getElementById('cacheStatus');
-    
-    if (sizeEl) sizeEl.textContent = stats.size;
-    if (ageEl) ageEl.textContent = stats.age || 'Nouveau';
-    if (statusEl) {
-        statusEl.textContent = stats.valid ? 'Valide ✓' : 'Expiré ✗';
-        statusEl.style.color = stats.valid ? 'var(--success-color)' : 'var(--error-color)';
+function _updateCacheInfo() {
+    const info   = window.cacheManager?.getInfo() || {};
+    const status = document.getElementById('cacheStatus');
+    const age    = document.getElementById('cacheAge');
+    if (status) {
+        status.textContent  = info.valid ? 'Valide ✓' : 'Expiré ✗';
+        status.style.color  = info.valid ? 'var(--success-color)' : 'var(--error-color)';
     }
+    if (age) age.textContent = info.age || 'Nouveau';
 }
 
 window.forceReloadData = async function() {
-    if (confirm('Recharger depuis le serveur ?')) {
-        window.loadingProgress.start();
-        try {
-            const dataLoader = new OptimizedDataLoader(supabase);
-            await dataLoader.forceReload();
-            allProducts = dataLoader.data.products;
-            productLikes = dataLoader.data.likes;
-            productComments = dataLoader.data.comments;
-            window.improvedMenu.update(allProducts);
-            displayProducts();
-            updateCarousel();
-            showToast('✅ Données rechargées', 'success');
-            updateCacheInfo();
-        } catch (error) {
-            showToast('❌ Erreur', 'error');
-        }
-    }
+    if (!confirm('Recharger depuis le serveur ?')) return;
+    window.loadingProgress.start();
+    try {
+        const loader = new OptimizedDataLoader(supabase);
+        const data   = await loader.forceReload();
+        _applyLoadedData(data);
+        showToast('✅ Données rechargées', 'success');
+        _updateCacheInfo();
+    } catch { showToast('❌ Erreur rechargement', 'error'); }
 };
 
 window.clearAllCache = function() {
-    if (confirm('Vider le cache ?')) {
-        window.cacheManager.clearAll();
-        showToast('🗑️ Cache vidé', 'success');
-        updateCacheInfo();
-    }
+    if (!confirm('Vider le cache ?')) return;
+    window.cacheManager.clearAll();
+    showToast('🗑️ Cache vidé', 'success');
+    _updateCacheInfo();
 };
 
-// ==================== SCROLL HEADER ====================
-let lastScrollTop = 0;
+// ==================== HEADER SCROLL ====================
+let _lastScrollTop = 0;
 function initScrollBehavior() {
     window.addEventListener('scroll', () => {
-        const header = document.querySelector('.main-header');
+        const header    = document.querySelector('.main-header');
         if (!header) return;
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        if (scrollTop > lastScrollTop && scrollTop > 100) {
+        if (scrollTop > _lastScrollTop && scrollTop > 80) {
             header.style.transform = 'translateY(-100%)';
         } else {
             header.style.transform = 'translateY(0)';
         }
-        lastScrollTop = scrollTop;
+        _lastScrollTop = scrollTop;
+    }, { passive: true });
+}
+
+// ==================== NAVIGATION ====================
+window.goToProduct = function(productId) {
+    window.location.href = `produit.html?id=${productId}`;
+};
+window.goToShop = function(shopSlug, productId) {
+    if (shopSlug) window.location.href = `boutique.html?shop=${shopSlug}#product-${productId}`;
+    else showToast('Boutique non disponible', 'error');
+};
+window.scrollToProducts = function() {
+    document.querySelector('.products-container')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// ==================== UTILITAIRES ====================
+function formatPrice(price) {
+    return `${Number(price).toLocaleString('fr-FR')} FCFA`;
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+    toast.innerHTML = `<span style="font-size:1.1rem;">${icons[type] || 'ℹ️'}</span>
+                       <span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight .3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ==================== EXPOSE GLOBAL ====================
+window.toggleFavorite    = toggleFavorite;
+window.toggleLike        = toggleLike;
+window.showCommentsModal = showCommentsModal;
+
+console.log('✅ Artefact 4 — Utilisateur · Likes · Commentaires · Menu prêt');
+// ============================================================
+// ARTEFACT 5 — CHARGEMENT PRINCIPAL · REALTIME SUPABASE
+//              INITIALISATION · AUTO-REFRESH
+// Ce bloc est le dernier du <script type="module">
+// ============================================================
+
+// ==================== HELPER : APPLIQUER LES DONNÉES CHARGÉES ====================
+// Utilisé à la fois par le chargement initial ET par la mise à jour silencieuse
+function _applyLoadedData(data) {
+    allProducts = data.products;
+
+    // Convertir les likes au bon format { count, userLiked }
+    Object.keys(data.likes).forEach(id => {
+        const raw = data.likes[id];
+        productLikes[id] = {
+            count     : raw.count ?? (Array.isArray(raw.users) ? raw.users.length : 0),
+            userLiked : Array.isArray(raw.users)
+                ? raw.users.includes(currentUserId)
+                : raw.userLiked ?? false,
+        };
+    });
+
+    productComments = data.comments;
+
+    // Rafraîchir l'interface
+    window.improvedMenu.update(allProducts);
+    displayProducts();
+    updateCarousel();
+    updateBadges();
+    console.log(`🔄 Interface mise à jour — ${allProducts.length} produits`);
+}
+
+// ==================== CHARGEMENT INITIAL ====================
+async function loadAllProductsOptimized() {
+    try {
+        const loader = new OptimizedDataLoader(supabase);
+        const data   = await loader.load();
+        _applyLoadedData(data);
+        return data;
+    } catch (err) {
+        console.error('❌ Erreur chargement:', err);
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.style.display = 'block';
+        showToast('Erreur de chargement', 'error');
+        throw err;
+    }
+}
+
+// ==================== REALTIME SUPABASE ====================
+// ✅ Écoute INSERT / UPDATE / DELETE en temps réel sur la table "produits"
+function initRealtimeSubscription() {
+    const channel = supabase
+        .channel('oda-produits-realtime')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'produits' },
+            payload => {
+                console.log(`🔔 Realtime — ${payload.eventType}`, payload);
+
+                switch (payload.eventType) {
+
+                    case 'INSERT': {
+                        // Nouveau produit : enrichir avec données boutique et l'ajouter
+                        const p      = payload.new;
+                        const shopId = p.user_id;
+                        // On récupère les infos boutique depuis le cache existant si disponible
+                        const cached = window.cacheManager.loadAll();
+                        const shop   = cached.shops?.[shopId] || {};
+
+                        const enriched = {
+                            id         : p.id,
+                            nom        : p.nom,
+                            description: p.description,
+                            prix       : p.prix,
+                            stock      : p.stock,
+                            mainImage  : p.main_image,
+                            categorie  : p.categorie,
+                            userId     : p.user_id,
+                            created_at : p.created_at,
+                            shopName   : shop.nom || 'Boutique',
+                            shopSlug   : shop.identifiant,
+                            shopColor  : shop.couleurPrimaire || '#FF6B00',
+                            rating     : '0.0',
+                            likes      : 0,
+                        };
+
+                        // N'ajouter que si publié et en stock
+                        if (p.statut === 'published' && p.stock > 0) {
+                            allProducts.unshift(enriched);
+                            showToast('🆕 Nouveau produit disponible !', 'info');
+                        }
+                        break;
+                    }
+
+                    case 'UPDATE': {
+                        const p   = payload.new;
+                        const idx = allProducts.findIndex(x => x.id === p.id);
+
+                        if (idx === -1) {
+                            // Peut-être que le produit vient d'être publié
+                            if (p.statut === 'published' && p.stock > 0) {
+                                allProducts.unshift({
+                                    id: p.id, nom: p.nom, description: p.description,
+                                    prix: p.prix, stock: p.stock, mainImage: p.main_image,
+                                    categorie: p.categorie, userId: p.user_id,
+                                    created_at: p.created_at, shopName: 'Boutique',
+                                    shopColor: '#FF6B00', rating: '0.0', likes: 0,
+                                });
+                            }
+                        } else {
+                            // Mettre à jour le produit existant
+                            allProducts[idx] = {
+                                ...allProducts[idx],
+                                nom       : p.nom,
+                                description: p.description,
+                                prix      : p.prix,
+                                stock     : p.stock,
+                                mainImage : p.main_image,
+                                categorie : p.categorie,
+                            };
+                            // Si le produit n'est plus publié ou hors stock, le retirer
+                            if (p.statut !== 'published' || p.stock <= 0) {
+                                allProducts.splice(idx, 1);
+                            }
+                        }
+                        break;
+                    }
+
+                    case 'DELETE': {
+                        const id  = payload.old.id;
+                        allProducts = allProducts.filter(x => x.id !== id);
+                        break;
+                    }
+
+                    default: break;
+                }
+
+                // ✅ Mettre à jour l'interface immédiatement
+                window.improvedMenu.update(allProducts);
+                displayProducts();
+                updateCarousel();
+
+                // ✅ Mettre à jour le cache avec les nouvelles données
+                const cached = window.cacheManager.loadAll();
+                window.cacheManager.saveAll(
+                    allProducts,
+                    cached.likes    || productLikes,
+                    cached.comments || productComments,
+                    cached.shops    || {},
+                );
+            }
+        )
+        .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+                console.log('✅ Realtime actif — mise à jour automatique des produits');
+            } else {
+                console.warn('⚠️ Statut Realtime :', status);
+            }
+        });
+
+    return channel;
+}
+
+// ==================== FILTRAGE PAR CATÉGORIE (EVENT) ====================
+function setupCategoryFiltering() {
+    window.addEventListener('categorySelected', e => {
+        filterByCategory(e.detail.category, e.detail.subcategory || 'all');
     });
 }
 
-// ==================== PWA NOTIFICATIONS ====================
-window.verifierStatutNotifications = function() {
-    const statusText = document.getElementById('notifStatusText');
-    const enableBtn = document.getElementById('enableNotifBtn');
-    if (!statusText || !enableBtn) return;
-    
-    if (!('Notification' in window)) {
-        statusText.textContent = '❌ Non supportées';
-        enableBtn.disabled = true;
-        return;
+// ==================== AUTO-REFRESH (onglet redevient visible) ====================
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!window.cacheManager.isValid()) {
+        console.log('🔄 Onglet réactivé — cache expiré, rechargement…');
+        loadAllProductsOptimized();
+    } else {
+        console.log('👁️ Onglet réactivé — cache encore valide');
     }
-    
-    const permission = Notification.permission;
-    switch(permission) {
-        case 'granted':
-            statusText.innerHTML = '✅ <span style="color:var(--success-color);font-weight:600;">Activées</span>';
-            enableBtn.style.display = 'none';
-            break;
-        case 'denied':
-            statusText.innerHTML = '❌ <span style="color:var(--error-color);font-weight:600;">Bloquées</span>';
-            enableBtn.textContent = 'Débloquer';
-            break;
-        default:
-            statusText.innerHTML = '⚠️ <span style="color:#F59E0B;font-weight:600;">Non activées</span>';
-            enableBtn.style.display = 'block';
-    }
-};
-
-window.activerNotifications = async function() {
-    if (!window.pwaManager) {
-        showToast('PWA Manager non disponible', 'error');
-        return;
-    }
-    const granted = await window.pwaManager.requestNotificationPermission();
-    if (granted) {
-        window.verifierStatutNotifications();
-        showToast('🎉 Notifications activées !', 'success');
-    }
-};
+});
 
 // ==================== INITIALISATION COMPLÈTE ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 ODA MARKETPLACE - VERSION OPTIMISÉE');
-    console.log('='.repeat(50));
-    
-    // Masquer l'ancien loader
+    console.log('🚀 ODA MARKETPLACE — démarrage');
+    console.log('='.repeat(48));
+
+    // Masquer l'ancien loader HTML si présent
     const oldLoader = document.getElementById('loader');
     if (oldLoader) oldLoader.style.display = 'none';
-    
-    // Chargement
+
+    // 1. Charger les favoris
     loadFavorites();
     updateBadges();
+
+    // 2. Charger les données (cache ou Supabase)
     await loadAllProductsOptimized();
-    
-    // Initialisation
+
+    // 3. Initialiser les composants UI
     setupCategoryFiltering();
     initSideMenu();
     initCarouselControls();
@@ -5971,912 +5341,74 @@ document.addEventListener('DOMContentLoaded', async () => {
     initScrollBehavior();
     initialiserParametres();
     addForceReloadButton();
-    
-    // PWA
-    if (window.verifierStatutNotifications) {
+
+    // 4. Activer le Realtime Supabase ✅
+    initRealtimeSubscription();
+
+    // 5. PWA
+    if (typeof window.verifierStatutNotifications === 'function') {
         window.verifierStatutNotifications();
     }
-    
-    // Mode PWA
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches;
-    if (isPWA) {
-        console.log('📱 Mode PWA');
+    if (window.matchMedia('(display-mode: standalone)').matches) {
         document.body.classList.add('pwa-mode');
+        console.log('📱 Mode PWA détecté');
     }
-    
-    console.log('='.repeat(50));
-    console.log('✅ PRÊT');
-    console.log('🎯 Fonctionnalités:');
-    console.log('   ✓ Cache local optimisé');
-    console.log('   ✓ Loader avec pourcentage');
-    console.log('   ✓ Menu avec compteurs');
-    console.log('   ✓ Catégorie "Tous"');
-    console.log('   ✓ Chargement instantané');
+
+    console.log('='.repeat(48));
+    console.log('✅ ODA prêt !');
+    console.log('   ✓ Cache 5 min');
+    console.log('   ✓ Realtime Supabase actif');
+    console.log('   ✓ Catégories avec sous-catégories');
+    console.log('   ✓ Scroll horizontal par section');
+    console.log('   ✓ Mise à jour UI instantanée');
 });
 
-// Refresh auto toutes les 30min
-setInterval(() => {
-    if (document.visibilityState === 'visible') {
-        console.log('🔄 Mise à jour auto...');
-        const dataLoader = new OptimizedDataLoader(supabase);
-        dataLoader.updateInBackground();
-    }
-}, 30 * 60 * 1000);
-
-// Mise à jour quand l'onglet redevient visible
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && window.cacheManager) {
-        const stats = window.cacheManager.getStats();
-        if (!stats.valid) {
-            console.log('🔄 Cache expiré, rechargement...');
-            loadAllProductsOptimized();
+// ==================== STYLES ANIMATIONS GLOBALES ====================
+(function injectGlobalStyles() {
+    if (document.getElementById('oda-global-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'oda-global-styles';
+    s.textContent = `
+        @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position:  200% 0; }
         }
-    }
-});
-
-console.log('🎉 Système optimisé prêt !');
-// ==================== ODA MARKETPLACE - CODE OPTIMISÉ ULTRA-RAPIDE ====================
-// Version Play Store : Chargement progressif + Virtual Scrolling + Cache intelligent
-
-// ==================== CONFIGURATION ====================
-const CONFIG = {
-    INITIAL_LOAD: 20,        // Nombre de produits au premier chargement
-    LOAD_MORE: 15,           // Nombre de produits à charger au scroll
-    CACHE_DURATION: 24 * 60, // Cache 24h au lieu de 5min
-    IMAGE_QUALITY: 'medium', // Qualité images (low/medium/high)
-    INTERSECTION_THRESHOLD: 0.1,
-    DEBOUNCE_DELAY: 300
-};
-
-// ==================== GESTIONNAIRE DE CACHE AMÉLIORÉ ====================
-class SmartCacheManager {
-    constructor() {
-        this.CACHE_KEY = 'oda_products_v2';
-        this.CACHE_TIMESTAMP = 'oda_cache_timestamp_v2';
-        this.MAX_AGE = CONFIG.CACHE_DURATION * 60 * 1000;
-    }
-
-    async get() {
-        try {
-            const timestamp = localStorage.getItem(this.CACHE_TIMESTAMP);
-            const now = Date.now();
-            
-            if (timestamp && (now - parseInt(timestamp)) < this.MAX_AGE) {
-                const cached = localStorage.getItem(this.CACHE_KEY);
-                if (cached) {
-                    console.log('✅ Cache local valide - Chargement instantané');
-                    return JSON.parse(cached);
-                }
-            }
-            return null;
-        } catch (e) {
-            console.warn('Cache error:', e);
-            return null;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-    }
-
-    async set(data) {
-        try {
-            localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
-            localStorage.setItem(this.CACHE_TIMESTAMP, Date.now().toString());
-            console.log('💾 Cache sauvegardé');
-        } catch (e) {
-            console.warn('Cache save error:', e);
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
         }
-    }
-
-    clear() {
-        localStorage.removeItem(this.CACHE_KEY);
-        localStorage.removeItem(this.CACHE_TIMESTAMP);
-    }
-
-    getAge() {
-        const timestamp = localStorage.getItem(this.CACHE_TIMESTAMP);
-        if (!timestamp) return null;
-        const age = Date.now() - parseInt(timestamp);
-        const minutes = Math.floor(age / 60000);
-        return minutes < 60 ? `${minutes}min` : `${Math.floor(minutes / 60)}h`;
-    }
-}
-
-// ==================== CHARGEUR DE DONNÉES ULTRA-RAPIDE ====================
-class FastDataLoader {
-    constructor(supabase) {
-        this.supabase = supabase;
-        this.cache = new SmartCacheManager();
-        this.data = { products: [], likes: {}, comments: {} };
-        this.loading = false;
-    }
-
-    async load() {
-        if (this.loading) return this.data;
-        this.loading = true;
-
-        try {
-            // 1. Essayer le cache d'abord
-            const cached = await this.cache.get();
-            if (cached) {
-                this.data = cached;
-                this.updateInBackground(); // Mise à jour silencieuse
-                return this.data;
-            }
-
-            // 2. Chargement depuis Supabase
-            console.log('📡 Chargement depuis Supabase...');
-            const [products, likes, comments] = await Promise.all([
-                this.supabase.from('oda-shop').select('*').order('created_at', { ascending: false }),
-                this.supabase.from('product_likes').select('*'),
-                this.supabase.from('product_comments').select('*')
-            ]);
-
-            this.data = {
-                products: products.data || [],
-                likes: this.processLikes(likes.data || []),
-                comments: this.processComments(comments.data || [])
-            };
-
-            await this.cache.set(this.data);
-            return this.data;
-
-        } catch (error) {
-            console.error('Erreur chargement:', error);
-            throw error;
-        } finally {
-            this.loading = false;
+        @keyframes slideOutRight {
+            to { opacity: 0; transform: translateX(100%); }
         }
-    }
-
-    async updateInBackground() {
-        try {
-            const [products, likes, comments] = await Promise.all([
-                this.supabase.from('oda-shop').select('*').order('created_at', { ascending: false }),
-                this.supabase.from('product_likes').select('*'),
-                this.supabase.from('product_comments').select('*')
-            ]);
-
-            this.data = {
-                products: products.data || [],
-                likes: this.processLikes(likes.data || []),
-                comments: this.processComments(comments.data || [])
-            };
-
-            await this.cache.set(this.data);
-            console.log('🔄 Cache mis à jour en arrière-plan');
-        } catch (error) {
-            console.warn('Mise à jour silencieuse échouée:', error);
+        .modal-backdrop {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 8999;
         }
-    }
-
-    processLikes(likesArray) {
-        const likesMap = {};
-        likesArray.forEach(like => {
-            if (!likesMap[like.product_id]) likesMap[like.product_id] = [];
-            likesMap[like.product_id].push(like);
-        });
-        return likesMap;
-    }
-
-    processComments(commentsArray) {
-        const commentsMap = {};
-        commentsArray.forEach(comment => {
-            if (!commentsMap[comment.product_id]) commentsMap[comment.product_id] = [];
-            commentsMap[comment.product_id].push(comment);
-        });
-        return commentsMap;
-    }
-
-    async forceReload() {
-        this.cache.clear();
-        return await this.load();
-    }
-}
-
-// ==================== GESTIONNAIRE D'IMAGES LAZY ====================
-class LazyImageLoader {
-    constructor() {
-        this.observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const src = img.dataset.src;
-                    if (src) {
-                        img.src = src;
-                        img.removeAttribute('data-src');
-                        this.observer.unobserve(img);
-                    }
-                }
-            });
-        }, {
-            rootMargin: '50px',
-            threshold: CONFIG.INTERSECTION_THRESHOLD
-        });
-    }
-
-    observe(img) {
-        this.observer.observe(img);
-    }
-
-    disconnect() {
-        this.observer.disconnect();
-    }
-}
-
-// ==================== VIRTUAL SCROLL MANAGER ====================
-class VirtualScrollManager {
-    constructor(products, renderFunction) {
-        this.allProducts = products;
-        this.displayedProducts = [];
-        this.renderFunction = renderFunction;
-        this.currentIndex = 0;
-        this.isLoading = false;
-        this.container = null;
-        this.sentinel = null;
-    }
-
-    init(containerId) {
-        this.container = document.getElementById(containerId);
-        if (!this.container) return;
-
-        // Créer le sentinel pour l'infinite scroll
-        this.sentinel = document.createElement('div');
-        this.sentinel.id = 'scroll-sentinel';
-        this.sentinel.style.cssText = 'height:1px;width:100%;';
-        this.container.appendChild(this.sentinel);
-
-        // Observer le sentinel
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && !this.isLoading) {
-                this.loadMore();
-            }
-        }, {
-            rootMargin: '200px'
-        });
-
-        observer.observe(this.sentinel);
-
-        // Chargement initial
-        this.loadInitial();
-    }
-
-    loadInitial() {
-        const initial = this.allProducts.slice(0, CONFIG.INITIAL_LOAD);
-        this.displayedProducts = initial;
-        this.currentIndex = CONFIG.INITIAL_LOAD;
-        this.render();
-    }
-
-    loadMore() {
-        if (this.isLoading || this.currentIndex >= this.allProducts.length) return;
-
-        this.isLoading = true;
-        this.showLoadingIndicator();
-
-        // Simuler un petit délai pour effet visuel
-        setTimeout(() => {
-            const nextBatch = this.allProducts.slice(
-                this.currentIndex,
-                this.currentIndex + CONFIG.LOAD_MORE
-            );
-
-            this.displayedProducts = [...this.displayedProducts, ...nextBatch];
-            this.currentIndex += CONFIG.LOAD_MORE;
-            
-            this.render(true); // true = append mode
-            this.isLoading = false;
-            this.hideLoadingIndicator();
-
-            console.log(`📦 Chargés: ${this.displayedProducts.length}/${this.allProducts.length}`);
-        }, 300);
-    }
-
-    render(append = false) {
-        if (!append) {
-            // Rendu initial
-            this.container.innerHTML = '';
+        .toast {
+            display: flex; align-items: center; gap: 10px;
+            background: #1A1A1A; color: #fff;
+            padding: 12px 18px; border-radius: 12px;
+            margin-bottom: 10px; font-size: .9rem; font-weight: 500;
+            animation: slideInRight .3s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,.2);
         }
-
-        const startIndex = append ? this.displayedProducts.length - CONFIG.LOAD_MORE : 0;
-        const endIndex = this.displayedProducts.length;
-
-        for (let i = startIndex; i < endIndex; i++) {
-            const product = this.displayedProducts[i];
-            const element = this.renderFunction(product);
-            this.container.insertBefore(element, this.sentinel);
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(80px); }
+            to   { opacity: 1; transform: translateX(0); }
         }
-    }
-
-    showLoadingIndicator() {
-        if (document.getElementById('load-more-spinner')) return;
-        
-        const spinner = document.createElement('div');
-        spinner.id = 'load-more-spinner';
-        spinner.style.cssText = `
-            text-align: center;
-            padding: 20px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        `;
-        spinner.innerHTML = `
-            <div style="display:inline-block;width:30px;height:30px;border:3px solid var(--border-color);
-                        border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-            <p style="margin-top:10px;">Chargement...</p>
-        `;
-        this.container.insertBefore(spinner, this.sentinel);
-    }
-
-    hideLoadingIndicator() {
-        const spinner = document.getElementById('load-more-spinner');
-        if (spinner) spinner.remove();
-    }
-
-    updateProducts(products) {
-        this.allProducts = products;
-        this.displayedProducts = [];
-        this.currentIndex = 0;
-        this.loadInitial();
-    }
-}
-
-// ==================== SKELETON LOADER ====================
-function createSkeletonCard() {
-    const skeleton = document.createElement('div');
-    skeleton.className = 'product-card skeleton';
-    skeleton.style.cssText = `
-        background: var(--bg-primary);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
+        .toast.success { border-left: 4px solid #10B981; }
+        .toast.error   { border-left: 4px solid #EF4444; }
+        .toast.info    { border-left: 4px solid #3B82F6; }
+        .toast.warning { border-left: 4px solid #F59E0B; }
     `;
-    skeleton.innerHTML = `
-        <div style="width:100%;height:200px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
-                    background-size:200% 100%;animation:shimmer 1.5s infinite;"></div>
-        <div style="padding:16px;">
-            <div style="width:60%;height:16px;background:#f0f0f0;border-radius:4px;margin-bottom:8px;"></div>
-            <div style="width:40%;height:14px;background:#f0f0f0;border-radius:4px;margin-bottom:12px;"></div>
-            <div style="width:80%;height:12px;background:#f0f0f0;border-radius:4px;"></div>
-        </div>
-    `;
-    return skeleton;
-}
+    document.head.appendChild(s);
+})();
 
-function showSkeletonLoading(containerId, count = 6) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.innerHTML = '';
-    for (let i = 0; i < count; i++) {
-        container.appendChild(createSkeletonCard());
-    }
-}
-
-// ==================== GESTIONNAIRE PRINCIPAL ====================
-class OdaMarketplace {
-    constructor(supabaseClient) {
-        this.supabase = supabaseClient;
-        this.dataLoader = new FastDataLoader(supabaseClient);
-        this.lazyLoader = new LazyImageLoader();
-        this.virtualScroll = null;
-        this.allProducts = [];
-        this.filteredProducts = [];
-        this.currentCategory = 'Tous';
-        this.searchTerm = '';
-    }
-
-    async init() {
-        console.log('🚀 Initialisation ODA Marketplace Optimisé');
-        
-        // Afficher les skeletons
-        showSkeletonLoading('productsGrid', 8);
-
-        try {
-            // Charger les données
-            const data = await this.dataLoader.load();
-            this.allProducts = data.products;
-            window.productLikes = data.likes;
-            window.productComments = data.comments;
-
-            console.log(`✅ ${this.allProducts.length} produits chargés`);
-
-            // Initialiser le virtual scroll
-            this.filteredProducts = this.allProducts;
-            this.virtualScroll = new VirtualScrollManager(
-                this.filteredProducts,
-                this.createProductCard.bind(this)
-            );
-            this.virtualScroll.init('productsGrid');
-
-            // Mettre à jour le carousel
-            this.updateCarousel();
-
-            // Mettre à jour le menu
-            if (window.improvedMenu) {
-                window.improvedMenu.update(this.allProducts);
-            }
-
-        } catch (error) {
-            console.error('❌ Erreur init:', error);
-            this.showError();
-        }
-    }
-
-    createProductCard(product) {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.style.cssText = `
-            background: var(--bg-primary);
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
-        `;
-
-        const likes = window.productLikes[product.id] || [];
-        const comments = window.productComments[product.id] || [];
-        const isFavorited = window.favorites?.includes(product.id);
-
-        // Image lazy
-        const imgUrl = product.image_url || product.image || 'placeholder.jpg';
-        
-        card.innerHTML = `
-            <div style="position:relative;width:100%;padding-top:75%;background:#f0f0f0;">
-                <img data-src="${imgUrl}" 
-                     alt="${product.nom_produit}"
-                     style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"
-                     loading="lazy">
-                <button class="favorite-btn ${isFavorited ? 'active' : ''}" 
-                        onclick="toggleFavorite(${product.id}); event.stopPropagation();"
-                        style="position:absolute;top:12px;right:12px;width:40px;height:40px;
-                               background:white;border:none;border-radius:50%;cursor:pointer;
-                               box-shadow:0 2px 8px rgba(0,0,0,0.15);display:flex;align-items:center;
-                               justify-content:center;transition:all 0.3s;">
-                    ${isFavorited ? '❤️' : '🤍'}
-                </button>
-            </div>
-            <div style="padding:16px;">
-                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">
-                    ${product.nom_boutique || 'Boutique'}
-                </div>
-                <h3 style="font-size:1rem;font-weight:600;margin-bottom:8px;
-                           overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    ${product.nom_produit}
-                </h3>
-                <div style="font-size:1.4rem;font-weight:700;color:var(--primary-color);margin-bottom:12px;">
-                    ${product.prix} FCFA
-                </div>
-                <div style="display:flex;gap:16px;color:var(--text-secondary);font-size:0.9rem;">
-                    <span>❤️ ${likes.length}</span>
-                    <span>💬 ${comments.length}</span>
-                    <span>👁️ ${product.views || 0}</span>
-                </div>
-            </div>
-        `;
-
-        // Lazy load de l'image
-        const img = card.querySelector('img');
-        if (img) this.lazyLoader.observe(img);
-
-        // Click handler
-        card.addEventListener('click', () => {
-            window.location.href = `product.html?id=${product.id}`;
-        });
-
-        return card;
-    }
-
-    filterProducts(category, searchTerm = '') {
-        let filtered = this.allProducts;
-
-        // Filtre catégorie
-        if (category && category !== 'Tous') {
-            filtered = filtered.filter(p => p.categorie === category);
-        }
-
-        // Filtre recherche
-        if (searchTerm) {
-            const search = searchTerm.toLowerCase();
-            filtered = filtered.filter(p => 
-                p.nom_produit?.toLowerCase().includes(search) ||
-                p.nom_boutique?.toLowerCase().includes(search) ||
-                p.categorie?.toLowerCase().includes(search)
-            );
-        }
-
-        this.filteredProducts = filtered;
-        
-        if (this.virtualScroll) {
-            this.virtualScroll.updateProducts(filtered);
-        }
-
-        console.log(`🔍 Filtrés: ${filtered.length}/${this.allProducts.length}`);
-    }
-
-    updateCarousel() {
-        const carouselContainer = document.querySelector('.carousel-container');
-        if (!carouselContainer || this.allProducts.length === 0) return;
-
-        const topProducts = this.allProducts
-            .sort((a, b) => (b.views || 0) - (a.views || 0))
-            .slice(0, 5);
-
-        carouselContainer.innerHTML = topProducts.map(product => `
-            <div class="carousel-item">
-                <img src="${product.image_url || product.image}" 
-                     alt="${product.nom_produit}"
-                     class="carousel-image"
-                     loading="eager">
-                <div class="carousel-overlay">
-                    <div class="carousel-info">
-                        <div class="shop-name">${product.nom_boutique}</div>
-                        <h2>${product.nom_produit}</h2>
-                        <div class="product-price">${product.prix} FCFA</div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    showError() {
-        const container = document.getElementById('productsGrid');
-        if (container) {
-            container.innerHTML = `
-                <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
-                    <div style="font-size:4rem;margin-bottom:16px;">😕</div>
-                    <h3 style="font-size:1.3rem;margin-bottom:12px;">Erreur de chargement</h3>
-                    <p style="color:var(--text-secondary);margin-bottom:24px;">
-                        Impossible de charger les produits
-                    </p>
-                    <button onclick="location.reload()" 
-                            style="background:var(--primary-color);color:white;border:none;
-                                   padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;">
-                        Réessayer
-                    </button>
-                </div>
-            `;
-        }
-    }
-
-    async forceReload() {
-        showSkeletonLoading('productsGrid', 8);
-        const data = await this.dataLoader.forceReload();
-        this.allProducts = data.products;
-        this.filterProducts(this.currentCategory, this.searchTerm);
-        this.updateCarousel();
-    }
-}
-/* ============================================ */
-/* CODE JAVASCRIPT À AJOUTER À LA FIN          */
-/* Ajoutez ce code dans une balise <script>    */
-/* juste après le HTML des modals              */
-/* ============================================ */
-
-// ==================== GESTION DES MODALS ====================
-
-/**
- * Ouvre un modal avec animation
- */
- function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error(`Modal ${modalId} introuvable`);
-        return;
-    }
-    
-    // Ajouter la classe active
-    modal.classList.add('active');
-    
-    // Empêcher le scroll du body
-    document.body.style.overflow = 'hidden';
-    
-    // Animation d'entrée
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.style.animation = 'modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-    }
-    
-    // Event listener pour fermer avec Échap
-    document.addEventListener('keydown', handleEscapeKey);
-    
-    console.log(`✅ Modal ${modalId} ouverte`);
-}
-
-/**
- * Ferme un modal avec animation
- */
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) {
-        console.error(`Modal ${modalId} introuvable`);
-        return;
-    }
-    
-    // Animation de sortie
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.style.animation = 'modalSlideDown 0.3s ease';
-    }
-    
-    // Retirer la classe active après l'animation
-    setTimeout(() => {
-        modal.classList.remove('active');
-        // Réactiver le scroll du body
-        document.body.style.overflow = '';
-    }, 300);
-    
-    // Retirer l'event listener de la touche Échap
-    document.removeEventListener('keydown', handleEscapeKey);
-    
-    console.log(`✅ Modal ${modalId} fermée`);
-}
-
-/**
- * Ferme tous les modals ouverts
- */
-function closeAllModals() {
-    const activeModals = document.querySelectorAll('.oda-modal.active');
-    activeModals.forEach(modal => {
-        closeModal(modal.id);
-    });
-}
-
-/**
- * Gère la fermeture des modals avec la touche Échap
- */
-function handleEscapeKey(event) {
-    if (event.key === 'Escape' || event.key === 'Esc') {
-        closeAllModals();
-    }
-}
-
-/**
- * Empêche la propagation des clics à l'intérieur du modal
- */
-function preventModalClosePropagation() {
-    const modalContents = document.querySelectorAll('.modal-content');
-    modalContents.forEach(content => {
-        content.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-    });
-}
-
-// ==================== INITIALISATION DES LIENS DU MENU ====================
-
-/**
- * Connecte les liens du menu hamburger aux modals
- */
-function initMenuLinks() {
-    // Lien "À propos"
-    const aboutLink = document.getElementById('aboutLink');
-    if (aboutLink) {
-        aboutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Fermer le menu hamburger
-            closeMenu();
-            // Ouvrir le modal
-            setTimeout(() => {
-                openModal('aboutModal');
-            }, 300);
-        });
-    }
-    
-    // Lien "Contact"
-    const contactLink = document.getElementById('contactLink');
-    if (contactLink) {
-        contactLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Fermer le menu hamburger
-            closeMenu();
-            // Ouvrir le modal
-            setTimeout(() => {
-                openModal('contactModal');
-            }, 300);
-        });
-    }
-    
-    // Lien "Aide"
-    const helpLink = document.getElementById('helpLink');
-    if (helpLink) {
-        helpLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Fermer le menu hamburger
-            closeMenu();
-            // Ouvrir le modal
-            setTimeout(() => {
-                openModal('helpModal');
-            }, 300);
-        });
-    }
-    
-    console.log('✅ Liens du menu initialisés');
-}
-
-/**
- * Ferme le menu hamburger
- */
-function closeMenu() {
-    const sideMenu = document.querySelector('.side-menu');
-    const overlay = document.getElementById('overlay');
-    
-    if (sideMenu) {
-        sideMenu.classList.remove('active');
-    }
-    if (overlay) {
-        overlay.classList.remove('active');
-    }
-}
-
-// ==================== EFFETS VISUELS ====================
-
-/**
- * Ajoute un effet de parallaxe au défilement du modal
- */
-function initModalParallax() {
-    const modalBodies = document.querySelectorAll('.modal-body');
-    
-    modalBodies.forEach(body => {
-        body.addEventListener('scroll', function() {
-            const scrolled = this.scrollTop;
-            const header = this.closest('.modal-content').querySelector('.modal-header');
-            
-            if (header) {
-                header.style.transform = `translateY(${scrolled * 0.3}px)`;
-                header.style.opacity = Math.max(0.5, 1 - (scrolled / 300));
-            }
-        });
-    });
-}
-
-/**
- * Ajoute des effets de hover aux cartes
- */
-function initCardHoverEffects() {
-    const cards = document.querySelectorAll('.info-card, .help-card, .contact-item');
-    
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        });
-    });
-}
-
-// ==================== INITIALISATION ====================
-
-/**
- * Initialise tous les composants des modals
- */
-function initOdaModals() {
-    console.log('🚀 Initialisation des modals ODA...');
-    
-    // Empêcher la propagation des clics
-    preventModalClosePropagation();
-    
-    // Initialiser les liens du menu
-    initMenuLinks();
-    
-    // Initialiser les effets
-    initModalParallax();
-    initCardHoverEffects();
-    
-    console.log('✅ Modals ODA initialisés avec succès !');
-}
-
-// ==================== AUTO-INITIALISATION ====================
-
-// Initialiser au chargement du DOM
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initOdaModals);
-} else {
-    // DOM déjà chargé
-    initOdaModals();
-}
-
-// ==================== EXPORT DES FONCTIONS ====================
-
-// Rendre les fonctions disponibles globalement
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.closeAllModals = closeAllModals;
-
-console.log('📦 Module modals ODA chargé pour menu hamburger');
-// ==================== ANIMATIONS CSS NÉCESSAIRES ====================
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    }
-    .favorite-btn:hover {
-        transform: scale(1.1);
-    }
-`;
-document.head.appendChild(style);
-
-// ==================== INITIALISATION ====================
-window.odaMarketplace = null;
-
-// Remplacer la fonction loadAllProductsOptimized
-window.loadAllProductsOptimized = async function() {
-    if (!window.odaMarketplace) {
-        window.odaMarketplace = new OdaMarketplace(window.supabase);
-    }
-    await window.odaMarketplace.init();
-};
-
-// Remplacer la fonction displayProducts
-window.displayProducts = function() {
-    // Maintenant géré par VirtualScrollManager
-    console.log('✓ displayProducts appelé (géré par VirtualScrollManager)');
-};
-
-// Fonction de recherche optimisée
-window.initSearch = function() {
-    const searchInput = document.querySelector('.search-box input');
-    if (!searchInput) return;
-
-    let debounceTimer;
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            const term = e.target.value.trim();
-            if (window.odaMarketplace) {
-                window.odaMarketplace.searchTerm = term;
-                window.odaMarketplace.filterProducts(
-                    window.odaMarketplace.currentCategory,
-                    term
-                );
-            }
-        }, CONFIG.DEBOUNCE_DELAY);
-    });
-};
-
-// Fonction de filtre par catégorie
-window.setupCategoryFiltering = function() {
-    document.querySelectorAll('.category-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const category = item.dataset.category;
-            
-            document.querySelectorAll('.category-item').forEach(i => 
-                i.classList.remove('active')
-            );
-            item.classList.add('active');
-
-            if (window.odaMarketplace) {
-                window.odaMarketplace.currentCategory = category;
-                window.odaMarketplace.filterProducts(
-                    category,
-                    window.odaMarketplace.searchTerm
-                );
-            }
-        });
-    });
-};
-
-// Fonction de rechargement forcé
-window.forceReloadData = async function() {
-    if (!window.odaMarketplace) return;
-    
-    if (confirm('Recharger les données depuis le serveur ?')) {
-        window.loadingProgress?.start();
-        try {
-            await window.odaMarketplace.forceReload();
-            showToast('✅ Données rechargées', 'success');
-        } catch (error) {
-            showToast('❌ Erreur', 'error');
-        }
-    }
-};
-
-console.log('🎯 Module optimisé chargé - Type Play Store');
-console.log(`📊 Config: ${CONFIG.INITIAL_LOAD} produits initiaux + ${CONFIG.LOAD_MORE} par scroll`);
-console.log(`💾 Cache: ${CONFIG.CACHE_DURATION}h`);
+console.log('✅ Artefact 5 — Realtime · Init · Auto-refresh prêt');
 </script>
 </body>
 </html>

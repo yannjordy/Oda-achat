@@ -3,8 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#D4920A">
   <meta name="description" content="ODA Market — La marketplace N°1 au Cameroun. Achetez et vendez facilement à Douala, Yaoundé et partout au pays.">
+
+  <!-- PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ODA Market">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="oda1.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="oda1.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="oda1.png">
+
   <title>ODA Market | La Marketplace du Cameroun 🇨🇲</title>
 
   <!-- FONTS -->
@@ -1864,7 +1875,7 @@
       </div>
 
        <img src="femme-marche-3.jpg"> 
-      <div class="gallery-cell sr-r" style="transition-delay:.15s"><script src="pwa-manager.js"></script>
+      <div class="gallery-cell sr-r" style="transition-delay:.15s">
          <img src="femme-marche-3.jpg" alt="Produits locaux camerounais"> 
         <div class="gallery-placeholder">
           <span></span>
@@ -2346,8 +2357,28 @@
       <button class="pwa-btn-skip" onclick="neverShowModal()">Ne plus afficher</button>
     </div>
   </div>
-  <script src="pwa-manager.js"></script>
   <script>
+  // ==================== SERVICE WORKER ====================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      // Inline SW minimal pour que le manifest soit valide et que l'app soit installable
+      const swCode = `
+        const CACHE = 'oda-v1';
+        self.addEventListener('install', e => { self.skipWaiting(); });
+        self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+        self.addEventListener('fetch', e => {
+          if (e.request.method !== 'GET') return;
+          e.respondWith(
+            fetch(e.request).catch(() => caches.match(e.request))
+          );
+        });
+      `;
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl).catch(() => {});
+    });
+  }
+
   // ==================== LOADER ====================
   window.addEventListener('load', () => {
     const loader = document.getElementById('loader');
@@ -2417,18 +2448,31 @@
 
   // ==================== PWA INSTALL ====================
   let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+
+  // Capture l'événement Android/Chrome avant qu'il ne s'affiche tout seul
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
   function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; }
   function isStandalone() {
     return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
   }
+
+  // Bouton "Installer" dans le header et dans la page
   function handleInstall() {
     if (isStandalone()) return;
     if (deferredPrompt) {
+      // Android : déclenche la native prompt
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(c => { if (c.outcome === 'accepted') deferredPrompt = null; });
-    } else { openInstallModal(); }
+    } else {
+      // iOS ou navigateur sans prompt natif : affiche le guide
+      openInstallModal();
+    }
   }
+
   function openInstallModal() {
     if (localStorage.getItem('oda-modal-never')) return;
     document.getElementById('pwaModal').classList.add('show');
@@ -2442,13 +2486,36 @@
     localStorage.setItem('oda-modal-never', '1');
     closeInstallModal();
   }
+
+  // ── Affichage automatique à l'arrivée sur la page ──
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      if (isIOS() && !isStandalone() && !localStorage.getItem('oda-modal-never') && !sessionStorage.getItem('oda-modal-shown')) {
+    if (isStandalone()) return; // déjà installé → rien
+    if (localStorage.getItem('oda-modal-never')) return; // l'utilisateur a dit "ne plus afficher"
+    if (sessionStorage.getItem('oda-modal-shown')) return; // déjà montré dans cet onglet
+
+    const DELAY = 2500; // 2,5 secondes après le chargement
+
+    if (isIOS()) {
+      // iOS ne supporte pas beforeinstallprompt → guide manuel
+      setTimeout(() => {
         openInstallModal();
         sessionStorage.setItem('oda-modal-shown', '1');
-      }
-    }, 4000);
+      }, DELAY);
+    } else {
+      // Android / Chrome : attend que beforeinstallprompt soit capturé, puis affiche
+      const tryAndroid = () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(c => { if (c.outcome === 'accepted') deferredPrompt = null; });
+          sessionStorage.setItem('oda-modal-shown', '1');
+        } else {
+          // Navigateur desktop ou prompt non dispo → affiche quand même le guide
+          openInstallModal();
+          sessionStorage.setItem('oda-modal-shown', '1');
+        }
+      };
+      setTimeout(tryAndroid, DELAY);
+    }
   });
 
  

@@ -1990,8 +1990,8 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: transparent;   
-   /
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
 }
 
 .settings-modal.active {
@@ -2898,6 +2898,103 @@ body.dark-mode .section-header h3 {
     text-align:left;
 }
 .oda-form-error.show{display:block;}
+.oda-update-banner {
+    position: fixed;
+    bottom: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 480px;
+    background: #2C3E50;
+    color: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 99999;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.25), 0 0 0 2px rgba(255,107,0,0.4);
+    transition: bottom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.oda-update-banner.visible {
+    bottom: 24px;
+}
+
+.oda-update-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    animation: odaBounce 1.2s ease infinite;
+}
+
+@keyframes odaBounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-4px); }
+}
+
+.oda-update-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.oda-update-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.oda-update-sub {
+    font-size: 0.78rem;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.oda-update-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.oda-btn-update {
+    background: #FF6B00;
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.oda-btn-update:hover {
+    background: #E55D00;
+    transform: scale(1.05);
+}
+
+.oda-btn-dismiss {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.oda-btn-dismiss:hover {
+    background: rgba(255,255,255,0.22);
+}
+
 </style>
 <body>
     <!-- Loader -->
@@ -3343,11 +3440,7 @@ body.dark-mode .section-header h3 {
                 </svg>
             </button>
         </div>
-        
-        <!-- Message de découverte -->
-       
-        
-        <!-- Boutons transparents sur la bannière -->
+    
         <div class="banner-actions">
             <button class="banner-btn" onclick="scrollToProducts()">
                 <div class="banner-icon">🎁</div>
@@ -3391,52 +3484,124 @@ body.dark-mode .section-header h3 {
 
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
-    <!-- Modal Paramètres -->
-<div class="settings-modal" id="settingsModal">
-    <div class="modal-backdrop" onclick="document.getElementById('settingsModal').classList.remove('active')"></div>
-    <div class="settings-modal-content">
-        <div class="settings-header">
-            <h2>⚙️ Paramètres</h2>
-            <button class="btn-close" onclick="document.getElementById('settingsModal').classList.remove('active')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="notifBtn" title="Notifications">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                <span class="badge" id="notifBadge" style="display: none;">0</span>
-            </button>
-        </div>
-        
-        <div class="settings-body">
-            <!-- Section Profil -->
-            <div class="settings-section">
-                <div class="section-header">
-                    <span class="section-icon">👤</span>
-                    <h3>Profil utilisateur</h3>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">
-                        <span>Nom d'utilisateur</span>
-                        <span class="label-badge" id="nameChangeBadge">Modifiable</span>
-                    </label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" class="form-input" id="userNameInput" placeholder="Votre nom" readonly>
-                        <button class="btn-primary" id="changeNameBtn" onclick="ouvrirChangementNom()">
-                            Modifier
-                        </button>
+
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-modal-content">
+    
+            <!-- HEADER -->
+            <div class="settings-header">
+                <h2>⚙️ Paramètres</h2>
+                <button class="btn-close" id="settingsCloseBtn" aria-label="Fermer">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+    
+            <!-- BODY -->
+            <div class="settings-body">
+    
+                <!-- Section Profil -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <span class="section-icon">👤</span>
+                        <h3>Profil utilisateur</h3>
                     </div>
-                    <small class="form-hint" id="nameChangeHint">Changement de nom autorisé tous les 3 mois</small>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span>Nom d'utilisateur</span>
+                            <span class="label-badge" id="nameChangeBadge">Modifiable</span>
+                        </label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" class="form-input" id="userNameInput" placeholder="Votre nom" readonly>
+                            <button class="btn-primary" onclick="ouvrirChangementNom()">Modifier</button>
+                        </div>
+                        <small class="form-hint" id="nameChangeHint">Changement de nom autorisé tous les 3 mois</small>
+                    </div>
                 </div>
+    
+                <!-- Section Notifications -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <span class="section-icon">🔔</span>
+                        <h3>Notifications Push</h3>
+                    </div>
+                    <div id="notificationStatus" style="background:var(--bg-secondary);padding:16px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:600;margin-bottom:4px;">Statut des notifications</div>
+                            <div id="notifStatusText" style="font-size:0.9rem;color:var(--text-secondary);">Chargement...</div>
+                        </div>
+                        <button class="btn-primary" id="enableNotifBtn" onclick="activerNotifications()">Activer</button>
+                    </div>
+                    <div class="settings-toggle">
+                        <div class="toggle-info">
+                            <div class="toggle-title">Nouveaux produits</div>
+                            <div class="toggle-desc">Être notifié des nouveaux produits</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="notifNewProducts" checked><span class="slider"></span></label>
+                    </div>
+                    <div class="settings-toggle">
+                        <div class="toggle-info">
+                            <div class="toggle-title">Promotions</div>
+                            <div class="toggle-desc">Recevoir les offres spéciales</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="notifPromotions" checked><span class="slider"></span></label>
+                    </div>
+                    <div class="settings-toggle">
+                        <div class="toggle-info">
+                            <div class="toggle-title">Nouveaux commentaires</div>
+                            <div class="toggle-desc">Sur les produits que vous suivez</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="notifComments" checked><span class="slider"></span></label>
+                    </div>
+                    <div class="settings-toggle">
+                        <div class="toggle-info">
+                            <div class="toggle-title">Produits populaires</div>
+                            <div class="toggle-desc">Vos favoris qui deviennent populaires</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="notifPopular" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+    
+                <!-- Section Préférences -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <span class="section-icon">🎨</span>
+                        <h3>Préférences</h3>
+                    </div>
+                    <div class="settings-toggle">
+                        <div class="toggle-info">
+                            <div class="toggle-title">Mode sombre</div>
+                            <div class="toggle-desc">Activer le thème sombre</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="darkMode"><span class="slider"></span></label>
+                    </div>
+                    <div class="settings-toggle">
+                        <div class="toggle-info">
+                            <div class="toggle-title">Sons</div>
+                            <div class="toggle-desc">Activer les sons de l'application</div>
+                        </div>
+                        <label class="switch"><input type="checkbox" id="appSounds" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+    
+                <!-- Section Données -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <span class="section-icon">🗑️</span>
+                        <h3>Données</h3>
+                    </div>
+                    <button class="btn-danger" onclick="effacerDonnees()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                        Effacer toutes mes données
+                    </button>
+                </div>
+    
             </div>
-            <div class="oda-modal-overlay" id="odaModalOverlay">
-                <div class="backdrop" onclick="fermerOdaModal()"></div>
-                <div class="oda-modal-box" id="odaModalBox"></div>
-            </div>
+        </div>
+    </div>
             
             <!-- ====== ANIMATION FÉLICITATIONS ====== -->
             <div id="odaCelebration" style="
@@ -3581,6 +3746,7 @@ body.dark-mode .section-header h3 {
         </div>
     </div>
 </div>
+<script src="Oda update checker"></script>
 <script src="pwa-manager.js"></script>
 <script src="connexion-vendeur.js"></script>
 <script type="module">
@@ -4186,12 +4352,7 @@ class ImprovedMenu {
 
 window.improvedMenu = new ImprovedMenu();
 console.log('✅ ImprovedMenu prêt');
-// ============================================================
-// ARTEFACT 3 — AFFICHAGE · CARTES · FILTRES · CARROUSEL
-// Remplace toutes les fonctions : displayProducts,
-// displayProductsByCategories, filterByCategory,
-// createProductCard, updateCarousel, startCarousel, etc.
-// ============================================================
+
 
 // ==================== STYLES SECTIONS CATÉGORIE ====================
 function _injectSectionStyles() {
@@ -4973,28 +5134,37 @@ window.effacerDonnees = function() {
         setTimeout(() => location.reload(), 1500);
     }
 };
-// ✅ NOUVEAU CODE — corrigé
 function initialiserParametres() {
-    const settingsBtn = document.getElementById('settingsBtn');
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();  // ← bloque la propagation du clic
-            window.ouvrirParametres();
-        });
-    }
+    const modal   = document.getElementById('settingsModal');
+    const content = modal?.querySelector('.settings-modal-content');
+    const closeBtn = document.getElementById('settingsCloseBtn');
+    const openBtn  = document.getElementById('settingsBtn');
 
-    // Empêcher les clics à l'intérieur du modal de le fermer
-    const modalContent = document.querySelector('.settings-modal-content');
-    if (modalContent) {
-        modalContent.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-    }
+    const ouvrir  = () => { chargerParametresUtilisateur(); modal?.classList.add('active'); };
+    const fermer  = () => modal?.classList.remove('active');
 
+    // Ouvrir
+    openBtn?.addEventListener('click', (e) => { e.stopPropagation(); ouvrir(); });
+    window.ouvrirParametres = ouvrir;
+    window.chargerParametresUtilisateur = chargerParametresUtilisateur;
+
+    // Fermer — uniquement le bouton ✕ ou clic sur le fond sombre
+    closeBtn?.addEventListener('click', fermer);
+    modal?.addEventListener('click', (e) => { if (e.target === modal) fermer(); });
+
+    // BLOQUER toute propagation depuis le contenu du modal
+    content?.addEventListener('click',      (e) => e.stopPropagation());
+    content?.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+    content?.addEventListener('touchend',   (e) => e.stopPropagation(), { passive: true });
+
+    // Touche Échap
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermer(); });
+
+    // Toggles notifications
     ['notifNewProducts','notifPromotions','notifComments','notifPopular'].forEach(id => {
         const el  = document.getElementById(id);
         if (!el) return;
-        const key = id.replace('notif', '').replace(/^./, c => c.toLowerCase());
+        const key = id.replace('notif','').replace(/^./,c=>c.toLowerCase());
         el.addEventListener('change', function() {
             userSettings.notifications[key] = this.checked;
             sauvegarderParametres();
@@ -5011,10 +5181,7 @@ function initialiserParametres() {
         userSettings.preferences.sounds = this.checked;
         sauvegarderParametres();
     });
-
-    chargerParametresUtilisateur();
 }
-
 // ── Bouton rechargement forcé dans paramètres ──
 function addForceReloadButton() {
     const body = document.querySelector('.settings-body');
@@ -5136,14 +5303,7 @@ window.toggleLike        = toggleLike;
 window.showCommentsModal = showCommentsModal;
 
 console.log('✅ Artefact 4 — Utilisateur · Likes · Commentaires · Menu prêt');
-// ============================================================
-// ARTEFACT 5 — CHARGEMENT PRINCIPAL · REALTIME SUPABASE
-//              INITIALISATION · AUTO-REFRESH
-// Ce bloc est le dernier du <script type="module">
-// ============================================================
 
-// ==================== HELPER : APPLIQUER LES DONNÉES CHARGÉES ====================
-// Utilisé à la fois par le chargement initial ET par la mise à jour silencieuse
 function _applyLoadedData(data) {
     allProducts = data.products;
 
@@ -5184,8 +5344,7 @@ async function loadAllProductsOptimized() {
     }
 }
 
-// ==================== REALTIME SUPABASE ====================
-// ✅ Écoute INSERT / UPDATE / DELETE en temps réel sur la table "produits"
+
 function initRealtimeSubscription() {
     const channel = supabase
         .channel('oda-produits-realtime')

@@ -3746,11 +3746,11 @@ body.dark-mode .section-header h3 {
         </div>
     </div>
 </div>
-    <script src="notif.js"></script>
-<script src="Oda update checker"></script>
+<script src="Oda-update-checker"></script>
+<script src="oda-instant-entry.js"></script>
 <script src="pwa-manager.js"></script>
 <script src="connexion-vendeur.js"></script>
-    <script src="oda-instant-entry.js"></script>
+<script src="notif.js"></script>
 <script type="module">
 
 
@@ -3772,7 +3772,7 @@ let currentUserId    = getUserId();
 
 // ==================== CONFIGURATION APP ====================
 const CONFIG = {
-    CACHE_DURATION : 5 * 60 * 1000,  // ✅ 5 minutes (plus 7 jours)
+    CACHE_DURATION : 5 * 24 * 60 * 60 * 60 * 1000,  
     DEBOUNCE_DELAY : 300,
     CAROUSEL_INTERVAL : 5000,
     LOW_STOCK_THRESHOLD : 5,
@@ -3816,7 +3816,7 @@ class CacheManager {
         this.save(this.KEYS.COMMENTS,  comments);
         this.save(this.KEYS.SHOPS,     shops);
         localStorage.setItem(this.KEYS.TIMESTAMP, Date.now().toString());
-        console.log('💾 Cache sauvegardé (expire dans 5 min)');
+        console.log('💾 Cache sauvegardé (expire dans 1 semaine)');
     }
 
     // ─── Lecture ────────────────────────────────────────────
@@ -3882,7 +3882,7 @@ class CacheManager {
 
 // Singleton global
 window.cacheManager = new CacheManager();
-console.log('✅ CacheManager prêt (TTL = 5 min)');
+console.log('✅ CacheManager prêt (TTL = 1 semaines )');
 
 // ==================== LOADING PROGRESS ====================
 class LoadingProgress {

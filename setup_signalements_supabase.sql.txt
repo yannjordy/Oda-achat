@@ -1,0 +1,31 @@
+-- ============================================================
+-- SIGNALEMENT DE PRODUITS - Configuration Supabase
+-- Exécuter dans SQL Editor → https://supabase.com/dashboard
+-- ============================================================
+
+-- 1. Ajouter la colonne is_report à la table product_comments
+ALTER TABLE public.product_comments 
+ADD COLUMN IF NOT EXISTS is_report BOOLEAN DEFAULT FALSE;
+
+-- 2. Vérifier que les colonnes nécessaires existent
+ALTER TABLE public.product_comments 
+ADD COLUMN IF NOT EXISTS product_id UUID REFERENCES public.produits(id),
+ADD COLUMN IF NOT EXISTS user_id UUID,
+ADD COLUMN IF NOT EXISTS user_name TEXT,
+ADD COLUMN IF NOT EXISTS comment TEXT,
+ADD COLUMN IF NOT EXISTS contenu TEXT,
+ADD COLUMN IF NOT EXISTS is_vendeur BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS rating INTEGER DEFAULT 0;
+
+-- 3. (Optionnel) Créer un index pour les performances des signalements
+CREATE INDEX IF NOT EXISTS idx_product_comments_is_report 
+ON public.product_comments(is_report) 
+WHERE is_report = TRUE;
+
+-- ============================================================
+-- NOTES
+-- ============================================================
+-- Après exécution, les signalements seront stockés avec is_report = true
+-- Le realtime du sandbox détectera automatiquement les signalements
+-- et les affichera dans le panneau Notifications avec l'icône 🚩
+-- ============================================================

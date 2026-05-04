@@ -513,29 +513,6 @@ const CSS = `
   .live-notif-title { font-size: 0.8rem; font-weight: 700; color: var(--grey-900); margin-bottom: 2px; }
   .live-notif-sub   { font-size: 0.7rem; color: var(--grey-400); }
   .live-notif-price { font-family: var(--font-head); font-size: 0.9rem; font-weight: 900; color: var(--terra); flex-shrink: 0; }
-
-  /* ── PWA Modal ── */
-  .pwa-overlay { display: none; position: fixed; inset: 0; z-index: 9000; }
-  .pwa-overlay.show { display: block; }
-  .pwa-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); animation: bgFadeIn 0.3s ease; }
-  @keyframes bgFadeIn { from { opacity:0; } to { opacity:1; } }
-  .pwa-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: var(--white); border-radius: 28px 28px 0 0; padding: 28px 22px calc(40px + env(safe-area-inset-bottom,0px)); animation: sheetSlideUp 0.45s cubic-bezier(.16,1,.3,1); max-height: 90vh; overflow-y: auto; }
-  @keyframes sheetSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .pwa-handle { width: 40px; height: 4px; background: var(--grey-200); border-radius: 2px; margin: 0 auto 24px; }
-  .pwa-header { text-align: center; margin-bottom: 22px; }
-  .pwa-logo-box { width: 80px; height: 80px; border-radius: 20px; background: var(--gold-pale); margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 1.5px solid rgba(212,146,10,0.2); overflow: hidden; }
-  .pwa-logo-box img { width:100%; height:100%; object-fit:cover; }
-  .pwa-sheet h2 { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; color: var(--grey-900); margin-bottom: 8px; }
-  .pwa-sheet p { color: var(--grey-400); font-size: 0.87rem; line-height: 1.65; max-width: 300px; margin: 0 auto; }
-  .pwa-steps { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
-  .pwa-step { display: flex; align-items: flex-start; gap: 14px; background: var(--grey-50); border: 1px solid var(--grey-100); border-radius: var(--radius-md); padding: 14px; }
-  .pwa-step-num { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--terra)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem; color: #fff; flex-shrink: 0; }
-  .pwa-step-title { font-weight: 700; font-size: 0.9rem; color: var(--grey-900); margin-bottom: 3px; }
-  .pwa-step-desc  { font-size: 0.8rem; color: var(--grey-400); line-height: 1.5; }
-  .pwa-btn-ok { width: 100%; background: linear-gradient(135deg, var(--gold), var(--terra)); color: #fff; border: none; border-radius: var(--radius-lg); padding: 16px; font-family: var(--font-body); font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 10px; box-shadow: 0 8px 28px rgba(212,146,10,0.35); transition: all 0.3s; }
-  .pwa-btn-ok:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(212,146,10,0.45); }
-  .pwa-btn-skip { width: 100%; background: transparent; color: var(--grey-400); border: 1.5px solid var(--grey-100); border-radius: var(--radius-lg); padding: 14px; font-family: var(--font-body); font-size: 0.87rem; font-weight: 500; cursor: pointer; transition: all 0.3s; }
-  .pwa-btn-skip:hover { background: var(--grey-50); color: var(--grey-700); }
 `;
 
 // ── Données produits ──────────────────────────────────────────────────────────
@@ -839,24 +816,7 @@ export default function OdaMarketPage() {
     if (isStandalone()) return;
     if (window.installPWA) {
       window.installPWA();
-    } else {
-      openInstallModal();
     }
-  }
-  function openInstallModal() {
-    if (localStorage.getItem('oda-modal-never')) return;
-    const modal = document.getElementById('pwaModal');
-    if (modal) modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeInstallModal() {
-    const modal = document.getElementById('pwaModal');
-    if (modal) modal.classList.remove('show');
-    document.body.style.overflow = '';
-  }
-  function neverShowModal() {
-    localStorage.setItem('oda-modal-never', '1');
-    closeInstallModal();
   }
 
   return (
@@ -1517,55 +1477,6 @@ export default function OdaMarketPage() {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════
-          MODAL PWA INSTALL
-      ════════════════════════════════════════════ */}
-      <div className="pwa-overlay" id="pwaModal">
-        <div className="pwa-backdrop" onClick={closeInstallModal}></div>
-        <div className="pwa-sheet">
-          <div className="pwa-handle"></div>
-          <div className="pwa-header">
-            <div className="pwa-logo-box">
-              <img
-                src="/images/oda.png"
-                alt="ODA Market"
-                onError={e => { e.target.parentElement.innerHTML = '🛍️'; }}
-              />
-            </div>
-            <h2>Installer ODA Market</h2>
-            <p>Ajoutez ODA sur votre écran d'accueil pour une expérience complète, même sans connexion internet.</p>
-          </div>
-          <div className="pwa-steps">
-            <div className="pwa-step">
-              <div className="pwa-step-num">1</div>
-              <div>
-                <p className="pwa-step-title">📤 Appuie sur "Partager"</p>
-                <p className="pwa-step-desc">Touche l'icône de partage en bas de Safari (carré avec flèche vers le haut)</p>
-              </div>
-            </div>
-            <div className="pwa-step">
-              <div className="pwa-step-num">2</div>
-              <div>
-                <p className="pwa-step-title">➕ "Sur l'écran d'accueil"</p>
-                <p className="pwa-step-desc">Fais défiler et sélectionne cette option dans la liste</p>
-              </div>
-            </div>
-            <div className="pwa-step">
-              <div className="pwa-step-num">3</div>
-              <div>
-                <p className="pwa-step-title">✅ Appuie sur "Ajouter"</p>
-                <p className="pwa-step-desc">Confirme en haut à droite. ODA est installé comme une vraie app !</p>
-              </div>
-            </div>
-          </div>
-          <button className="pwa-btn-ok"   onClick={closeInstallModal}>J'ai compris ! 🎉</button>
-          <button className="pwa-btn-skip" onClick={neverShowModal}>Ne plus afficher</button>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════
-          MODAL CONDITIONS D'UTILISATION
-      ════════════════════════════════════════════ */}
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
     </>
   );

@@ -1,4 +1,5 @@
 import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration';
+import PWAInstallModal from '@/components/ui/PWAInstallModal';
 
 export const metadata = {
   title: "ODA Market | La Marketplace du Cameroun 🇨🇲",
@@ -67,6 +68,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <ServiceWorkerRegistration />
+        <PWAInstallModal />
       </body>
     </html>
   );

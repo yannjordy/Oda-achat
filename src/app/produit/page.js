@@ -685,28 +685,11 @@ function ProduitDetail() {
       }
       if (!slug) slug = currentProduct.user_id;
       afficherNotification('Redirection vers la boutique...', 'info');
-      setTimeout(() => { window.location.href = `${window.location.origin}/boutique.html?shop=${slug}`; }, 500);
+      setTimeout(() => { window.location.href = `${window.location.origin}/boutique?shop=${slug}`; }, 500);
     } catch { afficherNotification("Erreur lors de l'accès à la boutique", 'error'); }
   };
 
-  // ================================================================
-  //  LOGIQUE PAIEMENT — FIDÈLE À parametre.js
-  // ================================================================
-
-  /**
-   * Construit les méthodes de paiement disponibles depuis shopConfig.paiement
-   *
-   * Structure de parametre.js (DEFAULT_PARAMS) :
-   *   paiement.carte  = { actif, cle, confirme }
-   *   paiement.mobile = { actif, confirme,
-   *                       mtn:    { actif, nomCompte, numero, confirme },
-   *                       orange: { actif, nomCompte, numero, confirme } }
-   *   paiement.cash   = { actif, confirme }
-   *   paiement.devise = 'FCFA'
-   *
-   * Règle d'affichage : actif === true
-   * (confirme = état interne marchand, affiché comme badge)
-   */
+ 
   const getMethodesPaiement = useCallback(() => {
     const p = shopConfig?.paiement || {};
     const liste = [];
@@ -771,13 +754,7 @@ function ProduitDetail() {
     return liste;
   }, [shopConfig]);
 
-  /**
-   * Calcul frais de livraison selon parametre.js :
-   *   livraison.fraisDouala    → ville = 'douala'
-   *   livraison.fraisAutres   → toutes les autres villes
-   *   livraison.gratuit + livraison.montantMin → livraison gratuite conditionnelle
-   *   livraison.zonesPersonnalisees → zones custom (ex: zone_0, zone_1…)
-   */
+
   const calculerLivraison = useCallback(() => {
     const liv  = shopConfig?.livraison || {};
     const prix = currentProduct?.prix  || 0;
@@ -853,18 +830,6 @@ function ProduitDetail() {
     return Object.keys(errs).length === 0;
   };
 
-  /**
-   * Soumettre la commande avec stratégie de fallback :
-   *
-   * Tentative 1 — champs ÉTENDUS (compatibles commandes.js) :
-   *   numero, adresse_livraison, ville, produits_data, client_email, commentaire, …
-   *
-   * Si Supabase retourne une erreur de colonne inconnue (42703 / PGRST204 / "column")
-   * → Tentative 2 — champs ORIGINAUX seulement (ceux qui existaient avant)
-   *
-   * Si la table n'existe pas du tout (42P01)
-   * → Fallback URL /payement avec query-string
-   */
   const soumettreCommande = async () => {
     if (!valider() || !currentProduct) return;
     setOrderLoading(true);
@@ -884,35 +849,7 @@ function ProduitDetail() {
       commandesCount = count || 0;
     } catch { commandesCount = Math.floor(Math.random() * 9000) + 1000; }
 
-    // ══════════════════════════════════════════════════════
-    //  Schéma réel de la table (déduit de commandes.js)
-    //  Colonnes sûres : client_nom, client_telephone, client_email,
-    //  adresse_livraison, ville, montant_total, statut, commentaire,
-    //  created_at  — toutes les autres sont "optionnelles"
-    // ══════════════════════════════════════════════════════
-
-    // ══════════════════════════════════════════════════════
-    //  Schéma confirmé via commandes.js (NewOrderModal ligne 609)
-    //  et boutique.js (verifierNouvellesCommandes ligne 339)
-    //
-    //  COLONNES GARANTIES :
-    //    user_id           → ID propriétaire boutique (currentProduct.user_id)
-    //    client_nom        → nom du client
-    //    client_email      → email (nullable)
-    //    client_telephone  → téléphone
-    //    adresse_livraison → adresse de livraison
-    //    produits_data     → tableau JSON [{nom,prix,quantite,image}]
-    //    montant_total     → total à payer
-    //    statut            → 'en_attente'
-    //    created_at        → date ISO
-    //
-    //  COLONNES OPTIONNELLES (tentative 1 uniquement) :
-    //    numero, ville, mode_paiement, numero_client,
-    //    numero_marchand, compte_marchand, frais_livraison,
-    //    livraison_gratuite, devise
-    // ══════════════════════════════════════════════════════
-
-    // ── Champs GARANTIS — strictement ceux du schéma confirmé
+   
     const champOriginaux = {
       user_id:           currentProduct.user_id,
       client_nom:        orderForm.nom.trim(),
@@ -955,9 +892,7 @@ function ProduitDetail() {
       if (!err) return false;
       const code = err.code || '';
       const msg  = (err.message || '').toLowerCase();
-      // 42703 = PostgreSQL "column does not exist"
-      // PGRST204 = PostgREST "no rows affected" (parfois colonne inconnue)
-      // Certains messages contiennent "column"
+      
       return (
         code === '42703' ||
         code === 'PGRST204' ||
@@ -970,10 +905,7 @@ function ProduitDetail() {
       );
     };
 
-    // ────────────────────────────────────────────────────────
-    //  Helper : sauvegarder la facture dans l'historique local
-    //  (lu par la page /favorie — onglet "Mes Commandes")
-    // ────────────────────────────────────────────────────────
+    
     const sauvegarderCommandeLocale = (bc) => {
       try {
         const stored = JSON.parse(localStorage.getItem('oda_orders') || '[]');
@@ -1127,7 +1059,7 @@ function ProduitDetail() {
   const montantTotal  = (currentProduct?.prix || 0) + livraison.frais;
   const slug          = shopConfig?.identifiant?.slug || '';
   const boutiqueLien  = slug
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/boutique.html?shop=${slug}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/boutique?shop=${slug}`
     : '';
 
   // ── State copié (pour le feedback bouton "Copier")
@@ -1299,10 +1231,9 @@ function ProduitDetail() {
         <button className="btn-secondary" onClick={contacterWhatsApp}>📱 Contacter sur WhatsApp</button>
       </div>
 
-      {/* ================================================================
-          MODAL FORMULAIRE DE COMMANDE & PAIEMENT
-          Toutes les données de paiement viennent de shopConfig (parametre.js)
-      ================================================================ */}
+      {
+
+      }
       {showOrderForm && (
         <div className="cmd-overlay" onClick={e => { if (e.target === e.currentTarget) fermerFormCommande(); }}>
           <div className="cmd-modal">

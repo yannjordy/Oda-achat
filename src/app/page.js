@@ -1,8 +1,9 @@
 
-
+ 
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Header from '@/components/layout/Header';
 import TermsModal from '@/components/ui/TermsModal';
 
 
@@ -94,45 +95,8 @@ const CSS = `
     letter-spacing: 3px; text-transform: uppercase; color: var(--grey-400);
   }
 
-  /* ── Header ── */
-  header {
-    position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; z-index: 200;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--grey-100);
-    padding: 0 20px; height: 62px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .logo-wrap { display: flex; align-items: center; gap: 10px; }
-  .logo-img {
-    width: 38px; height: 38px; border-radius: 10px; overflow: hidden;
-    background: var(--gold-pale);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .logo-img img { width: 100%; height: 100%; object-fit: cover; }
-  .logo-text { font-family: var(--font-head); font-size: 1.25rem; font-weight: 900; color: var(--grey-900); }
-  .logo-text span { color: var(--gold); }
-  .logo-badge {
-    background: var(--green); color: #fff;
-    font-size: 0.58rem; font-weight: 700;
-    padding: 2px 7px; border-radius: 20px;
-    letter-spacing: 0.8px; text-transform: uppercase;
-  }
-  .header-actions { display: flex; align-items: center; gap: 10px; }
-  .btn-install-header {
-    background: linear-gradient(135deg, var(--gold) 0%, var(--terra) 100%);
-    color: #fff; border: none; border-radius: 30px; padding: 9px 18px;
-    font-family: var(--font-body); font-size: 0.78rem; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; gap: 6px;
-    box-shadow: 0 4px 16px rgba(212,146,10,0.3); transition: all 0.3s;
-  }
-  .btn-install-header:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212,146,10,0.45); }
-  .cm-chip {
-    display: flex; align-items: center; gap: 5px;
-    background: var(--grey-50); border: 1px solid var(--grey-100);
-    border-radius: 30px; padding: 5px 11px;
-    font-size: 0.72rem; font-weight: 600; color: var(--grey-700);
-  }
+   /* ── Header ── */
+   /* Les styles du header sont maintenant dans components/layout/Header.js */
 
    /* ── Hero ── */
    .hero { padding-top: 62px; min-height: 100svh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
@@ -855,6 +819,11 @@ export default function OdaMarketPage() {
           </button>
         </div>
       </header>
+      {/* ════════════════════════════════════════
+          HEADER
+      ════════════════════════════════════════ */}
+      <Header variant="default" showInstall={true} />
+
 
       {/* ════════════════════════════════════════════
           HERO

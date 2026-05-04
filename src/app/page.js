@@ -100,7 +100,8 @@ const CSS = `
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--grey-100);
-    padding: 0 20px; height: 62px;
+    padding: env(safe-area-inset-top) 20px 0 20px;
+    height: calc(62px + env(safe-area-inset-top));
     display: flex; align-items: center; justify-content: space-between;
   }
   .logo-wrap { display: flex; align-items: center; gap: 10px; }

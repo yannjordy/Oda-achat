@@ -125,7 +125,7 @@ class OptimizedDataLoader {
         const currentUserId = window._currentUserId;
         const [shopsRes, productsRes, likesCountRes, userLikesRes] = await Promise.all([
             this.sb.from('parametres_boutique').select('user_id, config'),
-            this.sb.from('produits').select('id,nom,description,prix,stock,main_image,categorie,user_id,created_at').in('statut', ['published', 'actif', 'active', 'disponible', 'publié']).gt('stock', 0).limit(500),
+            this.sb.from('produits').select('id,nom,description,prix,stock,main_image,categorie,user_id,created_at,prix_promo,prix_initial').in('statut', ['published', 'actif', 'active', 'disponible', 'publié']).gt('stock', 0).limit(500),
             this.sb.from('product_likes').select('product_id'),
             this.sb.from('product_likes').select('product_id').eq('user_id', currentUserId),
         ]);
@@ -148,6 +148,8 @@ class OptimizedDataLoader {
             nom         : p.nom,
             description : p.description,
             prix        : p.prix,
+            prix_promo  : p.prix_promo,
+            prix_initial: p.prix_initial,
             stock       : p.stock,
             mainImage   : p.main_image,
             categorie   : p.categorie,
@@ -413,6 +415,7 @@ function _injectSectionStyles() {
         .btn-like:hover{transform:scale(1.05);}
         .product-rating{font-size:.7rem;color:var(--text-secondary);font-weight:600;}
         .product-price{font-size:1.05rem;font-weight:800;color:var(--primary-color);}
+        .badge-promo{display:inline-block;padding:2px 8px;background:#dc2626;color:white;border-radius:10px;font-size:.7rem;font-weight:700;letter-spacing:.5px;}
         .product-stock{font-size:.68rem;font-weight:600;color:#F59E0B;}
         .product-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
         /* FIX: réduire l'espace du séparateur pour éviter les grands blancs */
@@ -530,9 +533,21 @@ function createProductCard(product, isHorizontal = false) {
                 </div>
                 <div class="product-footer">
                     <!-- Prix avec couleur boutique -->
-                    <div class="product-price" style="color:${shopColor};font-size:1.05rem;font-weight:800;">
-                        ${formatPrice(product.prix)}
-                    </div>
+                    ${product.prix_promo && Number(product.prix_promo) > 0 && Number(product.prix_promo) < Number(product.prix) ? `
+                        <div class="product-price" style="color:#22c55e;font-weight:800;font-size:1.05rem;">
+                            ${formatPrice(product.prix_promo)}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
+                            <span style="text-decoration:line-through;opacity:0.7;font-size:0.85rem;color:${shopColor};">
+                                ${product.prix_initial ? formatPrice(product.prix_initial) : formatPrice(product.prix)}
+                            </span>
+                            <span class="badge-promo">-${Math.round((1 - Number(product.prix_promo)/Number(product.prix)) * 100)}%</span>
+                        </div>
+                    ` : `
+                        <div class="product-price" style="color:${shopColor};font-size:1.05rem;font-weight:800;">
+                            ${formatPrice(product.prix)}
+                        </div>
+                    `}
                     ${isLowStock ? `<div class="product-stock">⚠️ Stock faible</div>` : ''}
                 </div>
             </div>
@@ -772,13 +787,21 @@ function renderCarousel(products) {
                     aria-label="Signaler ce produit">
                 🚩
             </button>
-            <div class="carousel-overlay">
-                <div class="carousel-info">
-                    <div class="shop-name">🏪 ${p.shopName}</div>
-                    <h2>${p.nom}</h2>
-                    <div class="product-price">${formatPrice(p.prix)}</div>
-                </div>
-            </div>
+                    <div class="carousel-overlay">
+                        <div class="carousel-info">
+                            <div class="shop-name">🏪 ${p.shopName}</div>
+                            <h2>${p.nom}</h2>
+                            ${p.prix_promo && Number(p.prix_promo) > 0 && Number(p.prix_promo) < Number(p.prix) ? `
+                                <div class="product-price" style="color:#22c55e;font-weight:700;">${formatPrice(p.prix_promo)}</div>
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <span style="text-decoration:line-through;opacity:0.8;font-size:0.9rem;">${p.prix_initial ? formatPrice(p.prix_initial) : formatPrice(p.prix)}</span>
+                                    <span class="badge-promo" style="background:#dc2626;color:white;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:700;">-${Math.round((1 - Number(p.prix_promo)/Number(p.prix)) * 100)}%</span>
+                                </div>
+                            ` : `
+                                <div class="product-price">${formatPrice(p.prix)}</div>
+                            `}
+                        </div>
+                    </div>
         </div>`).join('');
 
     if (dotsEl) {

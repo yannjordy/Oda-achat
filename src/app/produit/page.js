@@ -204,8 +204,9 @@ const pageStyles = `
   .btn-report-product:hover{background:rgba(239,68,68,.15);transform:scale(1.05);}
   .product-category{display:inline-block;padding:6px 12px;background:linear-gradient(135deg,rgba(255,107,0,.1),rgba(255,107,0,.05));color:var(--primary-color);border-radius:20px;font-size:.85rem;font-weight:600;margin-bottom:16px;}
   .price-section{background:linear-gradient(135deg,var(--primary-color),var(--primary-dark));padding:24px;border-radius:var(--radius-lg);margin-bottom:24px;color:white;}
-  .product-price{font-size:2rem;font-weight:900;margin-bottom:8px;}
-  .stock-info{display:flex;align-items:center;gap:8px;font-size:.9rem;opacity:.95;}
+   .product-price{font-size:2rem;font-weight:900;margin-bottom:8px;}
+   .badge-promo{display:inline-block;padding:4px 10px;background:#dc2626;color:white;border-radius:20px;font-size:.8rem;font-weight:700;letter-spacing:.5px;}
+   .stock-info{display:flex;align-items:center;gap:8px;font-size:.9rem;opacity:.95;}
   .stock-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(255,255,255,.2);border-radius:12px;font-weight:600;}
   .description-section{background:var(--bg-primary);padding:24px;border-radius:var(--radius-lg);margin-bottom:24px;box-shadow:var(--shadow-sm);}
   .section-title{font-size:1.1rem;font-weight:700;margin-bottom:12px;color:var(--text-primary);display:flex;align-items:center;gap:8px;}
@@ -1146,7 +1147,21 @@ function ProduitDetail() {
         </div>
 
         <div className="price-section">
-          <div className="product-price">{currentProduct ? formatPrice(currentProduct.prix, devise) : '0 FCFA'}</div>
+          {currentProduct?.prix_promo && Number(currentProduct.prix_promo) > 0 && Number(currentProduct.prix_promo) < Number(currentProduct.prix) ? (
+            <>
+              <div className="product-price" style={{color:'var(--success)',fontWeight:700}}>
+                {formatPrice(currentProduct.prix_promo, devise)}
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                <span style={{textDecoration:'line-through',color:'var(--text-muted)',fontSize:'1rem'}}>
+                  {currentProduct.prix_initial ? formatPrice(currentProduct.prix_initial, devise) : formatPrice(currentProduct.prix, devise)}
+                </span>
+                <span className="badge-promo">Promotion -{Math.round((1 - Number(currentProduct.prix_promo)/Number(currentProduct.prix)) * 100)}%</span>
+              </div>
+            </>
+          ) : (
+            <div className="product-price">{currentProduct ? formatPrice(currentProduct.prix, devise) : '0 FCFA'}</div>
+          )}
           <div className="stock-info">
             <div className="stock-badge"><span>{stockInfo.icon}</span><span>{stockInfo.text}</span></div>
             <span>{stockInfo.quantity}</span>

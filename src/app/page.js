@@ -96,12 +96,11 @@ const CSS = `
 
   /* ── Header ── */
   header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; z-index: 200;
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--grey-100);
-    padding: env(safe-area-inset-top) 20px 0 20px;
-    height: calc(62px + env(safe-area-inset-top));
+    padding: 0 20px; height: 62px;
     display: flex; align-items: center; justify-content: space-between;
   }
   .logo-wrap { display: flex; align-items: center; gap: 10px; }
@@ -136,7 +135,7 @@ const CSS = `
   }
 
    /* ── Hero ── */
-   .hero { padding-top: calc(62px + env(safe-area-inset-top)); min-height: 100svh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+   .hero { padding-top: 62px; min-height: 100svh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
   .hero-bg-pattern {
     position: absolute; inset: 0; z-index: 0;
     background:

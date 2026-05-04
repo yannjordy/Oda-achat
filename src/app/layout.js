@@ -5,14 +5,34 @@ export const metadata = {
   description:
     "ODA Market — La marketplace N°1 au Cameroun. Achetez et vendez facilement à Douala, Yaoundé et partout au pays.",
   manifest: "/manifest.json",
+  applicationName: "ODA Market",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "ODA Market",
   },
+  formatDetection: {
+    telephone: false,
+  },
+  appleMobileWebAppCapable: "yes",
+  appleMobileWebAppStatusBarStyle: "black-translucent",
   icons: {
-    icon: [{ url: "/images/oda.png", sizes: "192x192", type: "image/png" }],
-    apple: "/images/oda.png",
+    icon: [
+      { url: "/images/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/images/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: ["/images/icon-192x192.png"],
+    apple: [
+      { url: "/images/icon-192x192.png", sizes: "192x192" },
+      { url: "/images/icon-512x512.png", sizes: "512x512" },
+    ],
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'application-name': 'ODA Market',
+    'msapplication-TileColor': '#D4920A',
+    'msapplication-tap-highlight': 'no',
   },
 };
 
@@ -29,6 +49,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr">
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="ODA Market" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/images/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/images/icon-512x512.png" />
+        <link rel="icon" href="/images/icon-192x192.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#D4920A" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

@@ -568,29 +568,11 @@ const NOTIF_DATA = [
 
 
 export default function OdaMarketPage() {
-  const deferredPromptRef = useRef(null);
-  const notifIdxRef       = useRef(0);
+  const notifIdxRef       = useRef(null);
   const notifTimerRef     = useRef(null);
   const [showTerms, setShowTerms] = useState(false);
 
-  // ── 1. Service Worker ────────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-    const swCode = `
-      const CACHE = 'oda-v1';
-      self.addEventListener('install',  e => { self.skipWaiting(); });
-      self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-      self.addEventListener('fetch', e => {
-        if (e.request.method !== 'GET') return;
-        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-      });
-    `;
-    const blob  = new Blob([swCode], { type: 'application/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl).catch(() => {});
-  }, []);
-
-  // ── 2. Loader ────────────────────────────────────────────────────────────
+  // ── 1. Loader ────────────────────────────────────────────────────────────
   useEffect(() => {
     const loader = document.getElementById('loader');
     if (!loader) return;
@@ -845,52 +827,7 @@ export default function OdaMarketPage() {
     });
   }, []);
 
-  // ── 11. PWA beforeinstallprompt + affichage automatique ─────────────────
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      deferredPromptRef.current = e;
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // Affichage automatique après 2,5 s
-    const DELAY = 2500;
-    let autoTimeout;
-
-    const tryShow = () => {
-      if (isStandalone()) return;
-      if (localStorage.getItem('oda-modal-never')) return;
-      if (sessionStorage.getItem('oda-modal-shown')) return;
-
-      if (isIOS()) {
-        autoTimeout = setTimeout(() => {
-          openInstallModal();
-          sessionStorage.setItem('oda-modal-shown', '1');
-        }, DELAY);
-      } else {
-        autoTimeout = setTimeout(() => {
-          if (deferredPromptRef.current) {
-            deferredPromptRef.current.prompt();
-            deferredPromptRef.current.userChoice.then(c => {
-              if (c.outcome === 'accepted') deferredPromptRef.current = null;
-            });
-          } else {
-            openInstallModal();
-          }
-          sessionStorage.setItem('oda-modal-shown', '1');
-        }, DELAY);
-      }
-    };
-
-    tryShow();
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      clearTimeout(autoTimeout);
-    };
-  }, []);
-
-  // ── Fonctions utilitaires ─────────────────────────────────────────────────
+  // ── 10. PWA — utilise window.installPWA exposé par ServiceWorkerRegistration
   function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   }
@@ -900,11 +837,8 @@ export default function OdaMarketPage() {
   }
   function handleInstall() {
     if (isStandalone()) return;
-    if (deferredPromptRef.current) {
-      deferredPromptRef.current.prompt();
-      deferredPromptRef.current.userChoice.then(c => {
-        if (c.outcome === 'accepted') deferredPromptRef.current = null;
-      });
+    if (window.installPWA) {
+      window.installPWA();
     } else {
       openInstallModal();
     }
@@ -949,7 +883,7 @@ export default function OdaMarketPage() {
       <header>
         <div className="logo-wrap">
           <div className="logo-img">
-            <img src="/images/oda1.png" alt="ODA Market" onError={e => { e.target.style.display = 'none'; }} />
+            <img src="/images/icon-192x192.png" alt="ODA Market" onError={e => { e.target.parentElement.innerHTML = '🛍️'; }} />
           </div>
           <span className="logo-text">ODA <span>Market</span></span>
           <span className="logo-badge">CM 🇨🇲</span>
@@ -1177,7 +1111,7 @@ export default function OdaMarketPage() {
             <div className="gallery-caption">Marché de Douala</div>
           </div>
           <div className="gallery-cell sr-r">
-            <img src="iamges/femme-marche-2.jpg" alt="Vendeuse tissu wax" />
+            <img src="/images/femme-marche-2.jpg" alt="Vendeuse tissu wax" />
             <div className="gallery-placeholder">
               <span></span>
               <p>Photo tissu wax</p>
@@ -1185,7 +1119,7 @@ export default function OdaMarketPage() {
             <div className="gallery-caption">Pagnes &amp; Wax</div>
           </div>
           <div className="gallery-cell sr-r" style={{ transitionDelay: '.15s' }}>
-            <img src="images/femme-marche-3.jpg" alt="Produits locaux camerounais" />
+            <img src="/images/femme-marche-3.jpg" alt="Produits locaux camerounais" />
             <div className="gallery-placeholder">
               <span></span>
               <p>Photo produits locaux</p>
@@ -1520,7 +1454,7 @@ export default function OdaMarketPage() {
       <footer className="footer" style={{ marginTop: '44px' }}>
         <div className="footer-logo">
           <div className="footer-logo-img">
-            <img src="/images/oda1.png" alt="ODA Market" onError={e => { e.target.style.display = 'none'; }} />
+            <img src="/images/icon-192x192.png" alt="ODA Market" onError={e => { e.target.parentElement.innerHTML = '🛍️'; }} />
           </div>
           <span className="footer-logo-name">ODA <span>Market</span></span>
         </div>

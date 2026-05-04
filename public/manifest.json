@@ -1,25 +1,67 @@
 {
   "name": "ODA Market",
-  "short_name": "ODA Market",
-  "description": "La marketplace N°1 au Cameroun",
-  "start_url": "/",
+  "short_name": "ODA",
+  "description": "La marketplace N°1 au Cameroun - Achetez et vendez facilement",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#D4920A",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "lang": "fr",
+  "dir": "ltr",
   "categories": ["shopping", "business"],
-  "icons": [
+  "shortcuts": [
     {
-      "src": "/images/oda1.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "name": "Produits",
+      "short_name": "Produits",
+      "description": "Parcourir les produits",
+      "url": "/produits",
+      "icons": [{ "src": "/images/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "src": "/images/oda1.png",
+      "name": "Boutiques",
+      "short_name": "Boutiques",
+      "description": "Voir les boutiques",
+      "url": "/boutiques",
+      "icons": [{ "src": "/images/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/images/oda.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ODA Market - Page d'accueil"
+    }
+  ],
+  "prefer_related_applications": false
 }

@@ -135,8 +135,8 @@ const CSS = `
     font-size: 0.72rem; font-weight: 600; color: var(--grey-700);
   }
 
-  /* ── Hero ── */
-  .hero { padding-top: 62px; min-height: 100svh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+   /* ── Hero ── */
+   .hero { padding-top: calc(62px + env(safe-area-inset-top)); min-height: 100svh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
   .hero-bg-pattern {
     position: absolute; inset: 0; z-index: 0;
     background:

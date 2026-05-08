@@ -19,10 +19,11 @@ export const metadata = {
   appleMobileWebAppStatusBarStyle: "black-translucent",
   icons: {
     icon: [
+      { url: "/images/oda-logo.svg", type: "image/svg+xml" },
       { url: "/images/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/images/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: ["/images/icon-192x192.png"],
+    shortcut: ["/images/oda-logo.svg"],
     apple: [
       { url: "/images/icon-192x192.png", sizes: "192x192" },
       { url: "/images/icon-512x512.png", sizes: "512x512" },
@@ -55,6 +56,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="ODA Market" />
         <link rel="apple-touch-icon" sizes="192x192" href="/images/icon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/images/icon-512x512.png" />
+        <link rel="icon" type="image/svg+xml" href="/images/oda-logo.svg" />
         <link rel="icon" href="/images/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#D4920A" />

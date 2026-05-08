@@ -220,6 +220,8 @@ const pageStyles = `
   .btn-like,.btn-comments{flex:1;padding:12px 16px;border:2px solid var(--border-color);background:var(--bg-secondary);border-radius:var(--radius-md);font-weight:600;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:8px;}
   .btn-like:active,.btn-comments:active{transform:scale(.95);}
   .btn-like.liked{background:#FFE5E5;border-color:var(--error-color);color:var(--error-color);}
+  .btn-like svg,.btn-fav-floating svg{width:20px;height:20px;}
+  .btn-like.liked svg{fill:#EF4444;stroke:#EF4444;}
   .comments-section{background:var(--bg-primary);padding:24px;border-radius:var(--radius-lg);margin-bottom:24px;box-shadow:var(--shadow-sm);}
   .comment-form{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border-color);}
   .rating-input{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
@@ -242,7 +244,8 @@ const pageStyles = `
   .empty-comments{text-align:center;padding:40px 20px;color:var(--text-secondary);}
   .shop-section{background:linear-gradient(135deg,var(--primary-color),var(--primary-dark));padding:24px;border-radius:var(--radius-lg);margin-bottom:24px;color:white;}
   .shop-info{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
-  .shop-icon{width:60px;height:60px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;}
+  .shop-icon{width:60px;height:60px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
+  .shop-icon img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
   .shop-details h3{font-size:1.2rem;margin-bottom:4px;}
   .shop-details p{opacity:.9;font-size:.9rem;}
   .btn-visit-shop{width:100%;padding:14px;background:white;color:var(--primary-color);border:none;border-radius:var(--radius-md);font-weight:700;cursor:pointer;transition:all .3s ease;}
@@ -284,9 +287,10 @@ const pageStyles = `
   .report-btn-submit{background:var(--primary-color);color:#fff;}
   .report-btn-submit:hover{background:var(--primary-dark);}
   .report-btn-submit:disabled{opacity:.5;cursor:not-allowed;}
-  .btn-fav-floating{position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:none;font-size:1.2rem;cursor:pointer;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  .btn-fav-floating{position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,.15);}
   .btn-fav-floating:hover{transform:scale(1.1);}
   .btn-fav-floating.active{background:rgba(239,68,68,.9);box-shadow:0 2px 12px rgba(239,68,68,.4);}
+  .btn-fav-floating.active svg{fill:#fff;stroke:#fff;}
 
   /* ════ MODAL COMMANDE ════ */
   .cmd-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:flex-end;justify-content:center;animation:cmd-fi .25s ease;}
@@ -607,7 +611,7 @@ function ProduitDetail() {
     const next = !isFavorite;
     setIsFavorite(next);
     saveFavorites(currentProduct.id, next);
-    afficherNotification(next ? '❤️ Ajouté aux favoris' : '🤍 Retiré des favoris', 'success');
+    afficherNotification(next ? '✅ Ajouté aux favoris' : ' Retiré des favoris', 'success');
   };
 
   const openReportModalProduit = () => { setReportOpen(true); setReportReason(''); setReportComment(''); };
@@ -1052,6 +1056,7 @@ function ProduitDetail() {
   const stockInfo     = currentProduct ? getStockInfo() : { icon: '✅', text: 'En stock', quantity: '' };
   const devise        = shopConfig?.paiement?.devise || 'FCFA';
   const shopName      = shopConfig?.general?.nom || 'Ma Boutique';
+  const shopLogo      = shopConfig?.apparence?.logo || '';
   const noteMoyenne   = calculerNoteMoyenne();
   const notifIcons    = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
   const methodesPaiem = getMethodesPaiement();
@@ -1118,7 +1123,9 @@ function ProduitDetail() {
             <div className="image-counter">{currentImageIndex + 1} / {allImages.length}</div>
           )}
           <button className={`btn-fav-floating${isFavorite ? ' active' : ''}`} onClick={toggleFavorite} aria-label="Ajouter aux favoris">
-            {isFavorite ? '❤️' : '🤍'}
+            {isFavorite
+              ? <svg viewBox="0 0 24 24" fill="#fff" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              : <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>}
           </button>
         </div>
         <div className="thumbnails-container" style={{ display: allImages.length > 1 ? 'flex' : 'none' }}>
@@ -1181,11 +1188,15 @@ function ProduitDetail() {
           </div>
           <div className="engagement-buttons">
             <button className={`btn-like${productLikes.userLiked ? ' liked' : ''}`} onClick={toggleLike} disabled={likeLoading}>
-              <span>{productLikes.userLiked ? '❤️' : '🤍'}</span>
+              <span>{productLikes.userLiked
+                ? <svg viewBox="0 0 24 24" fill="#EF4444" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                : <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>}</span>
               <span>{productLikes.userLiked ? 'Aimé' : "J'aime"}</span>
             </button>
             <button className={`btn-like${isFavorite ? ' liked' : ''}`} onClick={toggleFavorite}>
-              <span>{isFavorite ? '❤️' : '🤍'}</span>
+              <span>{isFavorite
+                ? <svg viewBox="0 0 24 24" fill="#EF4444" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                : <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>}</span>
               <span>{isFavorite ? 'Favori' : 'Favoris'}</span>
             </button>
             <button className="btn-comments" onClick={scrollToComments}><span>💬</span><span>Commenter</span></button>
@@ -1194,10 +1205,12 @@ function ProduitDetail() {
 
         <div className="shop-section">
           <div className="shop-info">
-            <div className="shop-icon">🏪</div>
+            <div className="shop-icon">
+              {shopLogo ? <img src={shopLogo} alt={shopName} /> : <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="30" height="30"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4"/><path d="M8 14h8"/><path d="M10 14v4"/><path d="M14 14v4"/></svg>}
+            </div>
             <div className="shop-details"><h3>{shopName}</h3><p>Visitez la boutique pour plus de produits</p></div>
           </div>
-          <button className="btn-visit-shop" onClick={allerBoutique}>🏪 Voir la boutique</button>
+          <button className="btn-visit-shop" onClick={allerBoutique}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" style={{marginRight:6}}><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4"/><path d="M8 14h8"/><path d="M10 14v4"/><path d="M14 14v4"/></svg> Voir la boutique</button>
         </div>
 
         <div className="comments-section" ref={commentsSectionRef}>
@@ -1274,7 +1287,7 @@ function ProduitDetail() {
                     <div className="cmd-recap-price">{formatPrice(currentProduct.prix, devise)}</div>
                     {boutiqueLien && (
                       <div className="cmd-shop-tag">
-                        🏪 {shopName} &nbsp;·&nbsp;
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" style={{marginRight:4,verticalAlign:'middle'}}><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4"/><path d="M8 14h8"/><path d="M10 14v4"/><path d="M14 14v4"/></svg> {shopName} &nbsp;·&nbsp;
                         <a href={boutiqueLien} target="_blank" rel="noopener noreferrer">voir la boutique ↗</a>
                       </div>
                     )}

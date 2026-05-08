@@ -400,9 +400,17 @@ function _injectSectionStyles() {
         .product-image-wrapper{position:relative;width:100%;padding-top:65%;background:#f5f5f5;overflow:hidden;}
         .product-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:transform .3s ease;}
         .product-card:hover .product-image{transform:scale(1.05);}
-        .btn-favorite{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;font-size:1rem;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+        .btn-favorite{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.btn-favorite svg{width:18px;height:18px;}
+.btn-favorite.active{background:var(--error-color);color:#fff;}
+.btn-favorite.active svg{stroke:#fff;fill:#fff;}
+.btn-like,.btn-comments{display:inline-flex;align-items:center;gap:4px;background:var(--bg-secondary);border:none;border-radius:8px;padding:4px 8px;font-size:.72rem;cursor:pointer;transition:all .2s;}
+.btn-like.liked{background:rgba(239,68,68,.1);color:#EF4444;}
+.btn-like.liked .like-icon svg{fill:#EF4444;stroke:#EF4444;}
+.btn-like:hover{transform:scale(1.05);}
+.like-icon{display:flex;align-items:center;}
+.like-icon svg{width:16px;height:16px;}
         .btn-favorite:hover{transform:scale(1.1);}
-        .btn-favorite.active{background:var(--error-color);color:#fff;}
         .btn-report-card{position:absolute;top:8px;left:8px;width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;font-size:.85rem;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.12);opacity:.7;}
         .btn-report-card:hover{opacity:1;transform:scale(1.1);background:#FEE2E2;}
         .product-card:hover .btn-report-card{opacity:1;}
@@ -410,9 +418,6 @@ function _injectSectionStyles() {
         .shop-badge{display:inline-flex;align-items:center;gap:3px;font-size:.68rem;font-weight:500;color:var(--text-secondary);padding:2px 6px;border-radius:8px;width:fit-content;}
         .product-name{font-size:.83rem;font-weight:700;color:var(--text-primary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;}
         .product-engagement{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-        .btn-like,.btn-comments{display:inline-flex;align-items:center;gap:4px;background:var(--bg-secondary);border:none;border-radius:8px;padding:4px 8px;font-size:.72rem;cursor:pointer;transition:all .2s;}
-        .btn-like.liked{background:rgba(239,68,68,.1);color:#EF4444;}
-        .btn-like:hover{transform:scale(1.05);}
         .product-rating{font-size:.7rem;color:var(--text-secondary);font-weight:600;}
         .product-price{font-size:1.05rem;font-weight:800;color:var(--primary-color);}
         .badge-promo{display:inline-block;padding:2px 8px;background:#dc2626;color:white;border-radius:10px;font-size:.7rem;font-weight:700;letter-spacing:.5px;}
@@ -498,7 +503,9 @@ function createProductCard(product, isHorizontal = false) {
                 ${isSale && !isNew ? `<span class="oda-badge oda-badge-sale">Promo</span>` : ''}
                 <button class="btn-favorite ${window._favoriteProducts.has(product.id) ? 'active' : ''}"
                         onclick="event.stopPropagation();window.toggleFavorite(${product.id})">
-                    ${window._favoriteProducts.has(product.id) ? '❤️' : '🤍'}
+                    ${window._favoriteProducts.has(product.id)
+                        ? '<svg class="heart-icon" viewBox="0 0 24 24" fill="#EF4444" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>'
+                        : '<svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
                 </button>
                 <button class="btn-report-card"
                         onclick="event.stopPropagation();window.openReportModal(${product.id}, '${product.nom.replace(/'/g, "\\'")}')"
@@ -520,7 +527,10 @@ function createProductCard(product, isHorizontal = false) {
                     <button class="btn-like ${likeData.userLiked ? 'liked' : ''}"
                             data-like-product="${product.id}"
                             onclick="event.stopPropagation();window.toggleLike(${product.id})">
-                        <span class="like-icon">${likeData.userLiked ? '❤️' : '🤍'}</span>
+                        <span class="like-icon">${likeData.userLiked
+                                ? '<svg viewBox="0 0 24 24" fill="#EF4444" width="16" height="16"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>'
+                                : '<svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="16" height="16"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
+                            </span>
                         <span class="like-count">${likeData.count}</span>
                     </button>
                     <button class="btn-comments"
@@ -996,10 +1006,12 @@ if (typeof window !== 'undefined') window.toggleFavorite = function(productId) {
     const btn = document.querySelector(`[onclick*="toggleFavorite(${productId})"]`);
     if (btn) {
         const isFav = window._favoriteProducts.has(productId);
-        btn.textContent = isFav ? '❤️' : '🤍';
+        btn.innerHTML = isFav
+            ? '<svg class="heart-icon" viewBox="0 0 24 24" fill="#EF4444" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>'
+            : '<svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="18" height="18"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         btn.classList.toggle('active', isFav);
     }
-    showToast(window._favoriteProducts.has(productId) ? '❤️ Ajouté aux favoris' : '🤍 Retiré des favoris', 'success');
+    showToast(window._favoriteProducts.has(productId) ? '✅ Ajouté aux favoris' : ' Retiré des favoris', 'success');
 };
 
 function updateBadges() {
@@ -1025,7 +1037,9 @@ if (typeof window !== 'undefined') window.toggleLike = async function(productId)
     const btn = document.querySelector(`[data-like-product="${productId}"]`);
     if (btn) {
         btn.classList.toggle('liked', curr.userLiked);
-        btn.querySelector('.like-icon').textContent = curr.userLiked ? '❤️' : '🤍';
+        btn.querySelector('.like-icon').innerHTML = curr.userLiked
+        ? '<svg viewBox="0 0 24 24" fill="#EF4444" width="16" height="16"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="16" height="16"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         btn.querySelector('.like-count').textContent = curr.count;
     }
 
@@ -1468,7 +1482,7 @@ if (typeof window !== 'undefined') window.showCommentsModal = async function(pro
                  border-radius:14px;padding:16px;margin-bottom:20px;">
                 <div style="text-align:center;">
                     <div style="font-size:1.6rem;font-weight:800;color:var(--primary-color);">${likeData.count}</div>
-                    <div style="font-size:.72rem;color:#888;margin-top:2px;">❤️ Likes</div>
+                    <div style="font-size:.72rem;color:#888;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px;"><svg viewBox="0 0 24 24" fill="#888" width="12" height="12"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Likes</div>
                 </div>
                 <div style="text-align:center;">
                     <div style="font-size:1.6rem;font-weight:800;color:var(--primary-color);">${parentComments.length}</div>
@@ -1970,7 +1984,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg-secondary);color:var(--t
 .banner-actions{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:20px;z-index:10;}
 .banner-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,.3);border-radius:16px;padding:16px 24px;cursor:pointer;transition:all .3s ease;color:white;font-weight:600;font-size:.9rem;min-width:100px;}
 .banner-btn:hover{background:rgba(255,255,255,.25);transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,.3);}
-.banner-icon{font-size:2rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));}
+.banner-icon{font-size:2rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));display:flex;align-items:center;justify-content:center;}
+.banner-icon svg{width:32px;height:32px;}
 .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.9);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.2);}
 .carousel-btn:hover{background:white;transform:translateY(-50%) scale(1.1);}
 .carousel-btn.prev{left:20px;}
@@ -2526,9 +2541,9 @@ export default function OdaAchatsPage() {
                                 </svg>
                             ) : (
                                 <img
-                                    src="/images/oda-seller.png"
+                                    src="/images/oda-seller.svg"
                                     alt="ODA"
-                                    style={{width:'26px',height:'26px',borderRadius:'6px',objectFit:'cover'}}
+                                    width="26" height="26"
                                     onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
                                 />
                             )}
@@ -2586,8 +2601,9 @@ export default function OdaAchatsPage() {
                             /* ── Formulaire de connexion ── */
                             <>
                                 <img
-                                    src="/images/oda-seller.png"
+                                    src="/images/oda-seller.svg"
                                     alt="ODA"
+                                    width="60" height="60"
                                     className="oda-modal-logo"
                                     onError={e => {
                                         e.target.style.display = 'none';
@@ -2951,15 +2967,15 @@ export default function OdaAchatsPage() {
                 </div>
                 <div className="banner-actions">
                     <button className="banner-btn" onClick={() => window.scrollToProducts()}>
-                        <div className="banner-icon">🎁</div>
+                        <div className="banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="32" height="32"><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"/><path d="M4 8h16v4H4z"/><path d="M12 6V2"/><path d="M8 6c0-2 4-2 4 0"/><path d="M16 6c0-2-4-2-4 0"/></svg></div>
                         <span>produits</span>
                     </button>
                     <button className="banner-btn" onClick={() => window.location.href='/favorie'}>
-                        <div className="banner-icon">❤️</div>
+                        <div className="banner-icon"><svg viewBox="0 0 24 24" fill="#EF4444" width="24" height="24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
                         <span>favoris</span>
                     </button>
                     <button className="banner-btn" onClick={() => window.location.href='/boutiques'}>
-                        <div className="banner-icon">🏪</div>
+                        <div className="banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="32" height="32"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4"/><path d="M8 14h8"/><path d="M10 14v4"/><path d="M14 14v4"/></svg></div>
                         <span>boutique</span>
                     </button>
                 </div>

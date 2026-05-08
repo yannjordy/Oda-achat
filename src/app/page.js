@@ -793,7 +793,7 @@ export default function OdaMarketPage() {
       ════════════════════════════════════════════ */}
       <div id="loader">
         <div className="loader-logo">
-          <img src="/images/oda.png" alt="ODA Market" onError={e => { e.target.parentElement.innerHTML = '🛍️'; }} />
+          <img src="/images/oda-logo.svg" alt="ODA Market" width="70" height="70" />
         </div>
         <div className="loader-bar">
           <div className="loader-bar-fill"></div>
@@ -807,7 +807,7 @@ export default function OdaMarketPage() {
       <header>
         <div className="logo-wrap">
           <div className="logo-img">
-            <img src="/images/icon-192x192.png" alt="ODA Market" onError={e => { e.target.parentElement.innerHTML = '🛍️'; }} />
+            <img src="/images/oda-logo.svg" alt="ODA Market" width="38" height="38" />
           </div>
           <span className="logo-text">ODA <span>Market</span></span>
           <span className="logo-badge">CM 🇨🇲</span>
@@ -967,7 +967,7 @@ export default function OdaMarketPage() {
         <div className="bento">
           <div className="bento-card c-gold sr-l">
             <div className="bento-icon-wrap bg-gold">
-              <img src="/images/icon-livraison.png" style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" />
+<img src="/images/icon-livraison.svg" width="32" height="32" alt="" />  
             </div>
             <div>
               <p className="bento-label">Logistique</p>
@@ -977,7 +977,7 @@ export default function OdaMarketPage() {
           </div>
           <div className="bento-card c-green sr-r">
             <div className="bento-icon-wrap bg-green">
-              <img src="/images/icon-paiement.png" style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" />
+<img src="/images/icon-paiement.svg" width="32" height="32" alt="" />  
             </div>
             <div>
               <p className="bento-label">Paiement</p>
@@ -987,7 +987,7 @@ export default function OdaMarketPage() {
           </div>
           <div className="bento-card c-terra sr-l">
             <div className="bento-icon-wrap bg-terra">
-              <img src="/images/icon-vendeuses.png" style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" />
+<img src="/images/icon-vendeuses.svg" width="32" height="32" alt="" />  
             </div>
             <div>
               <p className="bento-label">Communauté</p>
@@ -997,7 +997,7 @@ export default function OdaMarketPage() {
           </div>
           <div className="bento-card c-red sr-r">
             <div className="bento-icon-wrap bg-red">
-              <img src="/images/icon-secure.png" style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" />
+<img src="/images/icon-secure.svg" width="32" height="32" alt="" />  
             </div>
             <div>
               <p className="bento-label">Sécurité</p>
@@ -1007,7 +1007,7 @@ export default function OdaMarketPage() {
           </div>
           <div className="bento-card c-gold span-2 sr">
             <div className="bento-icon-wrap bg-gold">
-              <img src="/images/oda.png" style={{ width: '32px', height: '32px', objectFit: 'contain' }} alt="" />
+<img src="/images/oda-logo.svg" width="32" height="32" alt="" />  
             </div>
             <div>
               <p className="bento-label">Application</p>
@@ -1178,7 +1178,7 @@ export default function OdaMarketPage() {
       ════════════════════════════════════════════ */}
       <div className="install-banner sr">
         <div className="install-banner-img">
-          <img src="/images/oda.png" alt="Vendeuse ODA Market" />
+<img src="/images/oda-logo.svg" alt="ODA Market" width="100" height="100" />  
         </div>
         <h2>Votre boutique,<br />partout avec vous</h2>
         <p>Téléchargez ODA Market et gérez vos ventes, suivez vos commandes, et développez votre commerce même hors connexion.</p>
@@ -1383,7 +1383,7 @@ export default function OdaMarketPage() {
       <footer className="footer" style={{ marginTop: '44px' }}>
         <div className="footer-logo">
           <div className="footer-logo-img">
-            <img src="/images/icon-192x192.png" alt="ODA Market" onError={e => { e.target.parentElement.innerHTML = '🛍️'; }} />
+            <img src="/images/oda-logo.svg" alt="ODA Market" width="38" height="38" />
           </div>
           <span className="footer-logo-name">ODA <span>Market</span></span>
         </div>

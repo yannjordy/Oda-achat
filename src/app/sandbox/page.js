@@ -1622,7 +1622,7 @@ export default function ODAStudio() {
       <aside className={`sidebar${sidebarOuvert ? ' open' : ''}`} id="sidebar">
         <div className="sidebar-logo">
           {!logoError
-            ? <img src="/images/oda.png" alt="ODA" className="sidebar-logo-img" onError={() => setLogoError(true)} />
+            ? <img src="/images/oda-logo.svg" alt="ODA" width="40" height="40" className="sidebar-logo-img" onError={() => setLogoError(true)} />
             : <div className="sidebar-logo-fallback" id="logoFallback" style={{ display: 'flex' }}><span className="logo-icon">🏪</span></div>
           }
           <div className="sidebar-logo-text">
@@ -1769,7 +1769,7 @@ export default function ODAStudio() {
                 </div>
                 <div className="shop-hero-actions">
                   <a href="https://oda-seller.vercel.app" target="_blank" rel="noreferrer" className="hero-download-btn">
-                    <img src="/logo-oda.png" alt="ODA" style={{ width: '18px', height: '18px', borderRadius: '4px', objectFit: 'cover' }} onError={e => (e.target.style.display = 'none')} />
+                    <img src="/images/oda-logo.svg" alt="ODA" width="18" height="18" style={{ borderRadius: '4px' }} onError={e => (e.target.style.display = 'none')} />
                     Télécharger l&apos;app ODA
                   </a>
                   <div className="hero-socials">

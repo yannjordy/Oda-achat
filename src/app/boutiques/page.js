@@ -1587,7 +1587,7 @@ export default function BoutiquesPage() {
             </button>
             <button className="hdr-btn vendor-btn" id="vendorBtn" title="Espace Vendeur">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="images/oda.png" alt="ODA" style={{ width: 22, height: 22, borderRadius: 5, objectFit: 'cover' }} />
+              <img src="images/oda-logo.svg" alt="ODA" width="22" height="22" style={{ borderRadius: 5 }} />
             </button>
           </div>
         </div>

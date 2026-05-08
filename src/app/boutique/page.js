@@ -12,7 +12,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 // ==================== ÉTAT INITIAL DES PARAMÈTRES ====================
 const PARAMS_DEFAUT = {
   general: { nom: 'Ma Boutique', description: 'Les meilleurs produits au meilleur prix', telephone: '+237 6XX XX XX XX', email: '', adresse: '' },
-  apparence: { couleurPrimaire: '#FF6B00', couleurSecondaire: '#1A1A1A', logo: 'oda.jpg', favicon: 'oda.jpg', police: 'Inter' },
+  apparence: { couleurPrimaire: '#FF6B00', couleurSecondaire: '#1A1A1A', logo: 'images/oda-logo.svg', favicon: 'images/oda-logo.svg', police: 'Inter' },
   paiement: {
     carte: { actif: false, cle: '', confirme: false },
     mobile: { actif: false, confirme: false, mtn: { actif: false, numero: '', nomCompte: '', confirme: false }, orange: { actif: false, numero: '', nomCompte: '', confirme: false } },
@@ -961,7 +961,7 @@ export default function BoutiquePage() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
           <div className="logo-container">
-            <img src={parametres.apparence?.logo || 'oda.jpg'} alt="Logo" className="logo-image" id="shopLogo" onError={(e) => { e.target.src = 'oda.jpg' }} />
+            <img src={parametres.apparence?.logo || 'images/oda-logo.svg'} alt="Logo" width="40" height="40" className="logo-image" id="shopLogo" onError={(e) => { e.target.src = 'images/oda-logo.svg' }} />
             <h1 className="shop-name" id="shopName">{parametres.general?.nom || 'Ma Boutique'}</h1>
           </div>
           <button className="btn-cart" id="cartBtn" onClick={ouvrirPanier}>

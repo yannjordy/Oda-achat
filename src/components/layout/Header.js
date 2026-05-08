@@ -104,7 +104,7 @@ export default function Header({ variant = 'default', showBack = false, showSear
           ) : (
             <div className="header-logo-wrap">
               <div className="header-logo-img">
-                <img src="/images/icon-192x192.png" alt="ODA Market" onError={e => { e.target.parentElement.innerHTML = '🛍️'; }} />
+                <img src="/images/oda-logo.svg" alt="ODA Market" width="38" height="38" />
               </div>
               <span className="header-logo-text">ODA <span>Market</span></span>
               {variant === 'default' && <span className="header-logo-badge">CM 🇨🇲</span>}

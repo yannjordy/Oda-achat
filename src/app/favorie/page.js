@@ -175,7 +175,11 @@ body {
     font-size:4rem;
     line-height:1;
     filter:drop-shadow(0 4px 8px rgba(0,0,0,.12));
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
+.fav-empty-icon svg{width:64px;height:64px;}
 .fav-empty h3 {
     font-size:1.15rem;
     font-weight:700;
@@ -270,11 +274,11 @@ body {
     border:none;
     cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    font-size:.9rem;
     box-shadow:0 2px 8px rgba(0,0,0,.15);
     transition:var(--trans);
     z-index:5;
 }
+.fav-card-remove svg{width:16px;height:16px;}
 .fav-card-remove:hover { background:#FEE2E2; transform:scale(1.12); }
 
 .fav-card-body {
@@ -797,7 +801,7 @@ export default function FavoritePage() {
                     className={`fav-tab ${activeTab === 'favoris' ? 'active' : ''}`}
                     onClick={() => setActiveTab('favoris')}
                 >
-                    ❤️ Favoris
+                    <svg viewBox="0 0 24 24" fill="var(--primary)" width="18" height="18" style={{marginRight:2}}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Favoris
                     {favProducts.length > 0 && (
                         <span className="fav-tab-badge">{favProducts.length}</span>
                     )}
@@ -836,9 +840,9 @@ export default function FavoritePage() {
                     ) : favProducts.length === 0 ? (
                         /* État vide */
                         <div className="fav-empty">
-                            <div className="fav-empty-icon">🤍</div>
+                            <div className="fav-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="2" width="64" height="64"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
                             <h3>Aucun favori pour l'instant</h3>
-                            <p>Appuyez sur ❤️ sur un produit pour l'ajouter à vos favoris.</p>
+                            <p>Appuyez sur <svg viewBox="0 0 24 24" fill="#EF4444" width="16" height="16" style={{display:'inline',verticalAlign:'middle'}}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> sur un produit pour l'ajouter à vos favoris.</p>
                             <button className="fav-empty-btn" onClick={() => window.location.href = '/'}>
                                 Découvrir des produits
                             </button>
@@ -887,7 +891,7 @@ export default function FavoritePage() {
                                                     aria-label="Retirer des favoris"
                                                     title="Retirer des favoris"
                                                 >
-                                                    ❤️
+                                                    <svg viewBox="0 0 24 24" fill="#EF4444" width="16" height="16"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
                                                 </button>
                                             </div>
                                             <div className="fav-card-body">

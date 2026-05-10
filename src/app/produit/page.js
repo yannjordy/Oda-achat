@@ -146,14 +146,7 @@ function genererNumeroCommande(count = 0) {
   return `CMD-${yy}${mm}-${seq}`;
 }
 
-// ==================== USSD HELPERS ====================
-/**
- * Génère le lien tel: USSD pour déclencher un paiement Mobile Money.
- * Le caractère '#' est encodé en '%23' pour le protocole tel:
- *
- * MTN MoMo  (Cameroun) : *126*{numero}*{montant}#
- * Orange Money (Cam.)  : #150*{numero}*{montant}#
- */
+
 function genererLienUSSD(operateur, numeroDest, montant) {
   // Nettoyer le numéro : retirer espaces, tirets, +237, 00237
   let num = String(numeroDest).replace(/[\s\-().]/g, '');
@@ -927,10 +920,7 @@ function ProduitDetail() {
       }
     };
 
-    // ────────────────────────────────────────────────────────
-    //  Helper : afficher le bon de commande (facture) après succès
-    //  Contient toutes les infos boutique + client + commande
-    // ────────────────────────────────────────────────────────
+   
     const afficherBonCommande = (insertedId, numero) => {
       fermerFormCommande();
 
@@ -992,9 +982,6 @@ function ProduitDetail() {
       afficherNotification('✅ Commande enregistrée avec succès !', 'success');
     };
 
-    // ────────────────────────────────────────────────────────
-    //  Helper : fallback sans Supabase — bon de commande quand même
-    // ────────────────────────────────────────────────────────
     const fallbackBonCommande = () => {
       const fakeId = Date.now();
       afficherBonCommande(fakeId, genererNumeroCommande(commandesCount));
@@ -1193,12 +1180,7 @@ function ProduitDetail() {
                 : <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>}</span>
               <span>{productLikes.userLiked ? 'Aimé' : "J'aime"}</span>
             </button>
-            <button className={`btn-like${isFavorite ? ' liked' : ''}`} onClick={toggleFavorite}>
-              <span>{isFavorite
-                ? <svg viewBox="0 0 24 24" fill="#EF4444" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                : <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>}</span>
-              <span>{isFavorite ? 'Favori' : 'Favoris'}</span>
-            </button>
+
             <button className="btn-comments" onClick={scrollToComments}><span>💬</span><span>Commenter</span></button>
           </div>
         </div>

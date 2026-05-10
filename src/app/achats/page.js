@@ -1996,7 +1996,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-secondary);color:var(--t
 .dot.active{background:white;width:32px;border-radius:5px;}
 
 /* ── PRODUITS ── */
-.products-container{max-width:1400px;margin:0 auto;padding:calc(130px + env(safe-area-inset-top, 0px)) 20px 20px;}
+.products-container{max-width:1400px;margin:0 auto;padding:calc(8px + env(safe-area-inset-top, 0px)) 20px 20px;}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .section-header h2{font-size:1.5rem;font-weight:700;color:var(--text-primary);}
 .product-count{color:var(--text-secondary);font-size:.9rem;}

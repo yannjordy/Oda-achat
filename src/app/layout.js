@@ -19,11 +19,11 @@ export const metadata = {
   appleMobileWebAppStatusBarStyle: "black-translucent",
   icons: {
     icon: [
-      { url: "/images/oda-logo.svg", type: "image/svg+xml" },
+      { url: "/images/oda-logo.png", type: "image/svg+xml" },
       { url: "/images/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/images/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: ["/images/oda-logo.svg"],
+    shortcut: ["/images/oda-logo.png"],
     apple: [
       { url: "/images/icon-192x192.png", sizes: "192x192" },
       { url: "/images/icon-512x512.png", sizes: "512x512" },
@@ -33,7 +33,7 @@ export const metadata = {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'application-name': 'ODA Market',
-    'msapplication-TileColor': '#D4920A',
+    'msapplication-TileColor': '#0444f5',
     'msapplication-tap-highlight': 'no',
   },
 };

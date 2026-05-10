@@ -793,7 +793,7 @@ export default function OdaMarketPage() {
       ════════════════════════════════════════════ */}
       <div id="loader">
         <div className="loader-logo">
-          <img src="/images/oda-logo.svg" alt="ODA Market" width="70" height="70" />
+          <img src="/images/oda-logo.png" alt="ODA Market" width="70" height="70" />
         </div>
         <div className="loader-bar">
           <div className="loader-bar-fill"></div>
@@ -807,16 +807,10 @@ export default function OdaMarketPage() {
       <header>
         <div className="logo-wrap">
           <div className="logo-img">
-            <img src="/images/oda-logo.svg" alt="ODA Market" width="38" height="38" />
+            <img src="/images/oda-logo.png" alt="ODA Market" width="38" height="38" />
           </div>
           <span className="logo-text">ODA <span>Market</span></span>
           <span className="logo-badge">CM 🇨🇲</span>
-        </div>
-        <div className="header-actions">
-          <div className="cm-chip">🇨🇲 Cameroun</div>
-          <button className="btn-install-header" onClick={handleInstall}>
-            ⬇️ Installer
-          </button>
         </div>
       </header>
       {/* ════════════════════════════════════════

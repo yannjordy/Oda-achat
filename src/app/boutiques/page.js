@@ -396,7 +396,7 @@ const CFG = {
   TOP_COUNT:       10,
   DEBOUNCE_MS:     260,
   CACHE_KEY:       'oda_boutiques_v5_snap',
-  CACHE_DURATION:  7 * 24 * 60 * 60 * 1000,
+  CACHE_DURATION:  3 * 24 * 60 * 60 * 1000,  // 72h
   DEFAULT_COLORS:  ['#FF6B00','#6366F1','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#EC4899'],
   SLIDE_INTERVAL:  3200,
   MAX_PRODUCT_IMG: 5,
@@ -584,6 +584,69 @@ async function loadFromNetwork(withProgress = false) {
   const result = { shops, likes, products, subscribers, topImages };
   cacheManager.save(result);
   return result;
+}
+
+/* ── Chargement rapide : boutiques seules (sans produits) ── */
+async function loadShopsOnly() {
+  const { data: rawShops, error } = await db
+    .from('parametres_boutique')
+    .select('user_id, config, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  if (!rawShops?.length) return [];
+  return rawShops.map(row => ({
+    id:          row.user_id,
+    name:        row.config?.general?.nom || row.config?.nom || 'Boutique',
+    description: row.config?.general?.description || row.config?.description || '',
+    slug:        row.config?.identifiant?.slug || row.config?.slug || null,
+    logo_url:    row.config?.apparence?.logoUrl
+              || row.config?.apparence?.logo_url
+              || row.config?.apparence?.logo
+              || row.config?.logo_url
+              || row.config?.logoUrl
+              || null,
+    cover_url:   row.config?.apparence?.coverUrl
+              || row.config?.apparence?.cover_url
+              || row.config?.cover_url
+              || null,
+    color:       row.config?.apparence?.couleurPrimaire
+              || row.config?.apparence?.color
+              || row.config?.color
+              || null,
+    verified:    row.config?.verified || false,
+    created_at:  row.created_at,
+  }));
+}
+
+/* ── Chargement progressif des produits par lots de boutiques ── */
+async function loadProductsProgressively(shopIds, onBatch) {
+  const products  = {};
+  const topImages = {};
+  const BATCH_SIZE = 3;
+  for (let i = 0; i < shopIds.length; i += BATCH_SIZE) {
+    const batch = shopIds.slice(i, i + BATCH_SIZE);
+    try {
+      const { data: prodsData } = await db
+        .from('produits')
+        .select('user_id, id, main_image, description_images')
+        .in('user_id', batch);
+      if (prodsData) {
+        for (const prod of prodsData) {
+          const sid = prod.user_id;
+          products[sid] = (products[sid] || 0) + 1;
+          if (!topImages[sid]) topImages[sid] = [];
+          const extras = Array.isArray(prod.description_images)
+            ? prod.description_images.filter(Boolean) : [];
+          const allImgs = [prod.main_image, ...extras].filter(Boolean);
+          for (const img of allImgs) {
+            if (topImages[sid].length < CFG.MAX_PRODUCT_IMG) topImages[sid].push(img);
+          }
+        }
+      }
+    } catch (e) { console.warn('Lot produits échoué:', e.message); }
+    if (onBatch) onBatch({ products, topImages });
+  }
+  return { products, topImages };
 }
 
 function applyToState(data) {
@@ -2018,14 +2081,62 @@ async function init() {
   }
 
   try {
-    const [shops] = await Promise.all([loadFromNetwork(true), initAuth()]);
-    loader.update(90, 'Affichage final...');
-    applyToState(shops); renderTop10(); filterAndSort();
+    loader.update(5, 'Boutiques...');
+    const shops = await loadShopsOnly();
+    await initAuth();
+
+    const fakeShops = shops.map(s => ({
+      ...s,
+      likeCount: 0, productCount: 0, subscriberCount: 0,
+      color: s.color || CFG.DEFAULT_COLORS[Math.floor(Math.random() * CFG.DEFAULT_COLORS.length)],
+      topImages: [],
+    }));
+    fakeShops.sort((a, b) => b.likeCount - a.likeCount);
+    STATE.top10    = fakeShops.slice(0, CFG.TOP_COUNT);
+    STATE.rest     = fakeShops;
+    STATE.allShops = fakeShops;
+    STATE.restFiltered = [...fakeShops];
+
+    renderTop10();
+    filterAndSort();
     updateHeaderStats();
-    loadShopStatuses();
     await loadSubscriptions();
+    loadShopStatuses();
+    loader.update(60, 'Produits...');
+
+    const ids = shops.map(s => s.id);
+    let completedProducts  = {};
+    let completedTopImages = {};
+
+    await loadProductsProgressively(ids, ({ products, topImages }) => {
+      completedProducts  = { ...completedProducts, ...products };
+      completedTopImages = { ...completedTopImages, ...topImages };
+      STATE.shopProductCounts = completedProducts;
+      STATE.shopTopImages     = completedTopImages;
+      const shopsWithProducts = shops.map(s => ({
+        ...s,
+        likeCount:       0,
+        productCount:    completedProducts[s.id] || 0,
+        subscriberCount: 0,
+        color:           s.color || CFG.DEFAULT_COLORS[Math.floor(Math.random() * CFG.DEFAULT_COLORS.length)],
+        topImages:       completedTopImages[s.id] || [],
+      }));
+      shopsWithProducts.sort((a, b) => b.likeCount - a.likeCount);
+      STATE.top10    = shopsWithProducts.slice(0, CFG.TOP_COUNT);
+      STATE.rest     = shopsWithProducts;
+      STATE.allShops = shopsWithProducts;
+      STATE.restFiltered = [...shopsWithProducts];
+      renderTop10();
+      filterAndSort();
+      updateAllSubscribeButtons();
+    });
+
+    const finalResult = {
+      shops, likes: {}, products: completedProducts, subscribers: {}, topImages: completedTopImages,
+    };
+    cacheManager.save(finalResult);
     loader.complete();
-    console.log(`🌐 Chargé depuis réseau en ${(performance.now()-t0).toFixed(0)}ms`);
+    console.log(`🌐 Chargé progressivement en ${(performance.now()-t0).toFixed(0)}ms`);
   } catch (err) {
     console.error('❌ Init error:', err);
     loader.showError(err.message || 'Erreur de chargement');

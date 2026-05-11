@@ -261,6 +261,21 @@ a{text-decoration:none;color:inherit;}
 .sub-story-inner{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);overflow:hidden;background:var(--surface);position:relative;display:flex;align-items:center;justify-content:center;}
 .sub-story-badge{position:absolute;bottom:-2px;right:-2px;background:#25D366;color:white;font-size:.58rem;font-weight:900;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);font-family:var(--font-display);}
 .sub-story-name{font-size:.62rem;font-weight:600;color:var(--text-2);text-align:center;max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* STATUS STORIES */
+.status-bar-wrap{padding:8px 0 0;background:var(--bg);border-bottom:1px solid var(--border);}
+.status-bar{display:flex;gap:14px;padding:4px 16px 14px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+.status-bar::-webkit-scrollbar{display:none;}
+.status-item{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;scroll-snap-align:start;position:relative;}
+.status-ring{width:72px;height:72px;border-radius:50%;padding:3px;background:conic-gradient(#FF6B00,#FF0080,#7928CA,#00D68F,#FF6B00);animation:statusRingPulse 2.5s ease-in-out infinite;position:relative;transition:transform .28s cubic-bezier(.34,1.56,.64,1);}
+.status-ring.seen{background:rgba(255,255,255,.15);animation:none;}
+.status-item:hover .status-ring,.status-item:active .status-ring{transform:scale(1.08);}
+@keyframes statusRingPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.status-ring-inner{width:100%;height:100%;border-radius:50%;border:3px solid var(--bg);overflow:hidden;background:var(--surface);display:flex;align-items:center;justify-content:center;}
+.status-ring-inner img{width:100%;height:100%;object-fit:cover;}
+.status-name{font-family:var(--font-body);font-size:.65rem;font-weight:600;color:var(--text-2);text-align:center;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.status-time{font-size:.55rem;color:var(--primary);font-weight:600;margin-top:-2px;}
+.status-live-dot{width:8px;height:8px;border-radius:50%;background:#FF4D6D;position:absolute;top:2px;right:2px;z-index:2;animation:livePulse 1.2s ease-in-out infinite;border:2px solid var(--bg);}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 /* STORY VIEWER */
 .story-viewer-overlay{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;}
 .story-viewer-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(0px);transition:opacity .3s ease;}
@@ -281,6 +296,15 @@ a{text-decoration:none;color:inherit;}
 .story-viewer-actions{position:absolute;bottom:0;left:0;right:0;z-index:3;padding:20px 16px max(24px,env(safe-area-inset-bottom,24px));background:linear-gradient(to top,rgba(0,0,0,.75),transparent);display:flex;justify-content:center;}
 .story-viewer-visit{padding:12px 28px;background:var(--primary);border:none;border-radius:99px;color:#fff;font-family:var(--font-display);font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,107,0,.4);transition:transform .2s ease;}
 .story-viewer-visit:active{transform:scale(.95);}
+.story-viewer-body{position:absolute;bottom:80px;left:0;right:0;z-index:3;padding:0 16px;}
+.story-caption{color:#fff;font-size:.9rem;font-weight:500;line-height:1.5;text-shadow:0 2px 8px rgba(0,0,0,.6);background:rgba(0,0,0,.35);backdrop-filter:blur(8px);padding:12px 16px;border-radius:14px;max-width:80%;}
+.story-btn-sub{transition:all .15s !important;white-space:nowrap;}
+.story-btn-sub:active{transform:scale(.93);}
+.story-shop-counter{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:3;}
+.story-counter-dots{display:flex;gap:6px;align-items:center;}
+.story-counter-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;}
+.story-counter-dot.active{width:20px;border-radius:3px;background:#fff;}
+.story-counter-dot:hover{background:rgba(255,255,255,.7);}
 /* MODAL THUMBS */
 .modal-thumbs{margin-bottom:18px;}
 .modal-thumbs-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;}
@@ -340,6 +364,8 @@ const STATE = {
   subscriptionProducts: [],
   activeTab:            'discover',
   _slideTimers:         {},
+  statusesByShop:       [],  // [{ shop, statuses: [...] }]
+  statusesLoading:      true,
 };
 
 /* ════════════════════════════════════════════════
@@ -372,6 +398,7 @@ const dom = {
   subscriptionsSection:() => $('subscriptionsSection'),
   subStoriesBar:       () => $('subStoriesBar'),
   subShopsGrid:        () => $('subShopsGrid'),
+  statusStoriesBar:    () => $('statusStoriesBar'),
   subEmptyState:       () => $('subEmptyState'),
 };
 
@@ -585,6 +612,245 @@ async function loadSubscriptionProducts() {
       renderSubStories();
     }
   } catch (e) { console.warn('loadSubscriptionProducts:', e.message); }
+}
+
+/* ════════════════════════════════════════════════
+   STATUS LOADING
+════════════════════════════════════════════════ */
+async function loadShopStatuses() {
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await db
+      .from('shop_statuses')
+      .select('*')
+      .gt('expires_at', now)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    if (!data?.length) { STATE.statusesByShop = []; renderStatusStories(); return; }
+
+    const grouped = {};
+    for (const s of data) {
+      if (!grouped[s.user_id]) grouped[s.user_id] = [];
+      grouped[s.user_id].push(s);
+    }
+
+    STATE.statusesByShop = Object.entries(grouped)
+      .map(([userId, statuses]) => {
+        const shop = STATE.allShops.find(sh => sh.id === userId);
+        return shop ? { shop, statuses } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.statuses[0].created_at - a.statuses[0].created_at);
+
+    renderStatusStories();
+  } catch (e) {
+    console.warn('loadShopStatuses:', e.message);
+  } finally {
+    STATE.statusesLoading = false;
+  }
+}
+
+function renderStatusStories() {
+  const bar = dom.statusStoriesBar();
+  if (!bar) return;
+  const items = STATE.statusesByShop;
+  if (!items?.length) { bar.innerHTML = ''; const wrap = document.getElementById('statusStoriesWrap'); if (wrap) wrap.style.display = 'none'; return; }
+  const wrap = document.getElementById('statusStoriesWrap');
+  if (wrap) wrap.style.display = '';
+
+  bar.innerHTML = items.map(({ shop, statuses }) => {
+    const avatarHtml = shop.logo_url
+      ? `<img src="${escHtml(shop.logo_url)}" alt="${escHtml(shop.name)}">`
+      : `<span style="font-size:1.4rem;">${getShopEmoji(shop)}</span>`;
+    const timeAgo = getTimeAgo(statuses[0].created_at);
+    return `
+    <div class="status-item" onclick="openStatusViewer('${shop.id}')">
+      <div class="status-ring${statuses.every(s => s._seen) ? ' seen' : ''}">
+        <div class="status-ring-inner">${avatarHtml}</div>
+        <span class="status-live-dot"></span>
+      </div>
+      <span class="status-name">${escHtml(shop.name)}</span>
+      <span class="status-time">${timeAgo}</span>
+    </div>`;
+  }).join('');
+  const badge = document.getElementById('statusCountBadge');
+  if (badge) badge.textContent = items.length;
+}
+
+function getTimeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "À l'instant";
+  if (min < 60) return `Il y a ${min}min`;
+  const h = Math.floor(min / 60);
+  return `Il y a ${h}h`;
+}
+
+/* ════════════════════════════════════════════════
+   STATUS VIEWER — Instagram-like cross-shop stories
+════════════════════════════════════════════════ */
+function openStatusViewer(shopId) {
+  const allEntries = STATE.statusesByShop;
+  if (!allEntries.length) return;
+
+  let startEntryIdx = allEntries.findIndex(e => e.shop.id === shopId);
+  if (startEntryIdx < 0) startEntryIdx = 0;
+
+  let currentEntryIdx = startEntryIdx;
+  let currentStatusIdx = 0;
+  let progressTimer = null;
+  let touchStartX = 0;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'storyViewer';
+  overlay.className = 'story-viewer-overlay';
+
+  function getCurrentEntry() { return allEntries[currentEntryIdx]; }
+  function getCurrentStatus() { const e = getCurrentEntry(); return e ? e.statuses[currentStatusIdx] : null; }
+  function isOnLastStatus() { const e = getCurrentEntry(); return e && currentStatusIdx >= e.statuses.length - 1; }
+  function isOnFirstStatus() { return currentStatusIdx <= 0; }
+  function hasNextShop() { return currentEntryIdx < allEntries.length - 1; }
+  function hasPrevShop() { return currentEntryIdx > 0; }
+  function isSubscribed() { const e = getCurrentEntry(); return e && STATE.subscribedShops.has(e.shop.id); }
+
+  const toggleSub = async () => {
+    const e = getCurrentEntry();
+    if (!e) return;
+    const subbed = STATE.subscribedShops.has(e.shop.id);
+    if (subbed) {
+      STATE.subscribedShops.delete(e.shop.id);
+      saveSubscriptions();
+    } else {
+      STATE.subscribedShops.add(e.shop.id);
+      saveSubscriptions();
+    }
+    try {
+      const uid = STATE.anonymousUserId || getAnonymousUserId();
+      if (subbed) {
+        await db.from('shop_subscriptions').delete().eq('user_id', uid).eq('shop_id', e.shop.id);
+      } else {
+        await db.from('shop_subscriptions').upsert({ user_id: uid, shop_id: e.shop.id, created_at: new Date().toISOString() });
+      }
+    } catch (_) {}
+    updateAllSubscribeButtons();
+    updateHeaderStats();
+    render();
+    const badge = $('subTabBadge');
+    if (badge) { const n = STATE.subscribedShops.size; badge.textContent = n; badge.style.display = n > 0 ? 'inline-flex' : 'none'; }
+  };
+
+  const render = () => {
+    const entry = getCurrentEntry();
+    if (!entry) { closeViewer(); return; }
+    const { shop, statuses } = entry;
+    const s = statuses[currentStatusIdx];
+    const subbed = STATE.subscribedShops.has(shop.id);
+
+    overlay.innerHTML = `
+    <div class="story-viewer-bg" style="background-image:url('${escHtml(s.media_url)}')"></div>
+    <div class="story-viewer-header">
+      <div class="story-viewer-info">
+        ${shop.logo_url
+          ? `<img src="${escHtml(shop.logo_url)}" class="story-viewer-avatar" alt="">`
+          : `<div class="story-viewer-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;">${getShopEmoji(shop)}</div>`
+        }
+        <div>
+          <div class="story-viewer-shopname">${escHtml(shop.name)}</div>
+          <div class="story-viewer-prodname">${s.caption ? escHtml(s.caption) : 'Nouveau status'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="story-btn-sub" onclick="window.statusToggleSub()" style="background:${subbed ? 'rgba(0,214,143,.2)' : 'rgba(255,255,255,.15)'};border:${subbed ? '1px solid rgba(0,214,143,.4)' : '1px solid rgba(255,255,255,.2)'};color:${subbed ? '#00D68F' : '#fff'};padding:6px 12px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;display:flex;align-items:center;gap:4px;">
+          ${subbed ? '✓ Abonné' : '+ S\'abonner'}
+        </button>
+        <button class="story-viewer-close" onclick="window.closeStatusViewer()">✕</button>
+      </div>
+    </div>
+    <div class="story-viewer-bars">
+      ${statuses.map((_, i) => `
+        <div class="story-bar-track">
+          <div class="story-bar-fill ${i < currentStatusIdx ? 'done' : i === currentStatusIdx ? 'active' : ''}"></div>
+        </div>`).join('')}
+    </div>
+    <div class="story-viewer-body">
+      ${s.caption ? `<div class="story-caption">${escHtml(s.caption)}</div>` : ''}
+    </div>
+    <div class="story-viewer-prev"  onclick="window.statusNav(-1)"></div>
+    <div class="story-viewer-next"  onclick="window.statusNav(1)"></div>
+    <div class="story-viewer-actions">
+      <button class="story-viewer-visit"
+        onclick="visitShop('${shop.id}','${escHtml(shop.slug || '')}')">
+        Visiter la boutique →
+      </button>
+      <div class="story-shop-counter">${allEntries.length > 1 ? `<span class="story-counter-dots">${allEntries.map((e, i) => `<span class="story-counter-dot${i === currentEntryIdx ? ' active' : ''}" onclick="window.statusJumpTo(${i})"></span>`).join('')}</span>` : ''}</div>
+    </div>`;
+  };
+
+  window.statusToggleSub = toggleSub;
+  window.statusJumpTo = (idx) => {
+    clearTimeout(progressTimer);
+    if (idx >= 0 && idx < allEntries.length) {
+      currentEntryIdx = idx;
+      currentStatusIdx = 0;
+      render(); autoNext();
+    }
+  };
+
+  window.statusNav = (dir) => {
+    clearTimeout(progressTimer);
+    const entry = getCurrentEntry();
+    if (!entry) return;
+    if (dir > 0 && isOnLastStatus() && hasNextShop()) {
+      currentEntryIdx++;
+      currentStatusIdx = 0;
+      render(); autoNext();
+    } else if (dir < 0 && isOnFirstStatus() && hasPrevShop()) {
+      currentEntryIdx--;
+      currentStatusIdx = 0;
+      render(); autoNext();
+    } else {
+      currentStatusIdx = Math.max(0, Math.min(entry.statuses.length - 1, currentStatusIdx + dir));
+      render(); autoNext();
+    }
+  };
+
+  window.closeStatusViewer = () => {
+    clearTimeout(progressTimer);
+    overlay.remove();
+    delete window.statusNav;
+    delete window.closeStatusViewer;
+    delete window.statusToggleSub;
+    delete window.statusJumpTo;
+  };
+
+  const autoNext = () => {
+    progressTimer = setTimeout(() => {
+      const entry = getCurrentEntry();
+      if (!entry) { window.closeStatusViewer(); return; }
+      if (currentStatusIdx < entry.statuses.length - 1) {
+        currentStatusIdx++;
+        render(); autoNext();
+      } else if (hasNextShop()) {
+        currentEntryIdx++;
+        currentStatusIdx = 0;
+        render(); autoNext();
+      } else {
+        window.closeStatusViewer();
+      }
+    }, 4500);
+  };
+
+  const closeViewer = window.closeStatusViewer;
+
+  render();
+  document.body.appendChild(overlay);
+  autoNext();
+
+  overlay.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  overlay.addEventListener('touchend', e => {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 60) window.statusNav(diff > 0 ? -1 : 1);
+  }, { passive: true });
 }
 
 /* ════════════════════════════════════════════════
@@ -1399,6 +1665,7 @@ async function init() {
     loader.update(45, 'Chargement boutiques...');
     applyToState(cached.data);
     renderTop10();
+    loadShopStatuses();
     await loader.delay(60);
     loader.update(75, 'Affichage...');
     filterAndSort();
@@ -1412,6 +1679,7 @@ async function init() {
         const fresh = await loadFromNetwork(false);
         applyToState(fresh); renderTop10(); filterAndSort();
         updateHeaderStats(); updateAllSubscribeButtons();
+        loadShopStatuses();
         if (STATE.activeTab === 'subscriptions') renderSubscriptionsTab();
       } catch (e) { console.warn('Refresh silencieux échoué:', e.message); }
     }, 3000);
@@ -1422,6 +1690,7 @@ async function init() {
     loader.update(20, 'Cache (actualisation...)');
     applyToState(cached.data); renderTop10(); filterAndSort();
     updateHeaderStats(); loader.complete();
+    loadShopStatuses();
     initAuth().then(() => loadSubscriptions());
     setTimeout(async () => {
       try {
@@ -1429,6 +1698,7 @@ async function init() {
         cacheManager.save(fresh); applyToState(fresh);
         renderTop10(); filterAndSort(); updateHeaderStats();
         updateAllSubscribeButtons();
+        loadShopStatuses();
         if (STATE.activeTab === 'subscriptions') renderSubscriptionsTab();
       } catch (e) { console.warn('Refresh échoué:', e.message); }
     }, 500);
@@ -1440,6 +1710,7 @@ async function init() {
     loader.update(90, 'Affichage final...');
     applyToState(shops); renderTop10(); filterAndSort();
     updateHeaderStats();
+    loadShopStatuses();
     await loadSubscriptions();
     loader.complete();
     console.log(`🌐 Chargé depuis réseau en ${(performance.now()-t0).toFixed(0)}ms`);
@@ -1482,6 +1753,11 @@ export default function BoutiquesPage() {
     window.resetSearch        = resetSearch;
     window.switchTab          = switchTab;
     window.openSubStoryViewer = openSubStoryViewer;
+    window.openStatusViewer  = openStatusViewer;
+
+    /* ── Refresh périodique des status ── */
+    const statusInterval = setInterval(loadShopStatuses, 30000);
+    window._statusRefreshInterval = statusInterval;
 
     window.ODA_BOUTIQUES = {
       state:        () => STATE,
@@ -1500,6 +1776,7 @@ export default function BoutiquesPage() {
       if (window._storyCircleTimers) {
         window._storyCircleTimers.forEach(id => clearInterval(id));
       }
+      if (window._statusRefreshInterval) clearInterval(window._statusRefreshInterval);
       delete window.toggleSubscribe;
       delete window.visitShop;
       delete window.openShopModal;
@@ -1622,6 +1899,18 @@ export default function BoutiquesPage() {
 
       {/* ══ MAIN CONTENT ══ */}
       <main className="snap-main" id="snapMain">
+
+        {/* ── STATUS STORIES BAR (En Direct) ── */}
+        <section className="status-bar-wrap" id="statusStoriesWrap" style={{display:'none'}}>
+          <div className="stories-label">
+            <span className="stories-label-icon">🟢</span>
+            <span className="stories-label-txt">En Direct</span>
+            <span id="statusCountBadge" style={{background:'var(--primary)',color:'white',fontSize:'.6rem',fontWeight:800,padding:'2px 7px',borderRadius:99,marginLeft:4}}>0</span>
+          </div>
+          <div className="status-bar" id="statusStoriesBar">
+            {/* Rempli par JS */}
+          </div>
+        </section>
 
         {/* ── STORIES BAR (Top 10) ── */}
         <section className="stories-bar-wrap" id="top10Section">

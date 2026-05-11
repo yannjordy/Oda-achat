@@ -276,35 +276,92 @@ a{text-decoration:none;color:inherit;}
 .status-time{font-size:.55rem;color:var(--primary);font-weight:600;margin-top:-2px;}
 .status-live-dot{width:8px;height:8px;border-radius:50%;background:#FF4D6D;position:absolute;top:2px;right:2px;z-index:2;animation:livePulse 1.2s ease-in-out infinite;border:2px solid var(--bg);}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-/* STORY VIEWER */
-.story-viewer-overlay{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;}
-.story-viewer-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(0px);transition:opacity .3s ease;}
-.story-viewer-header{position:absolute;top:0;left:0;right:0;z-index:2;padding:52px 16px 16px;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);display:flex;align-items:center;justify-content:space-between;}
-.story-viewer-info{display:flex;align-items:center;gap:10px;}
-.story-viewer-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);}
-.story-viewer-shopname{font-family:var(--font-display);font-weight:700;font-size:.9rem;color:#fff;}
-.story-viewer-prodname{font-size:.72rem;color:rgba(255,255,255,.7);margin-top:1px;}
-.story-viewer-close{width:34px;height:34px;border-radius:50%;border:none;background:rgba(0,0,0,.5);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.story-viewer-bars{position:absolute;top:44px;left:12px;right:12px;z-index:3;display:flex;gap:4px;}
-.story-bar-track{flex:1;height:2px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden;}
-.story-bar-fill{height:100%;background:#fff;width:0%;border-radius:2px;}
-.story-bar-fill.done{width:100%;}
-.story-bar-fill.active{width:0%;animation:storyProgress 4s linear forwards;}
-@keyframes storyProgress{to{width:100%}}
-.story-viewer-prev{position:absolute;left:0;top:0;bottom:0;width:35%;z-index:2;cursor:pointer;}
-.story-viewer-next{position:absolute;right:0;top:0;bottom:0;width:35%;z-index:2;cursor:pointer;}
-.story-viewer-actions{position:absolute;bottom:0;left:0;right:0;z-index:3;padding:20px 16px max(24px,env(safe-area-inset-bottom,24px));background:linear-gradient(to top,rgba(0,0,0,.75),transparent);display:flex;justify-content:center;}
-.story-viewer-visit{padding:12px 28px;background:var(--primary);border:none;border-radius:99px;color:#fff;font-family:var(--font-display);font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,107,0,.4);transition:transform .2s ease;}
-.story-viewer-visit:active{transform:scale(.95);}
-.story-viewer-body{position:absolute;bottom:80px;left:0;right:0;z-index:3;padding:0 16px;}
-.story-caption{color:#fff;font-size:.9rem;font-weight:500;line-height:1.5;text-shadow:0 2px 8px rgba(0,0,0,.6);background:rgba(0,0,0,.35);backdrop-filter:blur(8px);padding:12px 16px;border-radius:14px;max-width:80%;}
-.story-btn-sub{transition:all .15s !important;white-space:nowrap;}
-.story-btn-sub:active{transform:scale(.93);}
-.story-shop-counter{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:3;}
-.story-counter-dots{display:flex;gap:6px;align-items:center;}
-.story-counter-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .2s;}
-.story-counter-dot.active{width:20px;border-radius:3px;background:#fff;}
-.story-counter-dot:hover{background:rgba(255,255,255,.7);}
+/* STATUS VIEWER — TikTok Design */
+.st-viewer-overlay{position:fixed;inset:0;z-index:99999;background:#000;}
+@keyframes stProgress{to{width:100%}}
+.st-viewer-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(0px);}
+.st-viewer-media{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.st-viewer-media video,.st-viewer-media img{width:100%;height:100%;object-fit:cover;}
+.st-vol-btn{position:absolute;bottom:16px;left:16px;z-index:6;width:36px;height:36px;border:none;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .2s;opacity:.7;pointer-events:auto;}
+.st-vol-btn:active{transform:scale(.85);opacity:1;}
+.st-vol-btn svg{width:18px;height:18px;}
+
+/* PROGRESS BARS */
+.st-bars{position:absolute;top:8px;left:8px;right:8px;z-index:10;display:flex;gap:3px;}
+.st-bar-track{flex:1;height:2px;background:rgba(255,255,255,.35);border-radius:2px;overflow:hidden;}
+.st-bar-fill{height:100%;background:#fff;border-radius:2px;width:0%;}
+.st-bar-fill.done{width:100%;}
+.st-bar-fill.active{width:0%;}
+
+/* HEADER */
+.st-header{position:absolute;top:16px;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:0 12px;pointer-events:none;}
+.st-header>*{pointer-events:auto;}
+.st-btn-close{width:36px;height:36px;border:none;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+.st-btn-close:active{transform:scale(.88);}
+.st-shop-info{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:6px 12px 6px 6px;border-radius:99px;}
+.st-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.5);}
+.st-avatar-ph{display:flex;align-items:center;justify-content:center;font-size:.9rem;background:rgba(255,255,255,.1);width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);}
+.st-shop-name{font-size:.8rem;font-weight:700;color:#fff;}
+.st-dot-row{display:flex;gap:4px;align-items:center;margin-left:4px;}
+.st-dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;}
+.st-dot.active{width:14px;border-radius:2px;background:#fff;}
+
+/* RIGHT ACTIONS */
+.st-actions{position:absolute;right:10px;bottom:140px;z-index:10;display:flex;flex-direction:column;gap:18px;align-items:center;}
+.st-action-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:#fff;transition:transform .15s;padding:0;}
+.st-action-btn:active{transform:scale(.88);}
+.st-action-btn svg{width:28px;height:28px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));}
+.st-action-label{font-size:.58rem;font-weight:600;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.6);}
+.st-action-btn.subbed .st-action-label{color:#00D68F;}
+
+/* FOOTER */
+.st-footer{position:absolute;bottom:60px;left:16px;right:80px;z-index:10;}
+.st-caption{color:#fff;font-size:.85rem;font-weight:500;line-height:1.4;text-shadow:0 1px 6px rgba(0,0,0,.8);margin-bottom:10px;}
+.st-hashtag{color:var(--primary);font-weight:700;cursor:pointer;}
+.st-hashtag:hover{text-decoration:underline;}
+.st-music{display:flex;align-items:center;gap:6px;font-size:.75rem;color:rgba(255,255,255,.8);margin-top:4px;}
+.st-music svg{width:16px;height:16px;}
+
+/* NAV ZONES */
+.st-nav-left,.st-nav-right{position:absolute;top:50px;bottom:80px;width:30%;z-index:5;cursor:pointer;}
+.st-nav-left{left:0;}
+.st-nav-right{right:0;}
+
+/* COMMENTS PANEL */
+.st-comments-panel{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;flex-direction:column;animation:stCommentsIn .3s ease;}
+@keyframes stCommentsIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.st-comments-header{display:flex;align-items:center;justify-content:space-between;padding:52px 16px 12px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+.st-comments-header span{font-size:1rem;font-weight:700;color:#fff;}
+.st-comments-close{width:30px;height:30px;border:none;background:rgba(255,255,255,.1);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.st-comments-close:active{background:rgba(255,255,255,.2);}
+.st-comments-list{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px;}
+.st-comments-loading,.st-comments-empty{text-align:center;color:rgba(255,255,255,.4);font-size:.85rem;padding:40px 0;}
+.st-comment{display:flex;gap:10px;animation:stCommentIn .3s ease backwards;}
+@keyframes stCommentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.st-comment-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.st-comment-body{flex:1;min-width:0;}
+.st-comment-author{font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);margin-bottom:2px;}
+.st-comment-date{font-weight:400;color:rgba(255,255,255,.3);}
+.st-comment-text{font-size:.82rem;color:#fff;line-height:1.4;}
+.st-comment-text .st-hashtag{color:#FF9500;}
+.st-comment-reply-btn{display:inline-block;font-size:.65rem;color:rgba(255,255,255,.35);cursor:pointer;margin-top:2px;font-weight:500;transition:color .15s;background:none;border:none;padding:0;font-family:inherit;}
+.st-comment-reply-btn:hover{color:var(--primary);}
+.st-comment-reply-to{font-size:.68rem;color:rgba(255,255,255,.3);margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+.st-comment-reply-to svg{flex-shrink:0;}
+.st-comment.is-reply{padding-left:42px;}
+.st-comment.is-reply .st-comment-avatar{width:24px;height:24px;font-size:.6rem;}
+.st-comment.is-reply .st-comment-body .st-comment-author{font-size:.65rem;}
+.st-comment.is-reply .st-comment-body .st-comment-text{font-size:.78rem;}
+.st-comment-reply-preview{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-bottom:6px;background:rgba(255,255,255,.06);border-radius:8px;font-size:.72rem;color:rgba(255,255,255,.5);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.st-comment-reply-preview svg{flex-shrink:0;width:14px;height:14px;stroke:rgba(255,255,255,.3);}
+.st-comment-reply-indicator{display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(255,107,0,.15);border-radius:8px;font-size:.72rem;color:rgba(255,255,255,.6);}
+.st-comment-reply-indicator b{color:#fff;}
+.st-comments-input-wrap{display:flex;align-items:center;gap:8px;padding:10px 12px max(10px,env(safe-area-inset-bottom,10px));border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;background:rgba(0,0,0,.5);}
+.st-comments-input{flex:1;padding:10px 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:.85rem;outline:none;font-family:var(--font-body);transition:border-color .15s;}
+.st-comments-input:focus{border-color:var(--primary);}
+.st-comments-input::placeholder{color:rgba(255,255,255,.3);}
+.st-comments-send{width:38px;height:38px;border-radius:50%;border:none;background:var(--primary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;flex-shrink:0;}
+.st-comments-send:active{transform:scale(.88);}
 /* MODAL THUMBS */
 .modal-thumbs{margin-bottom:18px;}
 .modal-thumbs-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;}
@@ -689,6 +746,99 @@ function getTimeAgo(dateStr) {
 /* ════════════════════════════════════════════════
    STATUS VIEWER — Instagram-like cross-shop stories
 ════════════════════════════════════════════════ */
+/* ── SVG Icons pour le viewer TikTok ── */
+const ST_ICONS = {
+  close: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  share: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>',
+  visit: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+  subscribe: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  subscribed: '<svg width="28" height="28" viewBox="0 0 24 24" fill="#00D68F" stroke="#00D68F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  music: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+  comment: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+  volumeOn: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>',
+  volumeOff: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+};
+
+/* ── Rendu caption avec hashtags ── */
+function renderCaption(text) {
+  return text.replace(/#(\w+)/g, '<span class="st-hashtag">#$1</span>');
+}
+
+/* ── Gestionnaire global des commentaires ── */
+let commentsState = { visible: false, statusId: null, comments: [] };
+let replyingTo = null;
+
+async function loadComments(statusId) {
+  try {
+    const { data } = await db.from('shop_status_comments').select('*').eq('status_id', statusId).order('created_at', { ascending: false }).limit(50);
+    commentsState.comments = data || [];
+  } catch (_) { commentsState.comments = []; }
+  renderCommentsList();
+}
+
+function renderCommentsList() {
+  const list = document.getElementById('stCommentsList');
+  if (!list) return;
+  if (!commentsState.comments.length) {
+    list.innerHTML = '<div class="st-comments-empty">Aucun commentaire pour le moment</div>';
+    return;
+  }
+  const topLevel = commentsState.comments.filter(c => !c.reply_to);
+  list.innerHTML = topLevel.map(c => renderComment(c)).join('');
+}
+
+function renderComment(c) {
+  const replies = commentsState.comments.filter(r => r.reply_to === c.id);
+  const t = new Date(c.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+  const content = renderCaption(escHtml(c.content));
+  const safeName = escHtml(c.author_name || 'Anonyme').replace(/'/g, "\\'");
+  let html = `<div class="st-comment" data-id="${c.id}"><div class="st-comment-avatar">${(c.author_name || 'A')[0]}</div><div class="st-comment-body"><div class="st-comment-author">${escHtml(c.author_name || 'Anonyme')} <span class="st-comment-date">· ${t}</span></div><div class="st-comment-text">${content}</div><button class="st-comment-reply-btn" onclick="window.setReplyTo('${c.id}','${safeName}')">Répondre</button>`;
+  if (replies.length) {
+    html += replies.map(r => {
+      const rt = new Date(r.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+      const rContent = renderCaption(escHtml(r.content));
+      return `<div class="st-comment is-reply"><div class="st-comment-avatar">${(r.author_name || 'A')[0]}</div><div class="st-comment-body"><div class="st-comment-author">${escHtml(r.author_name || 'Anonyme')} <span class="st-comment-date">· ${rt}</span></div><div class="st-comment-text">${rContent}</div></div></div>`;
+    }).join('');
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function openComments(statusId) {
+  commentsState.visible = true;
+  commentsState.statusId = statusId;
+  replyingTo = null;
+  const panel = document.getElementById('stCommentsPanel');
+  if (panel) panel.style.display = 'flex';
+  const overlay = document.getElementById('storyViewer');
+  if (overlay && overlay._onCommentsOpen) overlay._onCommentsOpen();
+  loadComments(statusId);
+  updateReplyIndicator();
+}
+
+function closeComments() {
+  commentsState.visible = false;
+  commentsState.statusId = null;
+  replyingTo = null;
+  const panel = document.getElementById('stCommentsPanel');
+  if (panel) panel.style.display = 'none';
+  const overlay = document.getElementById('storyViewer');
+  if (overlay && overlay._onCommentsClose) overlay._onCommentsClose();
+  updateReplyIndicator();
+}
+
+function updateReplyIndicator() {
+  const wrap = document.getElementById('stReplyIndicator');
+  if (!wrap) return;
+  if (replyingTo) {
+    wrap.style.display = 'flex';
+    wrap.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><path d="M12 18V6"/></svg> Réponse à <b>${escHtml(replyingTo.authorName)}</b> <span style="margin-left:auto;cursor:pointer;font-size:.8rem;opacity:.6" onclick="window.clearReplyTo()">✕</span>`;
+  } else {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+  }
+}
+
 function openStatusViewer(shopId) {
   const allEntries = STATE.statusesByShop;
   if (!allEntries.length) return;
@@ -700,10 +850,12 @@ function openStatusViewer(shopId) {
   let currentStatusIdx = 0;
   let progressTimer = null;
   let touchStartX = 0;
+  let videoEndHandler = null;
+  let isMuted = true;
 
   const overlay = document.createElement('div');
   overlay.id = 'storyViewer';
-  overlay.className = 'story-viewer-overlay';
+  overlay.className = 'st-viewer-overlay';
 
   function getCurrentEntry() { return allEntries[currentEntryIdx]; }
   function getCurrentStatus() { const e = getCurrentEntry(); return e ? e.statuses[currentStatusIdx] : null; }
@@ -711,8 +863,8 @@ function openStatusViewer(shopId) {
   function isOnFirstStatus() { return currentStatusIdx <= 0; }
   function hasNextShop() { return currentEntryIdx < allEntries.length - 1; }
   function hasPrevShop() { return currentEntryIdx > 0; }
-  function isSubscribed() { const e = getCurrentEntry(); return e && STATE.subscribedShops.has(e.shop.id); }
 
+  /* ── Subscribe toggle ── */
   const toggleSub = async () => {
     const e = getCurrentEntry();
     if (!e) return;
@@ -739,56 +891,177 @@ function openStatusViewer(shopId) {
     if (badge) { const n = STATE.subscribedShops.size; badge.textContent = n; badge.style.display = n > 0 ? 'inline-flex' : 'none'; }
   };
 
+  /* ── Share ── */
+  const share = async () => {
+    const entry = getCurrentEntry();
+    if (!entry) return;
+    const { shop, statuses } = entry;
+    const s = statuses[currentStatusIdx];
+    const url = window.location.origin + '/boutique/' + (shop.slug || shop.id);
+    const text = s.caption || `Découvrez ${shop.name} sur ODA Marketplace`;
+    if (navigator.share) {
+      try { await navigator.share({ title: shop.name, text, url }); } catch (_) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('🔗 Lien copié !', 'success');
+      } catch (_) { showToast('❌ Erreur de partage', 'error'); }
+    }
+  };
+
+  /* ── Comments ── */
+  const toggleComments = () => {
+    const s = getCurrentStatus();
+    if (!s) return;
+    if (commentsState.visible) { closeComments(); return; }
+    openComments(s.id);
+  };
+
+  const sendComment = async () => {
+    const input = document.getElementById('stCommentInput');
+    if (!input || !input.value.trim()) return;
+    const s = getCurrentStatus();
+    if (!s) return;
+    const content = input.value.trim();
+    input.value = '';
+    try {
+      const uid = STATE.anonymousUserId || getAnonymousUserId();
+      const payload = {
+        status_id: s.id,
+        user_id: uid,
+        author_name: 'Visiteur',
+        content,
+      };
+      if (replyingTo) payload.reply_to = replyingTo.id;
+      await db.from('shop_status_comments').insert(payload);
+      replyingTo = null;
+      updateReplyIndicator();
+      await loadComments(s.id);
+    } catch (_) { showToast('❌ Erreur lors de l\'envoi', 'error'); }
+  };
+
+  /* ── Volume ── */
+  const toggleMute = () => {
+    const video = document.getElementById('stVideo');
+    if (!video) return;
+    isMuted = !isMuted;
+    video.muted = isMuted;
+    const btn = document.getElementById('stVolBtn');
+    if (btn) btn.innerHTML = isMuted ? ST_ICONS.volumeOff : ST_ICONS.volumeOn;
+  };
+
+  /* ── Progress bar helper ── */
+  function setProgressDuration(ms) {
+    const bar = overlay.querySelector('.st-bar-fill.active');
+    if (bar) {
+      bar.style.animation = 'none';
+      bar.offsetHeight; // trigger reflow
+      bar.style.animation = `stProgress ${ms}ms linear forwards`;
+    }
+  }
+
+  /* ── Render ── */
   const render = () => {
     const entry = getCurrentEntry();
     if (!entry) { closeViewer(); return; }
     const { shop, statuses } = entry;
     const s = statuses[currentStatusIdx];
     const subbed = STATE.subscribedShops.has(shop.id);
+    const isVideo = s.type === 'video';
 
     overlay.innerHTML = `
-    <div class="story-viewer-bg" style="background-image:url('${escHtml(s.media_url)}')"></div>
-    <div class="story-viewer-header">
-      <div class="story-viewer-info">
-        ${shop.logo_url
-          ? `<img src="${escHtml(shop.logo_url)}" class="story-viewer-avatar" alt="">`
-          : `<div class="story-viewer-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;">${getShopEmoji(shop)}</div>`
-        }
-        <div>
-          <div class="story-viewer-shopname">${escHtml(shop.name)}</div>
-          <div class="story-viewer-prodname">${s.caption ? escHtml(s.caption) : 'Nouveau status'}</div>
+    <div class="st-viewer-bg" style="background:${isVideo ? '#000' : `url('${escHtml(s.media_url)}') center/cover no-repeat`}"></div>
+    <div class="st-viewer-media">
+      ${isVideo ? `<video src="${escHtml(s.media_url)}" autoplay muted playsinline id="stVideo" style="width:100%;height:100%;object-fit:cover;"></video>` : `<img src="${escHtml(s.media_url)}" alt="" style="width:100%;height:100%;object-fit:cover;">`}
+      ${isVideo ? `<button class="st-vol-btn" id="stVolBtn" onclick="window.statusToggleMute()">${ST_ICONS.volumeOff}</button>` : ''}
+    </div>
+    <div class="st-bars">
+      ${statuses.map((_, i) => `
+        <div class="st-bar-track"><div class="st-bar-fill ${i < currentStatusIdx ? 'done' : i === currentStatusIdx ? 'active' : ''}"></div></div>
+      `).join('')}
+    </div>
+    <div class="st-header">
+      <button class="st-btn-close" onclick="window.closeStatusViewer()">${ST_ICONS.close}</button>
+      <div class="st-shop-info">
+        ${shop.logo_url ? `<img src="${escHtml(shop.logo_url)}" class="st-avatar" alt="">` : `<div class="st-avatar st-avatar-ph">${getShopEmoji(shop)}</div>`}
+        <span class="st-shop-name">${escHtml(shop.name)}</span>
+        ${allEntries.length > 1 ? `<div class="st-dot-row">${allEntries.map((e, i) => `<span class="st-dot${i === currentEntryIdx ? ' active' : ''}" onclick="window.statusJumpTo(${i})"></span>`).join('')}</div>` : ''}
+      </div>
+    </div>
+    <div class="st-actions">
+      <button class="st-action-btn" onclick="visitShop('${shop.id}','${escHtml(shop.slug || '')}')">${ST_ICONS.visit}<span class="st-action-label">Boutique</span></button>
+      <button class="st-action-btn${subbed ? ' subbed' : ''}" onclick="window.statusToggleSub()" id="stSubBtn">${subbed ? ST_ICONS.subscribed : ST_ICONS.subscribe}<span class="st-action-label">${subbed ? 'Abonné' : "S'abonner"}</span></button>
+      <button class="st-action-btn" onclick="window.statusToggleComments()">${ST_ICONS.comment}<span class="st-action-label">Commenter</span></button>
+      <button class="st-action-btn" onclick="window.statusShare()">${ST_ICONS.share}<span class="st-action-label">Partager</span></button>
+    </div>
+    <div class="st-footer">
+      ${s.caption ? `<div class="st-caption">${renderCaption(escHtml(s.caption))}</div>` : ''}
+      <div class="st-music">${ST_ICONS.music}<span>${escHtml(shop.name)} · Son original</span></div>
+    </div>
+    <div class="st-nav-left" onclick="window.statusNav(-1)"></div>
+    <div class="st-nav-right" onclick="window.statusNav(1)"></div>
+    <div class="st-comments-panel" id="stCommentsPanel" style="display:none">
+      <div class="st-comments-header">
+        <span>Commentaires</span>
+        <button class="st-comments-close" onclick="window.statusToggleComments()">${ST_ICONS.close}</button>
+      </div>
+      <div class="st-comments-list" id="stCommentsList">
+        <div class="st-comments-loading">Chargement...</div>
+      </div>
+      <div class="st-comments-input-wrap">
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+          <div class="st-comment-reply-indicator" id="stReplyIndicator" style="display:none"></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" class="st-comments-input" id="stCommentInput" placeholder="Ajouter un commentaire..." maxlength="200" />
+            <button class="st-comments-send" id="stCommentSend" onclick="window.statusSendComment()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="story-btn-sub" onclick="window.statusToggleSub()" style="background:${subbed ? 'rgba(0,214,143,.2)' : 'rgba(255,255,255,.15)'};border:${subbed ? '1px solid rgba(0,214,143,.4)' : '1px solid rgba(255,255,255,.2)'};color:${subbed ? '#00D68F' : '#fff'};padding:6px 12px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;display:flex;align-items:center;gap:4px;">
-          ${subbed ? '✓ Abonné' : '+ S\'abonner'}
-        </button>
-        <button class="story-viewer-close" onclick="window.closeStatusViewer()">✕</button>
-      </div>
-    </div>
-    <div class="story-viewer-bars">
-      ${statuses.map((_, i) => `
-        <div class="story-bar-track">
-          <div class="story-bar-fill ${i < currentStatusIdx ? 'done' : i === currentStatusIdx ? 'active' : ''}"></div>
-        </div>`).join('')}
-    </div>
-    <div class="story-viewer-body">
-      ${s.caption ? `<div class="story-caption">${escHtml(s.caption)}</div>` : ''}
-    </div>
-    <div class="story-viewer-prev"  onclick="window.statusNav(-1)"></div>
-    <div class="story-viewer-next"  onclick="window.statusNav(1)"></div>
-    <div class="story-viewer-actions">
-      <button class="story-viewer-visit"
-        onclick="visitShop('${shop.id}','${escHtml(shop.slug || '')}')">
-        Visiter la boutique →
-      </button>
-      <div class="story-shop-counter">${allEntries.length > 1 ? `<span class="story-counter-dots">${allEntries.map((e, i) => `<span class="story-counter-dot${i === currentEntryIdx ? ' active' : ''}" onclick="window.statusJumpTo(${i})"></span>`).join('')}</span>` : ''}</div>
     </div>`;
+
+    /* Video handling */
+    if (isVideo) {
+      const video = document.getElementById('stVideo');
+      if (video) {
+        video.addEventListener('loadedmetadata', () => {
+          const dur = Math.min(video.duration * 1000, 80000);
+          setProgressDuration(dur);
+        }, { once: true });
+        videoEndHandler = () => advance();
+        video.addEventListener('ended', videoEndHandler, { once: true });
+        video.play().catch(() => {});
+      }
+    }
   };
 
+  /* ── Global window helpers ── */
   window.statusToggleSub = toggleSub;
+  window.statusShare = share;
+  window.statusToggleComments = toggleComments;
+  window.statusSendComment = sendComment;
+  window.setReplyTo = (id, name) => {
+    replyingTo = { id, authorName: name };
+    updateReplyIndicator();
+    const input = document.getElementById('stCommentInput');
+    if (input) input.focus();
+  };
+  window.clearReplyTo = () => {
+    replyingTo = null;
+    updateReplyIndicator();
+  };
+  window.statusToggleMute = toggleMute;
+
   window.statusJumpTo = (idx) => {
     clearTimeout(progressTimer);
+    if (commentsState.visible) {
+      commentsState.visible = false;
+      const panel = document.getElementById('stCommentsPanel');
+      if (panel) panel.style.display = 'none';
+      replyingTo = null;
+      updateReplyIndicator();
+    }
     if (idx >= 0 && idx < allEntries.length) {
       currentEntryIdx = idx;
       currentStatusIdx = 0;
@@ -798,6 +1071,13 @@ function openStatusViewer(shopId) {
 
   window.statusNav = (dir) => {
     clearTimeout(progressTimer);
+    if (commentsState.visible) {
+      commentsState.visible = false;
+      const panel = document.getElementById('stCommentsPanel');
+      if (panel) panel.style.display = 'none';
+      replyingTo = null;
+      updateReplyIndicator();
+    }
     const entry = getCurrentEntry();
     if (!entry) return;
     if (dir > 0 && isOnLastStatus() && hasNextShop()) {
@@ -821,30 +1101,62 @@ function openStatusViewer(shopId) {
     delete window.closeStatusViewer;
     delete window.statusToggleSub;
     delete window.statusJumpTo;
+    delete window.statusShare;
+    delete window.statusToggleComments;
+    delete window.statusSendComment;
+    delete window.setReplyTo;
+    delete window.clearReplyTo;
+    delete window.statusToggleMute;
+  };
+
+  const advance = () => {
+    const entry = getCurrentEntry();
+    if (!entry) { window.closeStatusViewer(); return; }
+    if (currentStatusIdx < entry.statuses.length - 1) {
+      currentStatusIdx++;
+      render(); autoNext();
+    } else if (hasNextShop()) {
+      currentEntryIdx++;
+      currentStatusIdx = 0;
+      render(); autoNext();
+    } else {
+      window.closeStatusViewer();
+    }
   };
 
   const autoNext = () => {
-    progressTimer = setTimeout(() => {
-      const entry = getCurrentEntry();
-      if (!entry) { window.closeStatusViewer(); return; }
-      if (currentStatusIdx < entry.statuses.length - 1) {
-        currentStatusIdx++;
-        render(); autoNext();
-      } else if (hasNextShop()) {
-        currentEntryIdx++;
-        currentStatusIdx = 0;
-        render(); autoNext();
-      } else {
-        window.closeStatusViewer();
+    clearTimeout(progressTimer);
+    const s = getCurrentStatus();
+    if (s && s.type === 'video') {
+      const video = document.getElementById('stVideo');
+      if (video) {
+        videoEndHandler = () => advance();
+        video.addEventListener('ended', videoEndHandler, { once: true });
+        video.play().catch(() => {});
+        return;
       }
-    }, 4500);
+    }
+    setProgressDuration(5000);
+    progressTimer = setTimeout(advance, 5000);
+    overlay._progressTimer = progressTimer;
   };
 
   const closeViewer = window.closeStatusViewer;
 
   render();
   document.body.appendChild(overlay);
+  setProgressDuration(5000);
   autoNext();
+
+  overlay._onCommentsOpen = () => {
+    const v = document.getElementById('stVideo');
+    if (v) v.pause();
+    clearTimeout(progressTimer);
+    overlay._progressTimer = null;
+  };
+  overlay._onCommentsClose = () => {
+    autoNext();
+  };
 
   overlay.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
   overlay.addEventListener('touchend', e => {

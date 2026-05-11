@@ -360,6 +360,15 @@ a{text-decoration:none;color:inherit;}
 .st-comments-input{flex:1;padding:10px 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:.85rem;outline:none;font-family:var(--font-body);transition:border-color .15s;}
 .st-comments-input:focus{border-color:var(--primary);}
 .st-comments-input::placeholder{color:rgba(255,255,255,.3);}
+.st-name-prompt-overlay{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;animation:stCommentsIn .25s ease;padding:20px;}
+.st-name-prompt-card{background:#1c1c1e;border-radius:20px;padding:28px 24px 24px;width:100%;max-width:320px;text-align:center;animation:mktSlideUp .3s cubic-bezier(.34,1.3,.64,1);}
+.st-name-prompt-title{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:4px;}
+.st-name-prompt-sub{font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:20px;}
+.st-name-prompt-input{width:100%;padding:12px 16px;border-radius:14px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font-size:.95rem;outline:none;text-align:center;font-family:var(--font-body);box-sizing:border-box;transition:border-color .2s;}
+.st-name-prompt-input:focus{border-color:var(--primary);}
+.st-name-prompt-input::placeholder{color:rgba(255,255,255,.25);}
+.st-name-prompt-btn{width:100%;margin-top:16px;padding:12px;border:none;border-radius:14px;background:var(--primary);color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:opacity .15s;}
+.st-name-prompt-btn:active{opacity:.8;}
 .st-comments-send{width:38px;height:38px;border-radius:50%;border:none;background:var(--primary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;flex-shrink:0;}
 .st-comments-send:active{transform:scale(.88);}
 /* MODAL THUMBS */
@@ -692,6 +701,10 @@ async function initAuth() {
   } catch { STATE.currentUser = null; }
 }
 
+function getCommentAuthorName() {
+  return localStorage.getItem('oda_user_name') || '';
+}
+
 async function loadSubscriptions() {
   try {
     const stored = localStorage.getItem(LS_SUBS_KEY);
@@ -985,23 +998,67 @@ function openStatusViewer(shopId) {
     if (!input || !input.value.trim()) return;
     const s = getCurrentStatus();
     if (!s) return;
-    const content = input.value.trim();
-    input.value = '';
-    try {
-      const uid = STATE.anonymousUserId || getAnonymousUserId();
-      const payload = {
-        status_id: s.id,
-        user_id: uid,
-        author_name: 'Visiteur',
-        content,
-      };
-      if (replyingTo) payload.reply_to = replyingTo.id;
-      await db.from('shop_status_comments').insert(payload);
-      replyingTo = null;
-      updateReplyIndicator();
-      await loadComments(s.id);
-    } catch (_) { showToast('❌ Erreur lors de l\'envoi', 'error'); }
+    const authorName = getCommentAuthorName();
+    if (!authorName) {
+      showNamePromptModal((name) => {
+        localStorage.setItem('oda_user_name', name);
+        doSendComment(s, input.value.trim());
+      });
+      return;
+    }
+    doSendComment(s, input.value.trim());
   };
+
+  function doSendComment(s, content) {
+    const input = document.getElementById('stCommentInput');
+    if (input) input.value = '';
+    const authorName = localStorage.getItem('oda_user_name') || 'Visiteur';
+    const uid = STATE.anonymousUserId || getAnonymousUserId();
+    const payload = {
+      status_id: s.id,
+      user_id: uid,
+      author_name: authorName,
+      content,
+    };
+    if (replyingTo) payload.reply_to = replyingTo.id;
+    db.from('shop_status_comments').insert(payload)
+      .then(() => {
+        replyingTo = null;
+        updateReplyIndicator();
+        loadComments(s.id);
+      })
+      .catch(() => showToast('❌ Erreur lors de l\'envoi', 'error'));
+  }
+
+  function showNamePromptModal(callback) {
+    const existing = document.getElementById('stNamePrompt');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'stNamePrompt';
+    overlay.className = 'st-name-prompt-overlay';
+    overlay.innerHTML = `
+      <div class="st-name-prompt-card">
+        <div class="st-name-prompt-title">👤 Votre nom</div>
+        <div class="st-name-prompt-sub">Entrez votre nom pour commenter</div>
+        <input class="st-name-prompt-input" id="stNamePromptInput" placeholder="Votre nom..." maxlength="50" autofocus />
+        <div class="st-name-prompt-error" id="stNamePromptError" style="display:none;color:#FF3B30;font-size:.75rem;margin-bottom:8px;">Le nom est requis</div>
+        <button class="st-name-prompt-btn" id="stNamePromptBtn">Confirmer</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('#stNamePromptInput');
+    const btn = overlay.querySelector('#stNamePromptBtn');
+    const err = overlay.querySelector('#stNamePromptError');
+    const submit = () => {
+      const val = input.value.trim();
+      if (!val) { err.style.display = 'block'; input.focus(); return; }
+      err.style.display = 'none';
+      overlay.remove();
+      callback(val);
+    };
+    btn.onclick = submit;
+    input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+    setTimeout(() => input.focus(), 100);
+  }
 
   /* ── Volume ── */
   const toggleMute = () => {
@@ -1097,6 +1154,9 @@ function openStatusViewer(shopId) {
         video.play().catch(() => {});
       }
     }
+
+    /* Increment view count */
+    db.rpc('increment_status_view', { row_id: s.id }).catch(() => {});
   };
 
   /* ── Global window helpers ── */

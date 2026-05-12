@@ -309,6 +309,70 @@ export default function ServicesPage() {
     ? services.filter(s => favs.includes(s.id))
     : services.filter(s => !search.trim() || s.nom?.toLowerCase().includes(search.toLowerCase()) || s.description?.toLowerCase().includes(search.toLowerCase()));
 
+  function renderServiceCard(svc) {
+    return (
+      <div key={svc.id} className="svc-card" onClick={() => setDetail(svc)}>
+        <div className="svc-card-img-wrap">
+          <ImageCarousel images={svc.images} nom={svc.nom} />
+          <button className="svc-fav-btn" onClick={e => { e.stopPropagation(); handleToggleFav(svc.id); }}>
+            <Svg name="heart" size={14} color={favs.includes(svc.id) ? '#FF4B4B' : '#999'} fill={favs.includes(svc.id) ? '#FF4B4B' : 'none'} />
+          </button>
+          {svc.video_url && (
+            <span className="svc-video-badge">
+              <Svg name="play" size={8} color="white" fill="white" /> Vidéo
+            </span>
+          )}
+        </div>
+        <div className="svc-card-body">
+          <h3 className="svc-card-title">{svc.nom}</h3>
+          {svc.prix ? <div className="svc-card-price">{Number(svc.prix).toLocaleString('fr-FR')} FCFA</div> : null}
+          <div className="svc-card-footer">
+            {svc.lieu ? <span className="svc-card-lieu">📍 {svc.lieu}</span> : <span />}
+            {svc.whatsapp && (
+              <a href={`https://wa.me/${svc.whatsapp.replace(/\s/g,'')}?text=Bonjour%21%20Je%20suis%20int%C3%A9ress%C3%A9%28e%29%20par%20${encodeURIComponent(svc.nom)}`}
+                target="_blank" rel="noopener noreferrer" className="svc-card-wa"
+                onClick={e => e.stopPropagation()}>
+                <Svg name="whatsapp" size={10} color="white" fill="white" /> WA
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function buildSections(list) {
+    const sections = [];
+    const nouveautes = list.filter(s => new Date(s.created_at) > new Date(Date.now() - 7*24*60*60*1000));
+    if (nouveautes.length >= 2) sections.push({ label: '✨ Nouveautés', items: nouveautes });
+    const avecVideo = list.filter(s => s.video_url);
+    if (avecVideo.length >= 2) sections.push({ label: '📹 Avec vidéo', items: avecVideo });
+    const avecPrix = list.filter(s => s.prix);
+    if (avecPrix.length >= 2 && avecPrix.length < list.length) sections.push({ label: '💰 Avec prix', items: avecPrix });
+    const sansPrix = list.filter(s => !s.prix);
+    if (sansPrix.length >= 2 && sansPrix.length < list.length) sections.push({ label: '🆓 Sans prix', items: sansPrix });
+    const parLieu = {};
+    list.forEach(s => { const l = s.lieu || 'Autre'; if (!parLieu[l]) parLieu[l] = []; parLieu[l].push(s); });
+    Object.entries(parLieu).sort((a,b) => b[1].length - a[1].length).forEach(([lieu, items]) => {
+      if (items.length >= 3 && !sections.some(s => s.items === items)) sections.push({ label: `📍 ${lieu}`, items });
+    });
+    sections.push({ label: `📋 Tous les services (${list.length})`, items: list });
+    return sections.map((sec, i) => (
+      <div key={i} className="svc-section">
+        <div className="svc-section-header">
+          <div className="svc-section-title-wrap">
+            <h3 className="svc-section-title">{sec.label}</h3>
+            <span className="svc-section-badge">{sec.items.length}</span>
+          </div>
+          <span className="svc-section-count">{sec.items.length} service{sec.items.length > 1 ? 's' : ''}</span>
+        </div>
+        <div className="svc-scroll-row">
+          {sec.items.map(s => renderServiceCard(s))}
+        </div>
+      </div>
+    ));
+  }
+
   return (
     <div style={{ minHeight:'100vh', background:'#f5f5f7', fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif' }}>
       <style>{`
@@ -325,27 +389,36 @@ export default function ServicesPage() {
         .svc-tab.active { background:#34C759; color:white; box-shadow:0 4px 12px rgba(52,199,89,.25); }
         .svc-tab:active { transform:scale(.95); }
         .svc-tab-count { font-size:.7rem; opacity:.7; margin-left:4px; }
-        .svc-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-        @media(min-width:500px){ .svc-grid{ grid-template-columns:repeat(3,1fr); } }
-        @media(min-width:768px){ .svc-grid{ grid-template-columns:repeat(4,1fr); } }
-        .svc-card { background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); cursor:pointer; border:1px solid #f0f0f0; transition:transform .2s,box-shadow .2s; }
+        .svc-section { margin-bottom:20px; }
+        .svc-section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 2px; }
+        .svc-section-title-wrap { display:flex; align-items:center; gap:8px; }
+        .svc-section-title { font-size:.95rem; font-weight:700; color:#1a1a1a; margin:0; }
+        .svc-section-badge { background:#34C759; color:white; font-size:.65rem; font-weight:700; padding:2px 7px; border-radius:10px; }
+        .svc-section-count { font-size:.75rem; color:#999; font-weight:500; }
+        .svc-scroll-row { display:flex; gap:12px; overflow-x:auto; overflow-y:hidden; padding-bottom:8px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; cursor:grab; width:100%; }
+        .svc-scroll-row:active { cursor:grabbing; }
+        .svc-scroll-row::-webkit-scrollbar { display:none; }
+        .svc-card { min-width:185px; max-width:185px; background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); cursor:pointer; border:1px solid #f0f0f0; transition:transform .2s,box-shadow .2s; scroll-snap-align:start; flex-shrink:0; }
         .svc-card:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,.1); }
-        .svc-card-img-wrap { position:relative; width:100%; aspect-ratio:16/10; overflow:hidden; background:#f0f0f2; }
+        .svc-card-img-wrap { position:relative; width:100%; aspect-ratio:2/1; overflow:hidden; background:#f0f0f2; }
         .svc-fav-btn { position:absolute; top:6px; right:6px; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,.1); transition:transform .2s; }
         .svc-fav-btn:active { transform:scale(.8); }
         .svc-video-badge { position:absolute; bottom:6px; left:6px; background:rgba(0,0,0,.5); color:white; font-size:.58rem; padding:2px 6px; border-radius:5px; backdrop-filter:blur(4px); z-index:2; display:flex; align-items:center; gap:3px; }
-        .svc-card-body { padding:8px 10px 10px; }
-        .svc-card-title { font-size:.78rem; font-weight:700; color:#1a1a1a; margin:0 0 2px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
-        .svc-card-price { font-size:.8rem; font-weight:800; color:#34C759; }
+        .svc-card-body { padding:10px 12px 12px; }
+        .svc-card-title { font-size:.8rem; font-weight:700; color:#1a1a1a; margin:0 0 2px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .svc-card-price { font-size:.85rem; font-weight:800; color:#34C759; }
         .svc-card-lieu { font-size:.65rem; color:#aaa; display:flex; align-items:center; gap:2px; }
         .svc-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
         .svc-card-wa { display:inline-flex; align-items:center; gap:3px; padding:4px 10px; border-radius:6px; background:#25D366; color:white; font-size:.65rem; font-weight:600; text-decoration:none; }
-        .svc-empty { text-align:center; padding:60px 20px; color:#999; grid-column:1/-1; }
+        .svc-empty { text-align:center; padding:60px 20px; color:#999; }
         .svc-empty-icon { font-size:3rem; margin-bottom:12px; }
         .svc-empty-title { font-size:1.1rem; font-weight:700; color:#333; margin:0 0 6px; }
         .svc-empty-sub { font-size:.82rem; color:#999; margin:0; }
-        .svc-skel { background:white; border-radius:12px; overflow:hidden; }
-        .svc-skel-img { width:100%; aspect-ratio:16/10; background:linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%); background-size:200% 100%; animation:shimmer 1.4s ease infinite; }
+        .svc-skel-section { margin-bottom:20px; }
+        .svc-skel-section-title { width:160px; height:16px; border-radius:8px; background:linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%); background-size:200% 100%; animation:shimmer 1.4s ease infinite; margin-bottom:12px; }
+        .svc-skel-row { display:flex; gap:12px; }
+        .svc-skel { min-width:185px; max-width:185px; background:white; border-radius:12px; overflow:hidden; }
+        .svc-skel-img { width:100%; aspect-ratio:2/1; background:linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%); background-size:200% 100%; animation:shimmer 1.4s ease infinite; }
         .svc-skel-body { padding:10px; }
         .svc-skel-line { height:8px; border-radius:4px; background:#f0f0f0; margin-bottom:6px; }
         .svc-skel-line:last-child { width:50%; }
@@ -370,13 +443,20 @@ export default function ServicesPage() {
         </div>
 
         {loading ? (
-          <div className="svc-grid">
-            {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="svc-skel">
-                <div className="svc-skel-img" />
-                <div className="svc-skel-body">
-                  <div className="svc-skel-line" />
-                  <div className="svc-skel-line" />
+          <div>
+            {[1,2,3].map(i => (
+              <div key={i} className="svc-skel-section">
+                <div className="svc-skel-section-title" />
+                <div className="svc-skel-row">
+                  {[1,2,3,4].map(j => (
+                    <div key={j} className="svc-skel">
+                      <div className="svc-skel-img" />
+                      <div className="svc-skel-body">
+                        <div className="svc-skel-line" />
+                        <div className="svc-skel-line" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -388,37 +468,7 @@ export default function ServicesPage() {
             <p className="svc-empty-sub">{favTab ? 'Ajoutez des services en favoris avec le cœur ♥' : 'Modifiez votre recherche ou revenez plus tard'}</p>
           </div>
         ) : (
-          <div className="svc-grid">
-            {filtered.map(svc => (
-              <div key={svc.id} className="svc-card" onClick={() => setDetail(svc)}>
-                <div className="svc-card-img-wrap">
-                  <ImageCarousel images={svc.images} nom={svc.nom} />
-                  <button className="svc-fav-btn" onClick={e => { e.stopPropagation(); handleToggleFav(svc.id); }}>
-                    <Svg name="heart" size={14} color={favs.includes(svc.id) ? '#FF4B4B' : '#999'} fill={favs.includes(svc.id) ? '#FF4B4B' : 'none'} />
-                  </button>
-                  {svc.video_url && (
-                    <span className="svc-video-badge">
-                      <Svg name="play" size={8} color="white" fill="white" /> Vidéo
-                    </span>
-                  )}
-                </div>
-                <div className="svc-card-body">
-                  <h3 className="svc-card-title">{svc.nom}</h3>
-                  {svc.prix ? <div className="svc-card-price">{Number(svc.prix).toLocaleString('fr-FR')} FCFA</div> : null}
-                  <div className="svc-card-footer">
-                    {svc.lieu ? <span className="svc-card-lieu">📍 {svc.lieu}</span> : <span />}
-                    {svc.whatsapp && (
-                      <a href={`https://wa.me/${svc.whatsapp.replace(/\s/g,'')}?text=Bonjour%21%20Je%20suis%20int%C3%A9ress%C3%A9%28e%29%20par%20${encodeURIComponent(svc.nom)}`}
-                        target="_blank" rel="noopener noreferrer" className="svc-card-wa"
-                        onClick={e => e.stopPropagation()}>
-                        <Svg name="whatsapp" size={10} color="white" fill="white" /> WA
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          buildSections(filtered, favs, handleToggleFav, setDetail)
         )}
       </div>
 

@@ -2978,6 +2978,10 @@ export default function OdaAchatsPage() {
                         <div className="banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="32" height="32"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4"/><path d="M8 14h8"/><path d="M10 14v4"/><path d="M14 14v4"/></svg></div>
                         <span>boutique</span>
                     </button>
+                    <button className="banner-btn" onClick={() => window.location.href='/services'}>
+                        <div className="banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="32" height="32"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2z"/><path d="M20 18v-7a8 8 0 00-16 0v7"/><path d="M9 11h6"/></svg></div>
+                        <span>services</span>
+                    </button>
                 </div>
                 <div className="carousel-dots" id="carouselDots"></div>
             </section>

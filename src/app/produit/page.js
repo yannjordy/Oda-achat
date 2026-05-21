@@ -531,6 +531,32 @@ function ProduitDetail() {
       setCurrentProduct(product);
       setIsFavorite(getFavStatus(product.id));
       document.title = `${product.nom} - ODA Marketplace`;
+
+      const productUrl = window.location.href;
+      const productImage = product.images?.[0] || product.image || '/images/oda-logo.png';
+      const devise = shopConfig?.paiement?.devise || 'FCFA';
+      const productDesc = product.description ? product.description.substring(0, 200) : `Découvrez ${product.nom} sur ODA Marketplace`;
+
+      const setMeta = (name, content) => {
+        let el = document.querySelector(`meta[property="${name}"]`) || document.querySelector(`meta[name="${name}"]`);
+        if (!el) { el = document.createElement('meta'); el.setAttribute('property', name); document.head.appendChild(el); }
+        el.setAttribute('content', content);
+      };
+      const setMetaName = (name, content) => {
+        let el = document.querySelector(`meta[name="${name}"]`);
+        if (!el) { el = document.createElement('meta'); el.setAttribute('name', name); document.head.appendChild(el); }
+        el.setAttribute('content', content);
+      };
+
+      setMeta('og:title', `${product.nom} - ODA Marketplace`);
+      setMeta('og:description', productDesc);
+      setMeta('og:image', productImage);
+      setMeta('og:url', productUrl);
+      setMeta('og:type', 'product');
+      setMetaName('twitter:card', 'summary_large_image');
+      setMetaName('twitter:title', `${product.nom} - ODA Marketplace`);
+      setMetaName('twitter:description', productDesc);
+      setMetaName('twitter:image', productImage);
       const images = buildAllImages(product);
       setAllImages(images);
       setCurrentImageIndex(0);
@@ -654,8 +680,20 @@ function ProduitDetail() {
   const partagerProduit = async () => {
     if (!currentProduct) return;
     const url = window.location.href;
+    const imageUrl = currentProduct.images?.[0] || currentProduct.image || '';
     if (navigator.share) {
-      try { await navigator.share({ title: currentProduct.nom, text: `Découvrez ${currentProduct.nom} sur ODA Marketplace`, url }); }
+      try {
+        const shareData = { title: currentProduct.nom, text: `Découvrez ${currentProduct.nom} sur ODA Marketplace`, url };
+        if (imageUrl) {
+          try {
+            const resp = await fetch(imageUrl);
+            const blob = await resp.blob();
+            const file = new File([blob], `${currentProduct.nom}.jpg`, { type: blob.type || 'image/jpeg' });
+            shareData.files = [file];
+          } catch { /* image non partageable, on envoie sans */ }
+        }
+        await navigator.share(shareData);
+      }
       catch (e) { if (e.name !== 'AbortError') console.error(e); }
     } else {
       try { await navigator.clipboard.writeText(url); afficherNotification('Lien copié !', 'success'); }

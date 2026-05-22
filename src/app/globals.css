@@ -1,0 +1,66 @@
+/* ─── Safe Area CSS Variables (iOS PWA) ─── */
+:root {
+  --sat: 0px;
+  --sab: 0px;
+  --sal: 0px;
+  --sar: 0px;
+}
+
+/* Nouveaux iOS (Safari 11.2+) */
+@supports (padding-top: env(safe-area-inset-top)) {
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+}
+
+/* Anciens iOS (Safari 11.0-11.1) */
+@supports (padding-top: constant(safe-area-inset-top)) {
+  :root {
+    --sat: constant(safe-area-inset-top);
+    --sab: constant(safe-area-inset-bottom);
+    --sal: constant(safe-area-inset-left);
+    --sar: constant(safe-area-inset-right);
+  }
+}
+
+/* ─── Utility Classes ─── */
+.sat { padding-top: var(--sat); }
+.sab { padding-bottom: var(--sab); }
+.sal { padding-left: var(--sal); }
+.sar { padding-right: var(--sar); }
+
+.sat-max { padding-top: max(12px, var(--sat)); }
+.sab-max { padding-bottom: max(12px, var(--sab)); }
+
+.sat-full { padding-top: calc(12px + var(--sat)); }
+.sab-full { padding-bottom: calc(12px + var(--sab)); }
+
+/* Top-fixed element (header full-bleed) */
+.fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  padding-top: var(--sat);
+}
+
+/* Bottom-fixed element */
+.fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  padding-bottom: var(--sab);
+}
+
+/* Fullscreen overlay */
+.fixed-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+}

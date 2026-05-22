@@ -1,3 +1,4 @@
+import './globals.css';
 import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration';
 import PWAInstallModal from '@/components/ui/PWAInstallModal';
 import PageTracker from '@/components/layout/PageTracker';

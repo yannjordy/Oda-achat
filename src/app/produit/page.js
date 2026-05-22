@@ -1311,8 +1311,46 @@ function ProduitDetail() {
 
       {/* ── BOUTONS FIXES ── */}
       <div className="action-buttons">
-        <button className="btn-primary" onClick={ouvrirFormCommande}>🛒 Passer la commande</button>
-        <button className="btn-secondary" onClick={contacterWhatsApp}>📱 Contacter sur WhatsApp</button>
+        {currentProduct?.source === 'aliexpress' ? (
+          <>
+            <a className="btn-primary"
+              href={currentProduct.external_url || `https://www.aliexpress.com/item/${currentProduct.external_id}.html`}
+              target="_blank" rel="noopener noreferrer"
+              onClick={async (e) => {
+                e.preventDefault();
+                try {
+                  const res = await fetch('/api/aliexpress/link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      url: currentProduct.external_url || `https://www.aliexpress.com/item/${currentProduct.external_id}.html`,
+                    }),
+                  });
+                  if (res.ok) {
+                    const data = await res.json();
+                    const link = data?.links?.promotion_links?.[0]?.promotion_link
+                      || data?.links?.[0]?.promotion_link
+                      || data?.links?.url
+                      || null;
+                    if (link) {
+                      window.open(link, '_blank');
+                      return;
+                    }
+                  }
+                } catch {}
+                window.open(currentProduct.external_url || `https://www.aliexpress.com/item/${currentProduct.external_id}.html`, '_blank');
+              }}
+              style={{ textDecoration: 'none' }}>
+              🛍️ Acheter sur AliExpress
+            </a>
+            <button className="btn-secondary" onClick={contacterWhatsApp}>📱 Contacter sur WhatsApp</button>
+          </>
+        ) : (
+          <>
+            <button className="btn-primary" onClick={ouvrirFormCommande}>🛒 Passer la commande</button>
+            <button className="btn-secondary" onClick={contacterWhatsApp}>📱 Contacter sur WhatsApp</button>
+          </>
+        )}
       </div>
 
       {

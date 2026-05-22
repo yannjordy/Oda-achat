@@ -8,10 +8,10 @@
 import { useRouter } from 'next/navigation';
 import SearchBar from '@/components/ui/SearchBar';
 
-const CSS = `
+  const CSS = `
   .oda-header {
     position: fixed;
-    top: env(safe-area-inset-top);
+    top: var(--sat, 0px);
     left: 0; right: 0;
     z-index: 200;
     height: 62px;

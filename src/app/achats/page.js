@@ -125,7 +125,7 @@ class OptimizedDataLoader {
         const currentUserId = window._currentUserId;
         const [shopsRes, productsRes, likesCountRes, userLikesRes] = await Promise.all([
             this.sb.from('parametres_boutique').select('user_id, config'),
-            this.sb.from('produits').select('id,nom,description,prix,stock,main_image,categorie,user_id,created_at,prix_promo,prix_initial').in('statut', ['published', 'actif', 'active', 'disponible', 'publié']).gt('stock', 0).limit(500),
+            this.sb.from('produits').select('id,nom,description,prix,stock,main_image,description_images,categorie,user_id,created_at,prix_promo,prix_initial').in('statut', ['published', 'actif', 'active', 'disponible', 'publié']).gt('stock', 0).limit(500),
             this.sb.from('product_likes').select('product_id'),
             this.sb.from('product_likes').select('product_id').eq('user_id', currentUserId),
         ]);
@@ -143,24 +143,29 @@ class OptimizedDataLoader {
                 couleurPrimaire : cfg?.apparence?.couleurPrimaire || '#FF6B00',
             };
         });
-        this.data.products = (productsRes.data || []).map(p => ({
-            id          : p.id,
-            nom         : p.nom,
-            description : p.description,
-            prix        : p.prix,
-            prix_promo  : p.prix_promo,
-            prix_initial: p.prix_initial,
-            stock       : p.stock,
-            mainImage   : p.main_image,
-            categorie   : p.categorie,
-            userId      : p.user_id,
-            created_at  : p.created_at,
-            shopName    : this.data.shops[p.user_id]?.nom || 'Boutique',
-            shopSlug    : this.data.shops[p.user_id]?.identifiant,
-            shopColor   : this.data.shops[p.user_id]?.couleurPrimaire || '#FF6B00',
-            rating      : '0.0',
-            likes       : 0,
-        }));
+        this.data.products = (productsRes.data || []).map(p => {
+            const descImgs = Array.isArray(p.description_images) ? p.description_images.filter(Boolean) : [];
+            return {
+                id              : p.id,
+                nom             : p.nom,
+                description     : p.description,
+                prix            : p.prix,
+                prix_promo      : p.prix_promo,
+                prix_initial    : p.prix_initial,
+                stock           : p.stock,
+                mainImage       : p.main_image,
+                descriptionImages: descImgs,
+                allImages       : [p.main_image, ...descImgs].filter(Boolean),
+                categorie       : p.categorie,
+                userId          : p.user_id,
+                created_at      : p.created_at,
+                shopName        : this.data.shops[p.user_id]?.nom || 'Boutique',
+                shopSlug        : this.data.shops[p.user_id]?.identifiant,
+                shopColor       : this.data.shops[p.user_id]?.couleurPrimaire || '#FF6B00',
+                rating          : '0.0',
+                likes           : 0,
+            };
+        });
         const userLikedSet = new Set((userLikesRes.data || []).map(l => l.product_id));
         (likesCountRes.data || []).forEach(l => {
             if (!this.data.likes[l.product_id]) this.data.likes[l.product_id] = { count: 0, users: [] };
@@ -398,6 +403,13 @@ function _injectSectionStyles() {
         .product-card{background:var(--bg-primary);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;position:relative;display:flex;flex-direction:column;border:1px solid var(--border-color);transition:all .25s cubic-bezier(.4,0,.2,1);}
         .product-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.12);border-color:var(--primary-color);}
         .product-image-wrapper{position:relative;width:100%;padding-top:65%;background:#f5f5f5;overflow:hidden;}
+        .product-carousel{position:absolute;top:0;left:0;width:100%;height:100%;}
+        .carousel-slide{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:opacity .4s ease;opacity:0;}
+        .carousel-slide.active{opacity:1;}
+        .product-card:hover .carousel-slide{transform:scale(1.05);}
+        .carousel-dots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:6;}
+        .carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);transition:all .3s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+        .carousel-dot.active{background:#fff;transform:scale(1.2);}
         .product-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:transform .3s ease;}
         .product-card:hover .product-image{transform:scale(1.05);}
         .btn-favorite{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15);}
@@ -494,6 +506,8 @@ function createProductCard(product, isHorizontal = false) {
     const isNew         = new Date(product.created_at) >= cutoff;
     const isLowStock    = product.stock > 0 && product.stock <= CONFIG.LOW_STOCK_THRESHOLD;
     const isSale        = product.prix < CONFIG.SALE_PRICE;
+    const allImages     = product.allImages || [product.mainImage].filter(Boolean);
+    const hasMultiple   = allImages.length > 1;
 
     return `
         <div class="product-card" data-product-id="${product.id}" style="${cardStyle}" onclick="window.goToProduct(${product.id})">
@@ -512,9 +526,15 @@ function createProductCard(product, isHorizontal = false) {
                         aria-label="Signaler ce produit">
                     🚩
                 </button>
-                <img src="${product.mainImage || 'https://via.placeholder.com/300'}"
-                     class="product-image" alt="${product.nom}" loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/300?text=Produit'">
+                <div class="product-carousel" data-product-id="${product.id}" ${hasMultiple ? `data-images='${JSON.stringify(allImages)}'` : ''}>
+                    ${allImages.map((img, i) => `
+                        <img src="${img || 'https://via.placeholder.com/300'}"
+                             class="product-image carousel-slide ${i === 0 ? 'active' : ''}"
+                             alt="${product.nom}" loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/300?text=Produit'">
+                    `).join('')}
+                    ${hasMultiple ? `<div class="carousel-dots">${allImages.map((_, i) => `<span class="carousel-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
+                </div>
             </div>
             <div class="product-info">
                 <!-- Nom + couleur boutique comme oda-achats.html -->
@@ -773,6 +793,37 @@ function renderProducts(products) {
     grid.innerHTML = html;
     attachProductInteractions();
     initCardReportTriggers();
+    initProductCarousels();
+}
+
+// ==================== CAROUSELS PRODUITS ====================
+function initProductCarousels() {
+    if (window._carouselIntervals) {
+        window._carouselIntervals.forEach(id => clearInterval(id));
+    }
+    window._carouselIntervals = [];
+
+    document.querySelectorAll('.product-carousel[data-images]').forEach(carousel => {
+        const productId = carousel.dataset.productId;
+        const images = JSON.parse(carousel.dataset.images);
+        if (images.length <= 1) return;
+
+        let currentIndex = 0;
+        const slides = carousel.querySelectorAll('.carousel-slide');
+        const dots = carousel.querySelectorAll('.carousel-dot');
+
+        const interval = setInterval(() => {
+            slides[currentIndex].classList.remove('active');
+            if (dots[currentIndex]) dots[currentIndex].classList.remove('active');
+
+            currentIndex = (currentIndex + 1) % images.length;
+
+            slides[currentIndex].classList.add('active');
+            if (dots[currentIndex]) dots[currentIndex].classList.add('active');
+        }, 3000);
+
+        window._carouselIntervals.push(interval);
+    });
 }
 
 // ==================== CAROUSEL ====================
@@ -1952,7 +2003,7 @@ html{scroll-behavior:smooth;}
 body{font-family:'Inter',sans-serif;background:var(--bg-secondary);color:var(--text-primary);min-height:100vh;overflow-x:hidden;}
 
 /* ── HEADER ── */
-.main-header{position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(135deg,var(--secondary-color),#16213e);padding-top:max(12px, env(safe-area-inset-top));padding-right:16px;padding-bottom:12px;padding-left:16px;transition:box-shadow .3s ease;}
+.main-header{position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(135deg,var(--secondary-color),#16213e);padding-top:max(12px, constant(safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));padding-right:16px;padding-bottom:12px;padding-left:16px;transition:box-shadow .3s ease;}
 .header-content{display:flex;justify-content:space-between;align-items:center;max-width:1400px;margin:0 auto;}
 .menu-btn{width:36px;height:36px;background:none;border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .3s;}
 .menu-btn:hover{background:rgba(255,255,255,.1);}

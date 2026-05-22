@@ -377,7 +377,7 @@ export default function ServicesPage() {
     <div style={{ minHeight:'100vh', background:'#f5f5f7', fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif' }}>
       <style>{`
         .svc-page { max-width:1000px; margin:0 auto; padding:0 12px 80px; }
-        .svc-header { display:flex; align-items:center; gap:10px; padding:14px 0; position:sticky; top:0; background:#f5f5f7; z-index:50; }
+        .svc-header { display:flex; align-items:center; gap:10px; padding:max(14px, constant(safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)) 0 14px; position:sticky; top:0; background:#f5f5f7; z-index:50; }
         .svc-back { width:36px; height:36px; border-radius:50%; border:none; background:white; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.06); color:#333; flex-shrink:0; transition:transform .15s; }
         .svc-back:active { transform:scale(.9); }
         .svc-search-wrap { flex:1; position:relative; }

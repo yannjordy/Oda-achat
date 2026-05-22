@@ -553,10 +553,36 @@ function ProduitDetail() {
       setMeta('og:image', productImage);
       setMeta('og:url', productUrl);
       setMeta('og:type', 'product');
+      setMeta('og:price:amount', product.prix?.toString());
+      setMeta('og:price:currency', 'XAF');
       setMetaName('twitter:card', 'summary_large_image');
       setMetaName('twitter:title', `${product.nom} - ODA Marketplace`);
       setMetaName('twitter:description', productDesc);
       setMetaName('twitter:image', productImage);
+      // JSON-LD structured data
+      const ld = document.getElementById('product-ldjson');
+      if (ld) ld.remove();
+      const script = document.createElement('script');
+      script.id = 'product-ldjson';
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify({
+        '@context': 'https://schema.org/',
+        '@type': 'Product',
+        name: product.nom,
+        description: product.description,
+        image: productImage,
+        sku: product.id,
+        offers: {
+          '@type': 'Offer',
+          url: productUrl,
+          priceCurrency: 'XAF',
+          price: product.prix_promo || product.prix,
+          priceValidUntil: new Date(Date.now() + 365*24*60*60*1000).toISOString(),
+          availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          itemCondition: 'https://schema.org/NewCondition',
+        },
+      });
+      document.head.appendChild(script);
       const images = buildAllImages(product);
       setAllImages(images);
       setCurrentImageIndex(0);
@@ -1171,7 +1197,14 @@ function ProduitDetail() {
 
       <div className="product-content">
         <div className="product-header">
-          <h2 className="product-name">{currentProduct?.nom || 'Nom du produit'}</h2>
+          <h2 className="product-name">{currentProduct?.nom || 'Nom du produit'}
+            {currentProduct?.source && currentProduct.source !== 'internal' && (
+              <span style={{ marginLeft: 8, fontSize: '0.65rem', background: '#E8F5E9', color: '#2E7D32', padding: '2px 8px', borderRadius: 6, fontWeight: 700, verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                {currentProduct.source === 'jumia' ? '🛒 Jumia' : currentProduct.source === 'aliexpress' ? '🌍 AliExpress' : currentProduct.source}
+                {currentProduct.external_platform === 'jumia' ? '' : currentProduct.external_platform ? ` (${currentProduct.external_platform})` : ''}
+              </span>
+            )}
+          </h2>
           <div className="product-header-actions">
             <span className="product-category">📦 {currentProduct?.categorie || 'Catégorie'}</span>
             <button className="btn-report-product" onClick={() => openReportModalProduit()}>

@@ -1,5 +1,6 @@
 import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration';
 import PWAInstallModal from '@/components/ui/PWAInstallModal';
+import PageTracker from '@/components/layout/PageTracker';
 
 export const metadata = {
   title: "ODA Market | La Marketplace du Cameroun 🇨🇲",
@@ -60,17 +61,40 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/images/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#D4920A" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="google-site-verification" content="" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;900&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "ODA Market",
+              url: "https://odamarket.cm",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://odamarket.cm/achats?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+              description: "La marketplace N°1 au Cameroun. Achetez et vendez facilement.",
+              inLanguage: ["fr", "en"],
+              address: { "@type": "PostalAddress", addressCountry: "CM" },
+            }),
+          }}
+        />
       </head>
       <body>
-        {children}
-        <ServiceWorkerRegistration />
-        <PWAInstallModal />
+        <PageTracker>
+          {children}
+          <ServiceWorkerRegistration />
+          <PWAInstallModal />
+        </PageTracker>
       </body>
     </html>
   );

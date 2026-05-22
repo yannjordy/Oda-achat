@@ -19,6 +19,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@types/node": "^25.9.1",
     "@types/react": "19.2.14",
     "autoprefixer": "^10.0.1",
     "eslint": "^9",

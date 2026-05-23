@@ -47,6 +47,7 @@ export default function BoutiquePage() {
   const [checkoutModal, setCheckoutModal] = useState(false)
   const [modalAPropos, setModalAPropos] = useState(false)
   const [modalContact, setModalContact] = useState(false)
+  const [logoModalOpen, setLogoModalOpen] = useState(false)
 
   // --- ÉTATS CHECKOUT ---
   const [customerName, setCustomerName] = useState('')
@@ -114,6 +115,20 @@ export default function BoutiquePage() {
   // ==================== LOADER ====================
   const mettreAJourStatusLoader = (message) => {
     setLoaderStatus(message)
+  }
+
+  // ==================== PARTAGE ====================
+  const partagerBoutique = async () => {
+    const url = window.location.href
+    const nom = parametres.general?.nom || 'Ma Boutique'
+    if (navigator.share) {
+      try { await navigator.share({ title: nom, text: `Découvrez ${nom} sur Oda`, url }) } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url)
+        alert('Lien copié dans le presse-papier !')
+      } catch { alert('Copiez ce lien : ' + url) }
+    }
   }
 
   // ==================== DÉTECTION IDENTIFIANT BOUTIQUE ====================
@@ -473,6 +488,7 @@ export default function BoutiquePage() {
     setSideMenuOpen(false)
     setCartOpen(false)
     setOverlayActive(false)
+    setLogoModalOpen(false)
   }
 
   const ouvrirPanier = () => {
@@ -866,7 +882,7 @@ export default function BoutiquePage() {
     // Raccourcis clavier
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        fermerTout(); setProductModal({ open: false, produit: null }); setCheckoutModal(false); setChatOpen(false); setModalAPropos(false); setModalContact(false)
+        fermerTout(); setProductModal({ open: false, produit: null }); setCheckoutModal(false); setChatOpen(false); setModalAPropos(false); setModalContact(false); setLogoModalOpen(false)
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault(); document.getElementById('searchInput')?.focus()
@@ -933,14 +949,16 @@ export default function BoutiquePage() {
 
       {/* ===== LOADER ===== */}
       {showLoader && (
-        <div style={{ position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(255,255,255,0.95)',backdropFilter:'blur(10px)',zIndex:9999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'20px',animation:'fadeIn 0.3s ease' }}>
-          <div style={{ position:'relative',width:'80px',height:'80px' }}>
-            {[0, -0.3, -0.6].map((delay, i) => (
-              <div key={i} style={{ position:'absolute',top:0,left:0,width:'80px',height:'80px',border:'4px solid transparent',borderTopColor:'var(--primary-color)',borderRadius:'50%',animation:`spin 1.2s cubic-bezier(0.5,0,0.5,1) ${delay}s infinite` }} />
-            ))}
+        <div className="loader-screen">
+          <div className="loader-center">
+            <div className="loader-shop-name">
+              {parametres.general?.nom || 'Boutique'}
+            </div>
+            <div className="loader-bar-track">
+              <div className="loader-bar-fill" />
+            </div>
+            <div className="loader-status">{loaderStatus}</div>
           </div>
-          <div style={{ fontSize:'1.2rem',fontWeight:600,color:'var(--primary-color)',animation:'pulse 1.5s infinite' }}>Chargement...</div>
-          <div style={{ fontSize:'0.9rem',color:'var(--text-secondary)',textAlign:'center',maxWidth:'300px' }}>{loaderStatus}</div>
         </div>
       )}
 
@@ -961,9 +979,14 @@ export default function BoutiquePage() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
           <div className="logo-container">
-            <img src={parametres.apparence?.logo || 'images/oda-logo.svg'} alt="Logo" width="40" height="40" className="logo-image" id="shopLogo" onError={(e) => { e.target.src = 'images/oda-logo.svg' }} />
+            <img src={parametres.apparence?.logo || 'images/oda-logo.svg'} alt="Logo" width="40" height="40" className="logo-image" id="shopLogo" onError={(e) => { e.target.src = 'images/oda-logo.svg' }} onClick={() => setLogoModalOpen(true)} style={{ cursor:'pointer' }} />
             <h1 className="shop-name" id="shopName">{parametres.general?.nom || 'Ma Boutique'}</h1>
           </div>
+          <button className="btn-share" onClick={partagerBoutique} aria-label="Partager">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
           <button className="btn-cart" id="cartBtn" onClick={ouvrirPanier}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M9 2L7.17 4M15 2l1.83 2M9 20c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -1492,6 +1515,16 @@ export default function BoutiquePage() {
           </div>
         </div>
       )}
+
+      {/* ===== MODAL LOGO ===== */}
+      {logoModalOpen && (
+        <div className="logo-overlay" onClick={() => setLogoModalOpen(false)}>
+          <button className="btn-close-logo" onClick={() => setLogoModalOpen(false)}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
+          </button>
+          <img src={parametres.apparence?.logo || 'images/oda-logo.svg'} alt="Logo" className="logo-modal-image" onError={(e) => { e.target.src = 'images/oda-logo.svg' }} />
+        </div>
+      )}
     </>
   )
 }
@@ -1512,12 +1545,25 @@ const GLOBAL_STYLES = `
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{font-family:var(--font-family);background:var(--bg-secondary);color:var(--text-primary);line-height:1.6;overflow-x:hidden;padding-top:110px;padding-top:calc(96px + max(12px, constant(safe-area-inset-top, 0px)));padding-top:calc(96px + max(12px, env(safe-area-inset-top, 0px)));padding-bottom:80px}
+  .loader-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#fff}
+  .loader-center{display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;padding:0 32px}
+  .loader-shop-name{font-size:1.4rem;font-weight:700;color:#1a1a1a;letter-spacing:-0.01em;line-height:1.3}
+  .loader-bar-track{width:200px;height:3px;border-radius:99px;background:#e8e8e8;overflow:hidden}
+  .loader-bar-fill{height:100%;border-radius:99px;background:#111;animation:loaderBarFill 2s ease infinite}
+  @keyframes loaderBarFill{0%{width:0%}50%{width:70%}100%{width:100%}}
+  .loader-status{font-size:0.82rem;color:#888;font-weight:400;min-height:18px}
   .mobile-header{position:fixed;top:0;left:0;right:0;background:var(--bg-primary);box-shadow:var(--shadow-md);z-index:1000;padding:max(12px, constant(safe-area-inset-top, 0px), env(safe-area-inset-top, 0px)) 16px 12px}
   .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  .btn-menu,.btn-cart{width:44px;height:44px;border-radius:var(--radius-md);border:none;background:var(--bg-secondary);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition)}
-  .btn-menu:active,.btn-cart:active{transform:scale(0.95);background:var(--border-color)}
+  .btn-menu,.btn-cart,.btn-share{width:44px;height:44px;border-radius:var(--radius-md);border:none;background:var(--bg-secondary);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition)}
+  .btn-menu:active,.btn-cart:active,.btn-share:active{transform:scale(0.95);background:var(--border-color)}
   .logo-container{display:flex;align-items:center;gap:10px;flex:1;justify-content:center}
   .logo-image{width:36px;height:36px;border-radius:50%;object-fit:cover}
+  .logo-modal-image{max-width:280px;max-height:60vh;width:80vw;aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:logoZoomIn 0.3s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes logoZoomIn{from{opacity:0;transform:scale(0.6)}to{opacity:1;transform:scale(1)}}
+  .logo-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;animation:logoFadeIn 0.25s ease}
+  @keyframes logoFadeIn{from{opacity:0}to{opacity:1}}
+  .btn-close-logo{position:fixed;top:max(20px,env(safe-area-inset-top,20px));right:20px;width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,0.15);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);z-index:10001}
+  .btn-close-logo:active{transform:scale(0.92)}
   .shop-name{font-size:1.1rem;font-weight:800;color:var(--primary-color);animation:shimmer 4s ease infinite;background-size:200% 200%!important}
   .btn-cart{position:relative}
   .cart-badge{position:absolute;top:-4px;right:-4px;background:var(--error-color);color:white;font-size:0.7rem;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center;display:flex;align-items:center;justify-content:center;background:linear-gradient(-45deg,var(--primary-color),var(--secondary-color),var(--primary-color))!important;background-size:300% 300%!important;animation:gradientShift 3s ease infinite,pulse 2s ease infinite!important}

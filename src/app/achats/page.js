@@ -539,7 +539,7 @@ function createProductCard(product, isHorizontal = false) {
             <div class="product-info">
                 <!-- Nom + couleur boutique comme oda-achats.html -->
                 <span class="shop-badge"
-                      style="background:${shopColor}18;color:${shopColor};padding:3px 8px;border-radius:8px;font-size:.7rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;width:fit-content;margin-bottom:2px;">
+                      style="position:relative;background:${shopColor}18;color:${shopColor};padding:3px 8px;border-radius:8px;font-size:.7rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;width:fit-content;margin-bottom:2px;">
                     🏪 ${product.shopName || 'Boutique'}
                 </span>
                 <h3 class="product-name">${product.nom}</h3>

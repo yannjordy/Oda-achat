@@ -50,7 +50,7 @@ export default function ShareCatalog({ variant = 'fab', onClose }) {
         <button
           onClick={() => setCatalog(catalog ? null : { message: '', waUrl: '', products: [] })}
           style={{
-            position: 'fixed', bottom: 80, right: 16, zIndex: 999,
+            position: 'fixed', bottom: 'calc(80px + var(--sab, 0px))', right: 16, zIndex: 999,
             width: 52, height: 52, borderRadius: '50%',
             background: '#25D366', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',

@@ -35,7 +35,7 @@ export default function ReferralButton({ userId, variant = 'inline' }) {
         <button
           onClick={() => setOpen(true)}
           style={{
-            position: 'fixed', bottom: 140, right: 16, zIndex: 999,
+            position: 'fixed', bottom: 'calc(140px + var(--sab, 0px))', right: 16, zIndex: 999,
             width: 52, height: 52, borderRadius: '50%',
             background: 'linear-gradient(135deg, #FF6B00, #FF8F00)',
             border: 'none', cursor: 'pointer',

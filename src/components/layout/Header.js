@@ -11,11 +11,11 @@ import SearchBar from '@/components/ui/SearchBar';
   const CSS = `
   .oda-header {
     position: fixed;
-    top: var(--sat, 0px);
+    top: 0;
     left: 0; right: 0;
     z-index: 200;
-    height: 62px;
-    padding: 0 20px;
+    height: calc(62px + var(--sat, 0px));
+    padding: var(--sat, 0px) 20px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
